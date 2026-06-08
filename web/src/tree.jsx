@@ -28,9 +28,12 @@ export function filterNodes(nodes, q) {
 export function TreeNode({ n, kids, depth, sel, onSelect, edit, onAdd, onRename, onDel, forceOpen, pathSet }) {
   const has = kids[n.id] && kids[n.id].length
   const [open, setOpen] = useState(depth < 2)
+  const onPath = pathSet && pathSet.has(n.id)
+  // Default view: expand the branch leading to the selected Vuvale (the first one).
+  // Depends on the boolean so the user can still collapse a path branch afterwards.
+  useEffect(() => { if (onPath) setOpen(true) }, [onPath])
   const isOpen = forceOpen || open
   const selectable = n.level === 'vuvale' && onSelect
-  const onPath = pathSet && pathSet.has(n.id)
   const child = CHILD_NAME[n.level]
   return (
     <li>
