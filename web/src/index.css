@@ -73,8 +73,8 @@ th{background:#eaf2f1;color:var(--deep);font-weight:700;border-bottom:1px solid 
 tr:last-child td{border-bottom:none}
 tbody tr:hover td{background:#f6faf9}
 
-ul.tree{list-style:none;padding-left:18px}ul.tree>li{margin:4px 0}
-.lvl{display:inline-block;font-size:10px;font-weight:700;color:#fff;border-radius:6px;padding:2px 8px;margin-right:7px;text-transform:uppercase;letter-spacing:.3px}
+ul.tree{list-style:none;padding-left:16px}ul.tree>li{margin:1px 0}
+.lvl{display:inline-block;font-size:13px;font-weight:700;color:#fff;border-radius:6px;padding:1px 8px;margin-right:7px;text-transform:uppercase;letter-spacing:.3px}
 .lvl.vanua{background:#27545c}.lvl.yavusa{background:#6f8fb0}.lvl.mataqali{background:#3a8f9c}
 .lvl.tokatoka{background:#7fae93}.lvl.vuvale{background:#cf9a86}
 .lvl.village{background:#5b9bb0}.lvl.district{background:#4f93a0}.lvl.provincial_council{background:#27545c}.lvl.soqosoqo{background:#c98a9a}
@@ -128,11 +128,11 @@ ul.people li:last-child{border-bottom:0}
 .caret.spacer{display:inline-block;visibility:hidden}
 .cols-13{grid-template-columns:1fr 2fr}
 @media(max-width:820px){.cols-13{grid-template-columns:1fr}}
-.nodelabel{vertical-align:middle}
+.nodelabel{vertical-align:middle;font-size:13px}
 .nodelabel.clickable{cursor:pointer}
 .nodelabel.clickable:hover{text-decoration:underline}
 .nodelabel.selected{background:var(--ocean);color:#fff;border-radius:7px;padding:2px 9px}
-ul.tree li{line-height:1.9}
+ul.tree li{line-height:1.3}
 
 /* hierarchy styling editor */
 .lvlgrid{display:flex;flex-direction:column;gap:8px;max-width:600px}

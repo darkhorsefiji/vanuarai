@@ -1,58 +1,8 @@
 import { useEffect, useState } from 'react'
 import { get } from '../api'
-import { LevelBadge } from '../levels'
+import { buildTree, filterNodes, TreeNode, useNodes } from '../tree'
 
-const CHILD_NAME = {
-  vanua: 'Yavusa', yavusa: 'Mataqali', mataqali: 'Tokatoka', tokatoka: 'Vuvale',
-  provincial_council: 'District', district: 'Village',
-}
 const BLANK = { full_name: '', gender: '', relationship: '', dob: '', dod: '' }
-
-function buildTree(nodes) {
-  const kids = {}
-  nodes.forEach(n => { (kids[n.parent_id] = kids[n.parent_id] || []).push(n) })
-  Object.values(kids).forEach(a => a.sort((x, y) => x.label.localeCompare(y.label)))
-  const ids = new Set(nodes.map(n => n.id))
-  const root = nodes.find(n => !n.parent_id || !ids.has(n.parent_id))
-  return { kids, root }
-}
-
-function filterNodes(nodes, q) {
-  if (!q.trim()) return nodes
-  const ql = q.toLowerCase()
-  const byId = Object.fromEntries(nodes.map(n => [n.id, n]))
-  const keep = new Set()
-  nodes.forEach(n => {
-    if (n.label.toLowerCase().includes(ql)) { let x = n; while (x) { keep.add(x.id); x = byId[x.parent_id] } }
-  })
-  return nodes.filter(n => keep.has(n.id))
-}
-
-function Node({ n, kids, depth, sel, onSelect, edit, onAdd, onRename, onDel, forceOpen, pathSet }) {
-  const has = kids[n.id] && kids[n.id].length
-  const [open, setOpen] = useState(depth < 2)
-  const isOpen = forceOpen || open
-  const isVuvale = n.level === 'vuvale'
-  const onPath = pathSet && pathSet.has(n.id)
-  return (
-    <li>
-      {has
-        ? <button className={'caret' + (isOpen ? ' open' : '')} onClick={() => setOpen(o => !o)} aria-label="toggle"><span className="chev">›</span></button>
-        : <span className="caret spacer" />}
-      <LevelBadge level={n.level} />
-      <span className={'nodelabel' + (isVuvale ? ' clickable' : '') + (sel === n.id ? ' selected' : (onPath ? ' onpath' : ''))}
-        onClick={isVuvale ? () => onSelect(n.id) : undefined}>{n.label}</span>
-      {edit && (
-        <span className="rowacts">
-          <button className="mini" onClick={() => onRename(n)} title="Rename">✎</button>
-          {CHILD_NAME[n.level] && <button className="mini" onClick={() => onAdd(n, CHILD_NAME[n.level])}>+ {CHILD_NAME[n.level]}</button>}
-          <button className="mini danger" onClick={() => onDel(n)} title="Delete">🗑</button>
-        </span>
-      )}
-      {has && isOpen && <ul className="tree">{kids[n.id].map(c => <Node key={c.id} n={c} kids={kids} depth={depth + 1} sel={sel} onSelect={onSelect} edit={edit} onAdd={onAdd} onRename={onRename} onDel={onDel} forceOpen={forceOpen} pathSet={pathSet} />)}</ul>}
-    </li>
-  )
-}
 
 function GenderSelect({ value, onChange }) {
   return (
@@ -63,16 +13,13 @@ function GenderSelect({ value, onChange }) {
 }
 
 export default function Hierarchy() {
-  const [nodes, setNodes] = useState(null)
+  const { nodes, msg, setMsg, addNode, renameNode, delNode } = useNodes()
   const [sel, setSel] = useState(null)
   const [people, setPeople] = useState(null)
   const [edit, setEdit] = useState(false)
   const [add, setAdd] = useState(BLANK)
-  const [msg, setMsg] = useState('')
   const [q, setQ] = useState('')
 
-  const loadNodes = () => get('/hierarchy').then(setNodes)
-  useEffect(() => { loadNodes() }, [])
   useEffect(() => {
     if (nodes && !sel) {
       const v = nodes.filter(n => n.level === 'vuvale').sort((a, b) => a.label.localeCompare(b.label))[0]
@@ -82,23 +29,7 @@ export default function Hierarchy() {
   const loadPeople = id => get(`/vuvale/${id}/persons`).then(setPeople)
   useEffect(() => { if (sel) { setPeople(null); loadPeople(sel) } }, [sel])
 
-  async function onAdd(parent, childName) {
-    const label = window.prompt(`New ${childName} name:`); if (!label) return
-    const r = await fetch('/api/nodes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ parent_id: parent.id, label }) })
-    setMsg(r.ok ? 'Added ✓' : 'Add failed'); loadNodes()
-  }
-  async function onRename(nd) {
-    const label = window.prompt('Rename to:', nd.label); if (!label || label === nd.label) return
-    const r = await fetch('/api/nodes/' + nd.id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ label }) })
-    setMsg(r.ok ? 'Renamed ✓' : 'Rename failed'); loadNodes()
-  }
-  async function onDel(nd) {
-    if (!window.confirm(`Delete "${nd.label}"?`)) return
-    const r = await fetch('/api/nodes/' + nd.id, { method: 'DELETE' }); const j = await r.json().catch(() => ({}))
-    setMsg(r.ok ? 'Deleted ✓' : (j.error || 'Delete failed'))
-    if (r.ok && sel === nd.id) setSel(null)
-    loadNodes()
-  }
+  const onDel = nd => delNode(nd, d => { if (sel === d.id) setSel(null) })
 
   const pbody = p => ({ full_name: p.full_name, gender: p.gender || null, relationship: p.relationship, date_of_birth: p.dob || null, date_of_death: p.dod || null })
   const updP = (i, k, v) => setPeople(arr => arr.map((p, idx) => idx === i ? { ...p, [k]: v } : p))
@@ -108,26 +39,20 @@ export default function Hierarchy() {
 
   if (!nodes) return <p className="loading">Loading…</p>
   const trad = nodes.filter(n => n.axis === 'traditional')
-  const gov = nodes.filter(n => n.axis === 'government')
   const byId = Object.fromEntries(nodes.map(n => [n.id, n]))
   const vnode = sel ? byId[sel] : null
   const tok = vnode ? byId[vnode.parent_id] : null
   const mat = tok ? byId[tok.parent_id] : null
-
-  // path from selected vuvale up to the root (for highlighting)
   const pathSet = new Set()
   if (vnode) { let x = vnode; while (x) { pathSet.add(x.id); x = byId[x.parent_id] } }
-
-  const tradFiltered = filterNodes(trad, q)
-  const tradTree = buildTree(tradFiltered)
-  const govTree = buildTree(gov)
+  const tree = buildTree(filterNodes(trad, q))
 
   return (
     <>
       <div className="pagehead">
         <div>
-          <h1>Hierarchy</h1>
-          <p className="sub">Use + / − to expand; click a Vuvale to view its family.{edit ? ' Editing on — add / rename / delete nodes and members.' : ''}</p>
+          <h1>Vanua Hierarchy</h1>
+          <p className="sub">Traditional lineage. Click a Vuvale to view its family.{edit ? ' Editing on.' : ''}</p>
         </div>
         <div className="editrow">
           <button className={edit ? 'btn' : 'btn secondary'} onClick={() => setEdit(e => !e)}>{edit ? 'Done' : '✎ Edit'}</button>
@@ -137,18 +62,14 @@ export default function Hierarchy() {
 
       <div className="cols cols-13">
         <div className="col">
-          <h3 style={{ marginTop: 0 }}>Vanua Hierarchy</h3>
           <input className="treesearch" placeholder="Search the tree…" value={q} onChange={e => setQ(e.target.value)} />
-          {tradTree.root
-            ? <ul className="tree"><Node n={tradTree.root} kids={tradTree.kids} depth={0} sel={sel} onSelect={setSel} edit={edit} onAdd={onAdd} onRename={onRename} onDel={onDel} forceOpen={!!q.trim()} pathSet={pathSet} /></ul>
+          {tree.root
+            ? <ul className="tree"><TreeNode n={tree.root} kids={tree.kids} depth={0} sel={sel} onSelect={setSel} edit={edit} onAdd={addNode} onRename={renameNode} onDel={onDel} forceOpen={!!q.trim()} pathSet={pathSet} /></ul>
             : <p className="meta">No matches.</p>}
         </div>
 
         <aside className="col">
-          <h3 style={{ marginTop: 0 }}>Provincial Hierarchy</h3>
-          <ul className="tree">{govTree.root && <Node n={govTree.root} kids={govTree.kids} depth={0} sel={sel} onSelect={setSel} edit={edit} onAdd={onAdd} onRename={onRename} onDel={onDel} />}</ul>
-
-          <h3 style={{ marginTop: 24 }}>Family (Vuvale) Composition</h3>
+          <h3 style={{ marginTop: 0 }}>Family (Vuvale) Composition</h3>
           {!vnode ? <p className="sub">Select a Vuvale in the tree.</p> : (
             <div className="card comp">
               <h3>{vnode.label}</h3>

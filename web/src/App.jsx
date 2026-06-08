@@ -3,6 +3,7 @@ import { NavLink, Routes, Route } from 'react-router-dom'
 import Internet from './pages/Internet'
 import Profile from './pages/Profile'
 import Hierarchy from './pages/Hierarchy'
+import Government from './pages/Government'
 import Projects from './pages/Projects'
 import Fundraising from './pages/Fundraising'
 import Financials from './pages/Financials'
@@ -13,7 +14,7 @@ import { AuthProvider } from './auth'
 import AuthArea from './AuthArea'
 
 const nav = [
-  ['/', 'Internet'], ['/profile', 'Profile'], ['/hierarchy', 'Hierarchy'],
+  ['/', 'Internet'], ['/profile', 'Profile'], ['/hierarchy', 'Hierarchy'], ['/government', 'Government'],
   ['/projects', 'Projects'], ['/fundraising', 'Fundraising'],
   ['/financials', 'Financials'], ['/minutes', 'Minutes'], ['/admin', 'Admin'],
 ]
@@ -40,6 +41,7 @@ export default function App() {
           <Route path="/" element={<Internet />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/hierarchy" element={<Hierarchy />} />
+          <Route path="/government" element={<Government />} />
           <Route path="/projects" element={<Projects />} />
           <Route path="/fundraising" element={<Fundraising />} />
           <Route path="/financials" element={<Financials />} />
