@@ -49,10 +49,18 @@ export const THEME_GROUPS = [
   {
     group: 'Surfaces & accents', items: [
       { k: '--body-bg', l: 'Page background', t: 'color', d: '#eef5f2' },
-      { k: '--card', l: 'Card background', t: 'color', d: '#ffffff' },
-      { k: '--line', l: 'Borders', t: 'color', d: '#e8edee' },
       { k: '--ocean', l: 'Primary (teal)', t: 'color', d: '#3a8f9c' },
       { k: '--clay', l: 'Buttons (coral)', t: 'color', d: '#d98a6b' },
+    ],
+  },
+  {
+    group: 'Cards', items: [
+      { k: '--card', l: 'Background', t: 'color', d: '#ffffff' },
+      { k: '--line', l: 'Border', t: 'color', d: '#e8edee' },
+      { k: '--card-radius', l: 'Corner radius', t: 'range', d: '16', min: 0, max: 28, step: 1, unit: 'px' },
+      { k: '--card-pad', l: 'Padding', t: 'range', d: '18', min: 8, max: 32, step: 1, unit: 'px' },
+      { k: '--card-accent1', l: 'Accent bar start', t: 'color', d: '#3a8f9c' },
+      { k: '--card-accent2', l: 'Accent bar end', t: 'color', d: '#7fae93' },
     ],
   },
 ]

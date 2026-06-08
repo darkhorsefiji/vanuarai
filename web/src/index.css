@@ -23,6 +23,7 @@
   --head-font:Avenir,"Avenir Next","Nunito Sans","Segoe UI",sans-serif;
   --head-weight:700; --head-style:normal; --body-weight:400; --body-style:normal;
   --head-spacing:0px; --body-spacing:0px; --body-leading:1.5;
+  --card-radius:16px; --card-pad:18px; --card-accent1:#3a8f9c; --card-accent2:#7fae93;
 }
 *{box-sizing:border-box}
 body{margin:0;color:var(--ink);
@@ -79,9 +80,9 @@ h3{font-size:17px;font-weight:var(--head-weight);font-style:var(--head-style);co
 
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:18px}
 .card{position:relative;overflow:hidden;background:var(--card);border:1px solid var(--line);
-  border-radius:16px;padding:18px;box-shadow:0 2px 10px rgba(39,84,92,.06);transition:.2s}
+  border-radius:var(--card-radius);padding:var(--card-pad);box-shadow:0 2px 10px rgba(39,84,92,.06);transition:.2s}
 .card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;
-  background:linear-gradient(90deg,var(--ocean),var(--sage))}
+  background:linear-gradient(90deg,var(--card-accent1),var(--card-accent2))}
 .card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(39,84,92,.1);border-color:#dce6e7}
 .card h3{margin:2px 0 6px;font-size:16px}
 .card .meta{color:var(--muted);font-size:13px}
