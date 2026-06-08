@@ -13,6 +13,7 @@ const n = v => Number(v);
 
 // permissive CORS for local dev (Vite on :5173)
 app.use((req, res, next) => { res.set("Access-Control-Allow-Origin", "*"); next(); });
+app.use(express.json());
 
 app.get("/api/health", (req, res) => res.json({ ok: true }));
 
@@ -44,6 +45,18 @@ app.get("/api/profile", async (req, res) => {
     counts,
     resources: resources.map(r => ({ sector: r.sector, resource: n(r.resource_score), participation: n(r.participation_score), notes: r.notes })),
   });
+});
+
+// Admin: update profile text + pinned location. (No auth yet — gate to official/admin later.)
+app.patch("/api/profile", async (req, res) => {
+  const b = req.body || {};
+  const lat = b.latitude != null && b.latitude !== "" ? Number(b.latitude) : null;
+  const lon = b.longitude != null && b.longitude !== "" ? Number(b.longitude) : null;
+  const [v] = await q(
+    `update villages set introduction=$1, background=$2, how_to_get_there=$3, latitude=$4, longitude=$5
+     where name=$6 returning name`,
+    [b.introduction ?? null, b.background ?? null, b.how_to_get_there ?? null, lat, lon, VILLAGE]);
+  res.json({ ok: !!v });
 });
 
 app.get("/api/hierarchy", async (req, res) => {

@@ -7,11 +7,12 @@ import Projects from './pages/Projects'
 import Fundraising from './pages/Fundraising'
 import Financials from './pages/Financials'
 import Minutes from './pages/Minutes'
+import Admin from './pages/Admin'
 
 const nav = [
   ['/', 'Internet'], ['/profile', 'Profile'], ['/hierarchy', 'Hierarchy'],
   ['/projects', 'Projects'], ['/fundraising', 'Fundraising'],
-  ['/financials', 'Financials'], ['/minutes', 'Minutes'],
+  ['/financials', 'Financials'], ['/minutes', 'Minutes'], ['/admin', 'Admin'],
 ]
 
 export default function App() {
@@ -38,6 +39,7 @@ export default function App() {
           <Route path="/fundraising" element={<Fundraising />} />
           <Route path="/financials" element={<Financials />} />
           <Route path="/minutes" element={<Minutes />} />
+          <Route path="/admin" element={<Admin />} />
         </Routes>
       </main>
     </>
