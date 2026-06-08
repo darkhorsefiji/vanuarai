@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { NavLink, Routes, Route } from 'react-router-dom'
 import Internet from './pages/Internet'
 import Profile from './pages/Profile'
@@ -14,10 +15,13 @@ const nav = [
 ]
 
 export default function App() {
+  const [logoOk, setLogoOk] = useState(true)
   return (
     <>
       <header className="top">
-        <span className="brand">🌺 VanuaRai</span>
+        {logoOk
+          ? <img className="brandlogo" src="/logo.png" alt="VanuaRai — Digital Village WiFi" onError={() => setLogoOk(false)} />
+          : <span className="brand">🌺 VanuaRai</span>}
         <span className="badge">Village: Bagasau</span>
         <nav>
           {nav.map(([to, label]) => (
