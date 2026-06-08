@@ -9,11 +9,12 @@ import Fundraising from './pages/Fundraising'
 import Financials from './pages/Financials'
 import Minutes from './pages/Minutes'
 import Admin from './pages/Admin'
+import Dev from './pages/Dev'
 import { LevelsProvider } from './levels'
 import { AuthProvider } from './auth'
 import AuthArea from './AuthArea'
 
-const TOP_NAV = [['/', 'Internet'], ['/admin', 'Admin']]
+const TOP_NAV = [['/', 'Internet'], ['/admin', 'Admin'], ['/dev', 'Dev']]
 const SIDE_NAV = [
   ['/profile', 'Profile', '🌺'], ['/vanua', 'Vanua', '🌴'], ['/government', 'Government', '🛖'],
   ['/projects', 'Projects', '🛶'], ['/fundraising', 'Fundraising', '🐚'],
@@ -63,6 +64,7 @@ export default function App() {
                 <Route path="/financials" element={<Financials />} />
                 <Route path="/minutes" element={<Minutes />} />
                 <Route path="/admin" element={<Admin />} />
+              <Route path="/dev" element={<Dev />} />
               </Routes>
             </main>
           </div>
