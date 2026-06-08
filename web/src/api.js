@@ -10,6 +10,20 @@ export async function get(path) {
   return r.json()
 }
 
+export async function send(method, path, body) {
+  const r = await fetch('/api' + path, {
+    method,
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: body != null ? JSON.stringify(body) : undefined,
+  })
+  if (!r.ok) {
+    let msg
+    try { msg = (await r.json()).error } catch { /* ignore */ }
+    throw new Error(msg || ('API ' + r.status))
+  }
+  return r.json()
+}
+
 export const fjd = c => 'FJD ' + (Number(c) / 100).toLocaleString(undefined, { minimumFractionDigits: 0 })
 
 export function useData(path) {

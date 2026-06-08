@@ -33,7 +33,7 @@ export default function Internet() {
       <EditableText id="internet.sub" className="sub">Choose a plan to reconnect — pay with M-PAiSA, MyCash or card.</EditableText>
       {!plans ? <p className="loading">Loading…</p> : (
         <div className="grid">
-          {plans.map(p => (
+          {plans.filter(p => p.active !== false).map(p => (
             <div className={'card plan' + (sel === p.name ? ' selected' : '')} key={p.name}
               onClick={() => { setSel(p.name); setPayMsg('') }}>
               {p.name === POPULAR && <span className="popular">Most popular</span>}

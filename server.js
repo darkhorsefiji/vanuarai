@@ -14,6 +14,7 @@ const q = (sql, p = []) => pool.query(sql, p).then(r => r.rows);
 const n = v => Number(v);
 const NEXT_LEVEL = { vanua: 'yavusa', yavusa: 'mataqali', mataqali: 'tokatoka', tokatoka: 'vuvale', provincial_council: 'district', district: 'village' };
 const BODY_LEVELS = new Set(['mataqali', 'village', 'soqosoqo']);
+const VALIDITY = new Set(['daily', 'weekly', 'fortnightly', 'monthly']);
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
 const JWT_SECRET = process.env.JWT_SECRET || "dev-secret-change-me";
 const gclient = new OAuth2Client(GOOGLE_CLIENT_ID);
@@ -62,9 +63,47 @@ app.get("/api/me", async (req, res) => {
 });
 
 app.get("/api/plans", async (req, res) => {
-  const rows = await q(`select p.name, p.volume_mb, p.validity, p.price_cents from plans p
+  const rows = await q(`select p.id, p.name, p.volume_mb, p.validity, p.price_cents, p.active from plans p
     join villages v on p.village_id=v.id where v.name=$1 order by p.price_cents`, [VILLAGE]);
   res.json(rows.map(r => ({ ...r, price_cents: n(r.price_cents), volume_mb: n(r.volume_mb) })));
+});
+
+// Admin: plan configuration + pricing (surfaced on the Dev page). No auth gate yet — gate to admin later.
+const planFields = b => [
+  String(b.name || '').trim(),
+  Math.max(0, parseInt(b.volume_mb, 10) || 0),
+  b.validity,
+  Math.max(0, parseInt(b.price_cents, 10) || 0),
+  b.active !== false,
+];
+app.post("/api/plans", async (req, res) => {
+  const b = req.body || {};
+  if (!b.name || !VALIDITY.has(b.validity)) return res.status(400).json({ error: "name and validity (daily/weekly/fortnightly/monthly) required" });
+  try {
+    const [v] = await q(`select id from villages where name=$1`, [VILLAGE]);
+    const [row] = await q(
+      `insert into plans(village_id, name, volume_mb, validity, price_cents, active)
+       values($1,$2,$3,$4,$5,$6) returning id`,
+      [v.id, ...planFields(b)]);
+    res.json({ ok: true, id: row.id });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+app.patch("/api/plans/:id", async (req, res) => {
+  const b = req.body || {};
+  if (!b.name || !VALIDITY.has(b.validity)) return res.status(400).json({ error: "name and validity (daily/weekly/fortnightly/monthly) required" });
+  try {
+    await q(`update plans set name=$1, volume_mb=$2, validity=$3, price_cents=$4, active=$5 where id=$6`,
+      [...planFields(b), req.params.id]);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+app.delete("/api/plans/:id", async (req, res) => {
+  try {
+    await q(`delete from plans where id=$1`, [req.params.id]);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(409).json({ error: "Can't delete a plan that already has payments/sessions — set it inactive instead." });
+  }
 });
 
 app.get("/api/profile", async (req, res) => {

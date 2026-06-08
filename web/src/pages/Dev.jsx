@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { THEME_GROUPS, loadOverrides, setVar, resetVars, ensureFont, fontStack, familyFromStack } from '../theme'
 import { GOOGLE_FONTS } from '../googleFonts'
 import { ICON_SETS, ICON_ITEMS, Icon, useIconSet } from '../icons'
+import PlansEditor from '../PlansEditor'
 
 const SYSTEM_FONTS = ['System UI', 'Georgia', 'Arial', 'Times New Roman', 'Courier New', 'Verdana', 'Tahoma']
 const ORDER_KEY = 'vr_theme_order'
@@ -82,6 +83,10 @@ export default function Dev() {
           )
         })}
       </div>
+
+      <h3>Internet plans</h3>
+      <p className="sub">Configure the plans &amp; pricing shown on the Internet page. Saved to the database — changes are live for everyone. Inactive plans stay hidden from buyers.</p>
+      <PlansEditor />
 
       {THEME_GROUPS.map(g => (
         <div key={g.group}>
