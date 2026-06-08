@@ -140,3 +140,9 @@ ul.tree li{line-height:1.9}
 select{padding:9px 11px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:14px;background:#fff;color:var(--ink)}
 td input{width:100%;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font:inherit;font-size:13px;color:var(--ink)}
 td input:focus{outline:none;border-color:var(--ocean)}
+
+/* inline page editing */
+.pagehead{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.editrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:4px}
+.inlineedit{width:100%;max-width:760px;border:1px solid var(--line);border-radius:12px;padding:11px 13px;font:inherit;font-size:14px;color:var(--ink);background:#fff;resize:vertical}
+.inlineedit:focus{outline:none;border-color:var(--ocean);box-shadow:0 0 0 3px rgba(58,143,156,.15)}

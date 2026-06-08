@@ -1,114 +1,31 @@
-import { useEffect, useRef, useState } from 'react'
-import L from 'leaflet'
-import 'leaflet/dist/leaflet.css'
-import { get } from '../api'
-import { makeBaseLayers, pinIcon } from '../map'
+import { useEffect, useState } from 'react'
 import { useLevels } from '../levels'
-import HierarchyEditor from '../admin/HierarchyEditor'
-import VuvaleEditor from '../admin/VuvaleEditor'
 
 export default function Admin() {
-  const [loaded, setLoaded] = useState(false)
-  const [form, setForm] = useState({ introduction: '', background: '', how_to_get_there: '' })
-  const [coords, setCoords] = useState({ lat: -17.8, lon: 178.2 })
-  const [status, setStatus] = useState('')
-  const { list: levelList, refresh: refreshLevels } = useLevels()
+  const { list: levelList, refresh } = useLevels()
   const [styles, setStyles] = useState([])
-  const [styleStatus, setStyleStatus] = useState('')
-  const mapDiv = useRef(null)
-  const mapObj = useRef(null)
+  const [status, setStatus] = useState('')
 
-  // load current profile
-  useEffect(() => {
-    get('/profile').then(d => {
-      setForm({
-        introduction: d.introduction || '',
-        background: d.background || '',
-        how_to_get_there: d.how_to_get_there || '',
-      })
-      if (d.latitude != null) setCoords({ lat: d.latitude, lon: d.longitude })
-      setLoaded(true)
-    })
-  }, [])
-
-  // init the Leaflet map once the profile is loaded
-  useEffect(() => {
-    if (!loaded || !mapDiv.current || mapObj.current) return
-    const map = L.map(mapDiv.current).setView([coords.lat, coords.lon], 12)
-    const layers = makeBaseLayers()
-    layers.Map.addTo(map)
-    L.control.layers(layers, null, { collapsed: false }).addTo(map)
-    const marker = L.marker([coords.lat, coords.lon], { draggable: true, icon: pinIcon }).addTo(map)
-    marker.on('dragend', () => { const ll = marker.getLatLng(); setCoords({ lat: ll.lat, lon: ll.lng }) })
-    map.on('click', e => { marker.setLatLng(e.latlng); setCoords({ lat: e.latlng.lat, lon: e.latlng.lng }) })
-    mapObj.current = map
-    return () => { map.remove(); mapObj.current = null }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaded])
-
-  // sync editable styles from the levels context
   useEffect(() => { setStyles(levelList.map(s => ({ ...s }))) }, [levelList])
-
-  const upd = k => e => setForm(f => ({ ...f, [k]: e.target.value }))
   const updStyle = (i, k, v) => setStyles(arr => arr.map((s, idx) => idx === i ? { ...s, [k]: v } : s))
 
-  async function saveStyles() {
-    setStyleStatus('Saving…')
+  async function save() {
+    setStatus('Saving…')
     try {
       const r = await fetch('/api/level-styles', {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ styles: styles.map(s => ({ level: s.level, color: s.color, label: s.label })) }),
       })
-      if (r.ok) { setStyleStatus('Saved ✓'); refreshLevels() } else setStyleStatus('Error saving')
-    } catch { setStyleStatus('Network error') }
+      if (r.ok) { setStatus('Saved ✓'); refresh() } else setStatus('Error saving')
+    } catch { setStatus('Network error') }
   }
-
-  async function save() {
-    setStatus('Saving…')
-    try {
-      const r = await fetch('/api/profile', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, latitude: coords.lat, longitude: coords.lon }),
-      })
-      setStatus(r.ok ? 'Saved ✓' : 'Error saving')
-    } catch {
-      setStatus('Network error')
-    }
-  }
-
-  if (!loaded) return <p className="loading">Loading…</p>
 
   return (
     <>
       <h1>Village Admin</h1>
-      <p className="sub">Edit the village profile and pin its location on the map. (Open for now — will be limited to officials once login is added.)</p>
+      <p className="sub">Portal-wide settings. Records (Profile notes &amp; location, Vanua/Provincial hierarchy, Family composition) are edited <b>inline on their own pages</b> — open the page and use its <b>Edit</b> button.</p>
 
-      <h3>Profile content</h3>
-      <div className="field">
-        <label>Introduction</label>
-        <textarea rows={4} value={form.introduction} onChange={upd('introduction')} />
-      </div>
-      <div className="field">
-        <label>Background</label>
-        <textarea rows={5} value={form.background} onChange={upd('background')} />
-      </div>
-      <div className="field">
-        <label>How to get there</label>
-        <textarea rows={4} value={form.how_to_get_there} onChange={upd('how_to_get_there')} />
-      </div>
-
-      <h3>Pin the village location</h3>
-      <p className="sub">Click the map or drag the pin to set the village’s coordinates.</p>
-      <div id="mapedit" ref={mapDiv} />
-      <p className="coordbox">📍 {coords.lat.toFixed(5)}, {coords.lon.toFixed(5)}</p>
-
-      <div className="savebar">
-        <button className="btn" onClick={save}>Save changes</button>
-        <span className="status">{status}</span>
-      </div>
-
-      <h3 style={{ marginTop: 28 }}>Hierarchy element styling</h3>
+      <h3>Hierarchy element styling</h3>
       <p className="sub">Set the colour and label for each hierarchy level. Changes apply across the whole portal.</p>
       <div className="lvlgrid">
         {styles.map((s, i) => (
@@ -121,18 +38,9 @@ export default function Admin() {
         ))}
       </div>
       <div className="savebar">
-        <button className="btn secondary" onClick={saveStyles}>Save styling</button>
-        <span className="status">{styleStatus}</span>
+        <button className="btn" onClick={save}>Save styling</button>
+        <span className="status">{status}</span>
       </div>
-
-      <h3 style={{ marginTop: 28 }}>Edit hierarchy</h3>
-      <p className="sub">Add, rename or remove nodes in either hierarchy. Changes affect the whole portal.</p>
-      <div className="cols">
-        <HierarchyEditor axis="traditional" title="Vanua Hierarchy" />
-        <HierarchyEditor axis="government" title="Provincial Hierarchy" />
-      </div>
-
-      <VuvaleEditor />
     </>
   )
 }
