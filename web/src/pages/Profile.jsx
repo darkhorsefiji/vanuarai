@@ -85,7 +85,7 @@ export default function Profile() {
           <div>
             <div className="tagline">Village Profile</div>
             <h1>{data.name}</h1>
-            <p className="sub" style={{ color: '#eafaf7', margin: '6px 0 0' }}>{data.district} · part of {data.province}</p>
+            <p className="sub" style={{ color: '#eafaf7', margin: '6px 0 0' }}>{[data.district, data.province && `part of ${data.province}`].filter(Boolean).join(' · ') || 'Location not set in Government'}</p>
           </div>
           <div className="editrow">
             {editing

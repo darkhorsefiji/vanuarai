@@ -119,8 +119,16 @@ app.get("/api/profile", async (req, res) => {
   const resources = await q(`select sector, resource_score, participation_score, notes
     from village_resources vr join villages vi on vi.id=vr.village_id
     where vi.name=$1 order by sort_order`, [VILLAGE]);
+  // District + Province sourced live from the Government (provincial) hierarchy:
+  // village node -> parent (district/Tikina) -> grandparent (provincial council).
+  const [gov] = await q(`select dist.label district, prov.label province
+    from villages vlg
+      join scope_nodes vil on vil.id = vlg.village_node_id
+      left join scope_nodes dist on dist.id = vil.parent_id
+      left join scope_nodes prov on prov.id = dist.parent_id
+    where vlg.name=$1`, [VILLAGE]);
   res.json({
-    name: v.name, district: "Tikina / District (TBD)", province: "Province (TBD)",
+    name: v.name, district: gov?.district || null, province: gov?.province || null,
     introduction: v.introduction, background: v.background,
     latitude: v.latitude != null ? n(v.latitude) : null,
     longitude: v.longitude != null ? n(v.longitude) : null,
