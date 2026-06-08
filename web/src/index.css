@@ -91,11 +91,11 @@ h3{font-size:17px;font-weight:var(--head-weight);font-style:var(--head-style);co
 .card .meta{color:var(--muted);font-size:13px}
 .price{font-size:27px;font-weight:700;margin:8px 0;color:var(--ocean)}
 
-.btn{display:inline-block;border:none;cursor:pointer;font-weight:600;font-size:14px;
-  padding:10px 18px;border-radius:30px;color:#fff;text-decoration:none;
-  background:var(--clay);box-shadow:0 3px 10px rgba(217,138,107,.3);transition:.18s}
+.btn{display:inline-block;border:none;cursor:pointer;font-weight:var(--btn-weight,600);font-size:var(--btn-font-size,14px);
+  padding:var(--btn-pad-y,10px) var(--btn-pad-x,18px);border-radius:var(--btn-radius,30px);color:var(--btn-text,#fff);text-decoration:none;
+  background:var(--btn-primary-bg,var(--clay));box-shadow:0 3px 10px rgba(217,138,107,.3);transition:.18s}
 .btn:hover{transform:translateY(-1px);filter:brightness(.98);text-decoration:none}
-.btn.secondary{background:var(--ocean);box-shadow:0 3px 10px rgba(58,143,156,.3)}
+.btn.secondary{background:var(--btn-secondary-bg,var(--ocean));box-shadow:0 3px 10px rgba(58,143,156,.3)}
 
 .bar{height:var(--bar-height,9px);background:var(--bar-track,#eef1f1);border-radius:8px;overflow:hidden;margin:8px 0 4px}
 .bar>i{display:block;height:100%;border-radius:8px;background:var(--bar-prog,var(--sage))}

@@ -80,6 +80,18 @@ export const THEME_GROUPS = [
       { k: '--card-accent2', l: 'Accent bar end', t: 'color', d: '#7fae93' },
     ],
   },
+  {
+    group: 'Buttons', items: [
+      { k: '--btn-secondary-bg', l: 'Secondary (Explore) colour', t: 'color', d: '#3a8f9c' },
+      { k: '--btn-primary-bg', l: 'Primary colour', t: 'color', d: '#d98a6b' },
+      { k: '--btn-text', l: 'Text colour', t: 'color', d: '#ffffff' },
+      { k: '--btn-radius', l: 'Corner radius', t: 'range', d: '30', min: 0, max: 30, step: 1, unit: 'px' },
+      { k: '--btn-pad-y', l: 'Padding (vertical)', t: 'range', d: '10', min: 4, max: 20, step: 1, unit: 'px' },
+      { k: '--btn-pad-x', l: 'Padding (horizontal)', t: 'range', d: '18', min: 6, max: 40, step: 1, unit: 'px' },
+      { k: '--btn-font-size', l: 'Font size', t: 'range', d: '14', min: 11, max: 20, step: 1, unit: 'px' },
+      { k: '--btn-weight', l: 'Font weight', t: 'range', d: '600', min: 100, max: 900, step: 100 },
+    ],
+  },
 ]
 
 const KEY = 'vr_theme'
