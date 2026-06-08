@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Montserrat:wght@400;600;700;800&family=Nunito+Sans:wght@400;600;700;800&family=Poppins:wght@400;600;700&display=swap');
 
 :root{
   --ocean:#3a8f9c;     /* calm sea-teal */
@@ -19,10 +19,13 @@
   --side-bg:#1f444b; --side-text:#e7f1f1; --side-active:#3a8f9c;
   --head-color:#27545c;
   --body-bg:linear-gradient(170deg,#f7f2e9 0%,#eef5f2 55%,#eaf2f1 100%);
+  --side-c1:#235059; --side-c2:#16363d; --side-angle:180deg;
+  --font:Avenir,"Avenir Next","Nunito Sans","Segoe UI",sans-serif;
+  --head-font:Avenir,"Avenir Next","Nunito Sans","Segoe UI",sans-serif;
 }
 *{box-sizing:border-box}
 body{margin:0;color:var(--ink);
-  font-family:Avenir,"Avenir Next","Nunito Sans","Segoe UI",system-ui,sans-serif;
+  font-family:var(--font);
   background:var(--body-bg) fixed;
   min-height:100vh;line-height:1.5}
 a{color:var(--ocean)}
@@ -49,7 +52,7 @@ main{max-width:1040px;margin:28px auto;padding:0 18px}
 .app{display:flex;flex-direction:column;min-height:100vh}
 .layout{flex:1;display:flex;align-items:stretch}
 .layout > main{flex:1;min-width:0;margin:0;padding:24px;max-width:1100px}
-.sidebar{width:196px;flex-shrink:0;background:var(--side-bg);border-right:1px solid rgba(0,0,0,.2);
+.sidebar{width:196px;flex-shrink:0;background:linear-gradient(var(--side-angle),var(--side-c1),var(--side-c2));border-right:1px solid rgba(0,0,0,.2);
   padding:12px 10px;display:flex;flex-direction:column;gap:4px;transition:width .18s ease}
 .sidebar.collapsed{width:56px;padding:12px 6px}
 .sbtoggle{align-self:flex-end;background:none;border:1px solid rgba(255,255,255,.25);border-radius:8px;cursor:pointer;
@@ -69,8 +72,8 @@ main{max-width:1040px;margin:28px auto;padding:0 18px}
   .sidebar .lbl{display:inline}
   .sbtoggle{display:none}
 }
-h1{font-size:29px;font-weight:700;margin:0 0 4px;letter-spacing:-.2px;color:var(--head-color)}
-h3{font-size:17px;font-weight:700;color:var(--head-color);margin:22px 0 8px}
+h1{font-size:29px;font-weight:700;margin:0 0 4px;letter-spacing:-.2px;color:var(--head-color);font-family:var(--head-font)}
+h3{font-size:17px;font-weight:700;color:var(--head-color);margin:22px 0 8px;font-family:var(--head-font)}
 .sub{color:var(--muted);margin:0 0 22px}
 
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:18px}

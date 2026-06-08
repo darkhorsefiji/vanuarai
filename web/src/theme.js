@@ -1,4 +1,16 @@
 // Live theme editor: a registry of editable CSS variables + localStorage persistence.
+const AVENIR = 'Avenir,"Avenir Next","Nunito Sans","Segoe UI",sans-serif'
+
+export const FONT_OPTIONS = [
+  ['Avenir / Nunito Sans', AVENIR],
+  ['Nunito Sans', '"Nunito Sans",sans-serif'],
+  ['Montserrat', 'Montserrat,sans-serif'],
+  ['Poppins', 'Poppins,sans-serif'],
+  ['Inter', 'Inter,sans-serif'],
+  ['System (Segoe UI)', '"Segoe UI",system-ui,Arial,sans-serif'],
+  ['Georgia (serif)', 'Georgia,"Times New Roman",serif'],
+]
+
 export const THEME_GROUPS = [
   {
     group: 'Top navigation', items: [
@@ -11,15 +23,19 @@ export const THEME_GROUPS = [
   },
   {
     group: 'Sidebar', items: [
-      { k: '--side-bg', l: 'Background', t: 'color', d: '#1f444b' },
+      { k: '--side-c1', l: 'Gradient start', t: 'color', d: '#235059' },
+      { k: '--side-c2', l: 'Gradient end', t: 'color', d: '#16363d' },
+      { k: '--side-angle', l: 'Direction', t: 'range', d: '180', min: 0, max: 360, unit: 'deg' },
       { k: '--side-text', l: 'Text', t: 'color', d: '#e7f1f1' },
       { k: '--side-active', l: 'Active item', t: 'color', d: '#3a8f9c' },
     ],
   },
   {
     group: 'Typography', items: [
-      { k: '--head-color', l: 'Headings', t: 'color', d: '#27545c' },
-      { k: '--ink', l: 'Body text', t: 'color', d: '#2f4a51' },
+      { k: '--head-font', l: 'Heading font', t: 'font', d: AVENIR },
+      { k: '--font', l: 'Body font', t: 'font', d: AVENIR },
+      { k: '--head-color', l: 'Heading colour', t: 'color', d: '#27545c' },
+      { k: '--ink', l: 'Body text colour', t: 'color', d: '#2f4a51' },
     ],
   },
   {
