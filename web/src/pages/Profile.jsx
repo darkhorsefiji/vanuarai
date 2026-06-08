@@ -1,4 +1,8 @@
+import { useEffect, useRef } from 'react'
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
 import { useData } from '../api'
+import { makeBaseLayers, pinIcon } from '../map'
 
 function Rate({ label, score, kind }) {
   return (
@@ -15,6 +19,20 @@ function Rate({ label, score, kind }) {
 
 export default function Profile() {
   const { data } = useData('/profile')
+  const mapDiv = useRef(null)
+  const mapObj = useRef(null)
+
+  useEffect(() => {
+    if (!data || data.latitude == null || !mapDiv.current || mapObj.current) return
+    const map = L.map(mapDiv.current, { scrollWheelZoom: false }).setView([data.latitude, data.longitude], 12)
+    const layers = makeBaseLayers()
+    layers.Map.addTo(map)
+    L.control.layers(layers, null, { collapsed: false }).addTo(map)
+    L.marker([data.latitude, data.longitude], { icon: pinIcon }).addTo(map)
+    mapObj.current = map
+    return () => { map.remove(); mapObj.current = null }
+  }, [data])
+
   if (!data) return <p className="loading">Loading…</p>
   const c = data.counts
   const res = data.resources || []
@@ -23,8 +41,6 @@ export default function Profile() {
   const avgP = avg(res.map(r => r.participation))
   const overall = Math.round((avgR + avgP) / 2 / 5 * 100)
   const { latitude: lat, longitude: lon } = data
-  const d = 0.06
-  const bbox = lon != null ? `${lon - d},${lat - d},${lon + d},${lat + d}` : null
 
   return (
     <>
@@ -72,16 +88,12 @@ export default function Profile() {
           </div>
 
           <h3>Location</h3>
-          {bbox ? (
+          {lat != null ? (
             <>
-              <iframe
-                title="Village location" width="100%" height="240" loading="lazy"
-                style={{ border: 0, borderRadius: 12 }}
-                src={`https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lon}`}
-              />
+              <div className="mapview" ref={mapDiv} />
               <p className="meta">
                 <a target="_blank" rel="noreferrer" href={`https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=13/${lat}/${lon}`}>View larger map ↗</a>
-                &nbsp;·&nbsp;{Number(lat).toFixed(4)}, {Number(lon).toFixed(4)} (placeholder)
+                &nbsp;·&nbsp;{Number(lat).toFixed(4)}, {Number(lon).toFixed(4)}
               </p>
             </>
           ) : <p className="meta">Location not set.</p>}

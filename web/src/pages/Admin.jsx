@@ -2,8 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { get } from '../api'
-
-const pin = L.divIcon({ className: '', html: '<div class="pinDot"></div>', iconSize: [16, 16], iconAnchor: [8, 8] })
+import { makeBaseLayers, pinIcon } from '../map'
 
 export default function Admin() {
   const [loaded, setLoaded] = useState(false)
@@ -30,10 +29,10 @@ export default function Admin() {
   useEffect(() => {
     if (!loaded || !mapDiv.current || mapObj.current) return
     const map = L.map(mapDiv.current).setView([coords.lat, coords.lon], 12)
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19, attribution: '© OpenStreetMap contributors',
-    }).addTo(map)
-    const marker = L.marker([coords.lat, coords.lon], { draggable: true, icon: pin }).addTo(map)
+    const layers = makeBaseLayers()
+    layers.Map.addTo(map)
+    L.control.layers(layers, null, { collapsed: false }).addTo(map)
+    const marker = L.marker([coords.lat, coords.lon], { draggable: true, icon: pinIcon }).addTo(map)
     marker.on('dragend', () => { const ll = marker.getLatLng(); setCoords({ lat: ll.lat, lon: ll.lng }) })
     map.on('click', e => { marker.setLatLng(e.latlng); setCoords({ lat: e.latlng.lat, lon: e.latlng.lng }) })
     mapObj.current = map
