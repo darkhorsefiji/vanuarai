@@ -120,10 +120,10 @@ ul.people li:last-child{border-bottom:0}
 
 /* collapsible tree carets (rotating chevron angle) */
 .caret{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;
-  width:18px;height:18px;border:none;background:none;color:var(--muted);
-  font-size:16px;font-weight:600;line-height:1;cursor:pointer;padding:0;margin-right:6px}
+  width:20px;height:20px;border:none;background:none;color:var(--muted);
+  font-size:19px;font-weight:800;line-height:1;cursor:pointer;padding:0;margin-right:7px}
 .caret:hover{color:var(--ocean)}
-.caret .chev{display:inline-block;transition:transform .15s ease}
+.caret .chev{display:inline-block;transition:transform .15s ease;-webkit-text-stroke:.5px currentColor}
 .caret.open .chev{transform:rotate(90deg)}
 .caret.spacer{display:inline-block;visibility:hidden}
 .cols-13{grid-template-columns:1fr 2fr}
