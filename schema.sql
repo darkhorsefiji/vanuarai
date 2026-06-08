@@ -373,6 +373,7 @@ CREATE TABLE persons (
   id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   vuvale_node_id  uuid NOT NULL REFERENCES scope_nodes(id),
   full_name       text NOT NULL,
+  gender          text,
   date_of_birth   date,
   date_of_death   date,
   is_deceased     boolean NOT NULL DEFAULT false,
