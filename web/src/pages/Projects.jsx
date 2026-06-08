@@ -32,15 +32,18 @@ export default function Projects() {
           const burn = r.budget_cents ? Math.round(r.spent / r.budget_cents * 100) : 0
           return (
             <div className="card" key={r.id}>
-              <h3>{r.name}</h3>
-              <div className="meta">{r.owner} · <span className={'chip ' + r.status}>{r.status}</span></div>
-              {(r.start_date || r.end_date) && (
-                <div className="meta" style={{ marginTop: 4 }}>🗓 {r.start_date || '—'} → {r.end_date || '—'}</div>
-              )}
-              <div className="meta" style={{ marginTop: 8 }}>Physical progress</div>
+              <div className="cardhead">
+                <h3>{r.name}</h3>
+                <span className={'chip ' + r.status}>{r.status}</span>
+              </div>
+              <div className="meta">
+                {r.owner}
+                {(r.start_date || r.end_date) && <> · 🗓 {r.start_date || '—'} → {r.end_date || '—'}</>}
+              </div>
+              <div className="meta" style={{ marginTop: 8 }}>Progress</div>
               <div className="bar"><i style={{ width: r.prog + '%' }} /></div>
               <div className="meta">{r.prog}%</div>
-              <div className="meta" style={{ marginTop: 8 }}>Financial burn</div>
+              <div className="meta" style={{ marginTop: 8 }}>Spent</div>
               <div className="bar fin"><i style={{ width: burn + '%' }} /></div>
               <div className="meta">{fjd(r.spent)} of {fjd(r.budget_cents)} · raised {fjd(r.raised)}</div>
 

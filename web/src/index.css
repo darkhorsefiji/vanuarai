@@ -100,6 +100,10 @@ h3{font-size:17px;font-weight:var(--head-weight);font-style:var(--head-style);co
 .bar>i{display:block;height:100%;border-radius:8px;background:var(--bar-prog,var(--sage))}
 .bar.fin>i{background:var(--bar-fin,var(--ocean))}
 
+.cardhead{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.cardhead h3{margin:0;flex:1;min-width:0}
+.cardhead .chip{flex:none}
+
 /* ---- DEV Edit: inline copy editing ---- */
 .copy-edit{outline:1.5px dashed var(--ocean);outline-offset:3px;border-radius:4px;cursor:text;
   transition:background .15s}
