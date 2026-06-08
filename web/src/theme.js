@@ -32,6 +32,15 @@ export const THEME_GROUPS = [
     ],
   },
   {
+    group: 'Welcome banner', items: [
+      { k: '--hero-c1', l: 'Gradient start', t: 'color', d: '#27545c' },
+      { k: '--hero-c2', l: 'Gradient middle', t: 'color', d: '#3a8f9c' },
+      { k: '--hero-c3', l: 'Gradient end', t: 'color', d: '#5b9bb0' },
+      { k: '--hero-mid', l: 'Middle stop', t: 'range', d: '55', min: 0, max: 100, unit: '%' },
+      { k: '--hero-angle', l: 'Direction', t: 'range', d: '120', min: 0, max: 360, unit: 'deg' },
+    ],
+  },
+  {
     group: 'Typography', items: [
       { k: '--head-font', l: 'Heading font', t: 'font', d: AVENIR },
       { k: '--head-weight', l: 'Heading weight', t: 'range', d: '700', min: 100, max: 900, step: 100 },

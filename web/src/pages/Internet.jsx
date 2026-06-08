@@ -18,10 +18,9 @@ export default function Internet() {
   return (
     <>
       <div className="hero">
-        <img className="herologo" src="/logo.png" alt="VanuaRai" />
-        <div className="tagline">Digital Village WiFi</div>
-        <h1>Welcome to Bagasau</h1>
-        <p>Buy an internet plan to get online — then explore your village’s records: family, land, projects, fundraising and more.</p>
+        <EditableText as="div" id="hero.tagline" className="tagline">Digital Village WiFi</EditableText>
+        <EditableText as="h1" id="hero.title">Welcome to Bagasau</EditableText>
+        <EditableText as="p" id="hero.body">Buy an internet plan to get online — then explore your village’s records: family, land, projects, fundraising and more.</EditableText>
         <div className="cta">
           {user
             ? <span style={{ color: '#eafaf7' }}>Signed in as <b>{user.name || user.email}</b></span>

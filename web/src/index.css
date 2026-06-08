@@ -247,13 +247,12 @@ td input:focus{outline:none;border-color:var(--ocean)}
 /* ---- UI polish: hero, plans, chips, sticky, tree search ---- */
 .tagline{letter-spacing:3px;text-transform:uppercase;font-size:12px;opacity:.9;margin-bottom:6px}
 .hero{position:relative;overflow:hidden;border-radius:18px;color:#fff;padding:30px 26px;margin-bottom:22px;
-  background:linear-gradient(120deg,var(--deep),var(--ocean) 55%,var(--sea));box-shadow:0 6px 22px rgba(39,84,92,.16)}
+  background:linear-gradient(var(--hero-angle,120deg),var(--hero-c1,#27545c),var(--hero-c2,#3a8f9c) var(--hero-mid,55%),var(--hero-c3,#5b9bb0));box-shadow:0 6px 22px rgba(39,84,92,.16)}
 .hero h1{color:#fff;font-size:30px;margin:0 0 6px}
 .hero p{color:#eafaf7;max-width:640px}
-.hero .herologo{height:52px;margin-bottom:12px;display:block;border-radius:8px}
 .hero .cta{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-top:16px}
 .profilehero{border-radius:18px;overflow:hidden;margin-bottom:20px;color:#fff;padding:26px;
-  background:linear-gradient(120deg,var(--ocean),var(--sea) 60%,var(--aqua))}
+  background:linear-gradient(var(--hero-angle,120deg),var(--hero-c1,#27545c),var(--hero-c2,#3a8f9c) var(--hero-mid,55%),var(--hero-c3,#5b9bb0))}
 .profilehero h1{color:#fff;margin:0}
 .profilehero .pagehead{align-items:center}
 .popular{position:absolute;top:12px;right:12px;background:var(--pop);color:#3a2a06;font-size:11px;font-weight:800;
