@@ -3,12 +3,20 @@ import { get } from '../api'
 import { buildTree, filterNodes, TreeNode, useNodes } from '../tree'
 import { EditableText } from '../copy'
 
-const BLANK = { full_name: '', gender: '', relationship: '', dob: '', dod: '' }
+const BLANK = { full_name: '', gender: '', is_deceased: false }
 
 function GenderSelect({ value, onChange }) {
   return (
     <select value={value || ''} onChange={onChange} style={{ width: '100%' }}>
       <option value="">—</option><option value="Male">Male</option><option value="Female">Female</option>
+    </select>
+  )
+}
+
+function StatusSelect({ value, onChange }) {
+  return (
+    <select value={value ? 'Deceased' : 'Living'} onChange={onChange} style={{ width: '100%' }}>
+      <option value="Living">Living</option><option value="Deceased">Deceased</option>
     </select>
   )
 }
@@ -32,7 +40,8 @@ export default function Hierarchy() {
 
   const onDel = nd => delNode(nd, d => { if (sel === d.id) setSel(null) })
 
-  const pbody = p => ({ full_name: p.full_name, gender: p.gender || null, relationship: p.relationship, date_of_birth: p.dob || null, date_of_death: p.dod || null })
+  // Birth/death dates are no longer surfaced here, but we preserve any existing values on save.
+  const pbody = p => ({ full_name: p.full_name, gender: p.gender || null, relationship: p.relationship || null, date_of_birth: p.dob || null, date_of_death: p.dod || null, is_deceased: !!p.is_deceased })
   const updP = (i, k, v) => setPeople(arr => arr.map((p, idx) => idx === i ? { ...p, [k]: v } : p))
   async function savePerson(p) { const r = await fetch('/api/persons/' + p.id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(pbody(p)) }); setMsg(r.ok ? 'Saved ✓' : 'Error'); if (r.ok) loadPeople(sel) }
   async function delPerson(p) { if (!window.confirm(`Remove ${p.full_name}?`)) return; await fetch('/api/persons/' + p.id, { method: 'DELETE' }); setMsg('Removed ✓'); loadPeople(sel) }
@@ -70,7 +79,7 @@ export default function Hierarchy() {
         </div>
 
         <aside className="col">
-          <h3 style={{ marginTop: 0 }}>Family (Vuvale) Composition</h3>
+          <h3 style={{ marginTop: 0 }}>Vuvale (Family) Composition</h3>
           {!vnode ? <p className="sub">Select a Vuvale in the tree.</p> : (
             <div className="card comp">
               <h3>{vnode.label}</h3>
@@ -78,35 +87,29 @@ export default function Hierarchy() {
               {!people ? <p className="loading">Loading…</p> : (
                 <table style={{ marginTop: 12 }}>
                   <tbody>
-                    <tr><th>Name</th><th>Gender</th><th>Relationship</th><th>Birth date</th><th>Age</th><th>Death date</th>{edit && <th></th>}</tr>
+                    <tr><th>Name</th><th>Gender</th><th>Age</th><th>Status</th>{edit && <th></th>}</tr>
                     {people.map((p, i) => edit ? (
                       <tr key={p.id}>
                         <td><input value={p.full_name || ''} onChange={e => updP(i, 'full_name', e.target.value)} /></td>
                         <td><GenderSelect value={p.gender} onChange={e => updP(i, 'gender', e.target.value)} /></td>
-                        <td><input value={p.relationship || ''} onChange={e => updP(i, 'relationship', e.target.value)} /></td>
-                        <td><input type="date" value={p.dob || ''} onChange={e => updP(i, 'dob', e.target.value)} /></td>
                         <td className="meta">{p.age != null ? p.age : ''}</td>
-                        <td><input type="date" value={p.dod || ''} onChange={e => updP(i, 'dod', e.target.value)} /></td>
+                        <td><StatusSelect value={p.is_deceased} onChange={e => updP(i, 'is_deceased', e.target.value === 'Deceased')} /></td>
                         <td className="rowacts"><button className="mini" onClick={() => savePerson(p)}>Save</button><button className="mini danger" onClick={() => delPerson(p)}>🗑</button></td>
                       </tr>
                     ) : (
                       <tr key={p.id}>
-                        <td>{p.full_name}{p.is_deceased ? ' †' : ''}</td>
+                        <td>{p.full_name}</td>
                         <td>{p.gender || ''}</td>
-                        <td>{p.relationship || ''}</td>
-                        <td>{p.dob || ''}</td>
                         <td>{p.age != null ? p.age : ''}</td>
-                        <td>{p.dod || ''}</td>
+                        <td>{p.is_deceased ? 'Deceased' : 'Living'}</td>
                       </tr>
                     ))}
                     {edit && (
                       <tr>
                         <td><input placeholder="Add name" value={add.full_name} onChange={e => setAdd({ ...add, full_name: e.target.value })} /></td>
                         <td><GenderSelect value={add.gender} onChange={e => setAdd({ ...add, gender: e.target.value })} /></td>
-                        <td><input placeholder="Relationship" value={add.relationship} onChange={e => setAdd({ ...add, relationship: e.target.value })} /></td>
-                        <td><input type="date" value={add.dob} onChange={e => setAdd({ ...add, dob: e.target.value })} /></td>
                         <td className="meta">—</td>
-                        <td><input type="date" value={add.dod} onChange={e => setAdd({ ...add, dod: e.target.value })} /></td>
+                        <td><StatusSelect value={add.is_deceased} onChange={e => setAdd({ ...add, is_deceased: e.target.value === 'Deceased' })} /></td>
                         <td><button className="mini" onClick={addPerson}>+ Add</button></td>
                       </tr>
                     )}

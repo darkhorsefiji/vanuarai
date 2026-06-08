@@ -265,14 +265,14 @@ app.post("/api/persons", async (req, res) => {
   const [row] = await q(
     `insert into persons(vuvale_node_id, full_name, gender, relationship, date_of_birth, date_of_death, is_deceased)
      values($1,$2,$3,$4,$5,$6,$7) returning id`,
-    [b.vuvale_node_id, b.full_name, b.gender || null, b.relationship || null, b.date_of_birth || null, b.date_of_death || null, !!b.date_of_death]);
+    [b.vuvale_node_id, b.full_name, b.gender || null, b.relationship || null, b.date_of_birth || null, b.date_of_death || null, !!b.is_deceased]);
   res.json({ ok: true, id: row.id });
 });
 
 app.patch("/api/persons/:id", async (req, res) => {
   const b = req.body || {};
   await q(`update persons set full_name=$1, gender=$2, relationship=$3, date_of_birth=$4, date_of_death=$5, is_deceased=$6 where id=$7`,
-    [b.full_name, b.gender || null, b.relationship || null, b.date_of_birth || null, b.date_of_death || null, !!b.date_of_death, req.params.id]);
+    [b.full_name, b.gender || null, b.relationship || null, b.date_of_birth || null, b.date_of_death || null, !!b.is_deceased, req.params.id]);
   res.json({ ok: true });
 });
 
