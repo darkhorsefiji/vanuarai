@@ -1,29 +1,31 @@
 /* Fonts loaded via <link> in index.html (Inter, Montserrat, Nunito Sans, Poppins) */
 :root{
-  --ocean:#3a8f9c;     /* calm sea-teal */
-  --sea:#5b9bb0;       /* soft blue */
-  --aqua:#7fb5b5;      /* muted aqua */
-  --sage:#7fae93;      /* soft green */
-  --sand:#f6f1e7;      /* warm light */
-  --clay:#d98a6b;      /* muted warm coral accent (togetherness) */
-  --deep:#27545c;      /* calm deep teal (text/headings) */
-  --ink:#2f4a51;
-  --muted:#6f868d;
-  --card:#ffffff;--line:#e8edee;
-  --pop:#ef9b2f;        /* logo orange — highlights / "popular" */
+  /* Fiji lagoon palette — deep sea → lagoon teal, with hibiscus coral & sun gold accents */
+  --ocean:#0e98a5;     /* lagoon teal — primary */
+  --sea:#23b0bb;       /* bright turquoise */
+  --aqua:#7fd0cf;      /* light aqua */
+  --sage:#46a877;      /* tropical leaf green */
+  --sand:#fbf5ea;      /* warm cream */
+  --clay:#ef6f56;      /* hibiscus coral — warm accent / primary buttons */
+  --deep:#0c4651;      /* deep sea teal (text/headings/nav) */
+  --ink:#21464c;
+  --muted:#6f8a8f;
+  --card:#ffffff;--line:#e6eeec;
+  --pop:#f4a72c;        /* sun gold — highlights / "popular" */
   --logo-blue:#2aa9e0;  /* logo blue */
   --logo-green:#7cbf3f; /* logo green */
   /* themeable (editable from the Dev page) */
-  --nav-c1:#2b2e32; --nav-c2:#3a3e43; --nav-c3:#919497; --nav-mid:35%; --nav-text:#eaf0f3;
-  --side-bg:#1f444b; --side-text:#e7f1f1; --side-active:#3a8f9c;
-  --head-color:#27545c;
-  --body-bg:linear-gradient(170deg,#f7f2e9 0%,#eef5f2 55%,#eaf2f1 100%);
-  --side-c1:#235059; --side-c2:#16363d; --side-angle:180deg;
+  --nav-c1:#0c4651; --nav-c2:#0c7b86; --nav-c3:#10a0ad; --nav-mid:42%; --nav-text:#eafaf9;
+  --side-bg:#0e5560; --side-text:#e7f3f1; --side-active:#0e98a5;
+  --head-color:#0c4651;
+  --body-bg:linear-gradient(170deg,#fbf6ec 0%,#edf6f3 55%,#e7f3ef 100%);
+  --side-c1:#0e5560; --side-c2:#0a363d; --side-angle:180deg;
+  --hero-c1:#0c4651; --hero-c2:#0e98a5; --hero-c3:#2bb6a6; --hero-mid:52%; --hero-angle:120deg;
   --font:Avenir,"Avenir Next","Nunito Sans","Segoe UI",sans-serif;
   --head-font:Avenir,"Avenir Next","Nunito Sans","Segoe UI",sans-serif;
   --head-weight:700; --head-style:normal; --body-weight:400; --body-style:normal;
   --head-spacing:0px; --body-spacing:0px; --body-leading:1.5;
-  --card-radius:16px; --card-pad:18px; --card-accent1:#3a8f9c; --card-accent2:#7fae93;
+  --card-radius:16px; --card-pad:18px; --card-accent1:#0e98a5; --card-accent2:#f4a72c;
 }
 *{box-sizing:border-box}
 body{margin:0;color:var(--ink);
@@ -269,8 +271,16 @@ td input:focus{outline:none;border-color:var(--ocean)}
 .heroline-body{margin:0}
 .heroline-cta{flex:none;white-space:nowrap}
 @media(max-width:620px){.heroline{flex-direction:column;align-items:flex-start;gap:14px}}
-.profilehero{border-radius:18px;overflow:hidden;margin-bottom:20px;color:#fff;padding:26px;
+.profilehero{position:relative;border-radius:18px;overflow:hidden;margin-bottom:20px;color:#fff;padding:26px;
   background:linear-gradient(var(--hero-angle,120deg),var(--hero-c1,#27545c),var(--hero-c2,#3a8f9c) var(--hero-mid,55%),var(--hero-c3,#5b9bb0))}
+
+/* Tapa (masi) pattern overlay — subtle Fiji texture on the dark banners + brand bar */
+header.top{position:relative}
+.hero::before,.profilehero::before,header.top::before{content:"";position:absolute;inset:0;
+  pointer-events:none;z-index:0;background-image:url("/tapa.svg");background-size:46px 46px}
+.hero::before,.profilehero::before{opacity:.13}
+header.top::before{opacity:.07}
+.hero>*,.profilehero>*,header.top>*{position:relative;z-index:1}
 .profilehero h1{color:#fff;margin:0}
 .profilehero .pagehead{align-items:center}
 .popular{position:absolute;top:12px;right:12px;background:var(--pop);color:#3a2a06;font-size:11px;font-weight:800;
