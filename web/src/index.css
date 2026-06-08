@@ -278,14 +278,14 @@ td input:focus{outline:none;border-color:var(--ocean)}
 header.top{position:relative;overflow:hidden}
 .hero::before,.profilehero::before,header.top::before{content:"";position:absolute;inset:0;
   pointer-events:none;z-index:0;background-image:url("/tapa.svg");
-  background-size:cover;background-position:center;background-repeat:no-repeat}
+  background-size:50% auto;background-position:center;background-repeat:repeat}
 .hero::before,.profilehero::before{opacity:.13}
 header.top::before{opacity:.07}
 .hero>*,.profilehero>*,header.top>*{position:relative;z-index:1}
 /* tapa rising from the bottom half of the sidebar, fading upward */
 .sidebar::after{content:"";position:absolute;left:0;right:0;bottom:0;height:62%;
   pointer-events:none;z-index:0;background-image:url("/tapa.svg");
-  background-size:cover;background-position:center bottom;background-repeat:no-repeat;opacity:.14;
+  background-size:100% auto;background-position:center bottom;background-repeat:repeat-y;opacity:.14;
   -webkit-mask-image:linear-gradient(to top,#000 0%,#000 28%,transparent 100%);
   mask-image:linear-gradient(to top,#000 0%,#000 28%,transparent 100%)}
 .sidebar a{position:relative;z-index:1}
