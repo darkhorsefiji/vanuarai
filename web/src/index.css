@@ -101,6 +101,21 @@ h3{font-size:17px;font-weight:var(--head-weight);font-style:var(--head-style);co
 .bar>i{display:block;height:100%;border-radius:8px;background:var(--bar-prog,var(--sage))}
 .bar.fin>i{background:var(--bar-fin,var(--ocean))}
 
+/* ---- Dev: sidebar icon-set chooser ---- */
+.iconsets{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:6px 0 22px}
+@media(max-width:760px){.iconsets{grid-template-columns:1fr}}
+.iconset-card{border:1.5px solid var(--line);border-radius:14px;padding:14px;background:var(--card);
+  cursor:pointer;transition:.15s}
+.iconset-card:hover{border-color:var(--ocean)}
+.iconset-card.on{border-color:var(--ocean);box-shadow:0 0 0 3px rgba(58,143,156,.16)}
+.iconset-top{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.iconset-radio{display:flex;align-items:center;gap:7px;cursor:pointer}
+.iconset-hint{font-size:12px;color:var(--ink);opacity:.7}
+.iconset-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.iconset-cell{display:flex;flex-direction:column;align-items:center;gap:5px;padding:9px 4px;
+  border-radius:9px;background:var(--body-bg);color:var(--ink)}
+.iconset-cell span{font-size:10px;opacity:.75;text-align:center;line-height:1.1}
+
 .cardhead{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .cardhead h3{margin:0;flex:1;min-width:0}
 .cardhead .chip{flex:none}

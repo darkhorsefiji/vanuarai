@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { THEME_GROUPS, loadOverrides, setVar, resetVars, ensureFont, fontStack, familyFromStack } from '../theme'
 import { GOOGLE_FONTS } from '../googleFonts'
+import { ICON_SETS, ICON_ITEMS, Icon, useIconSet } from '../icons'
 
 const SYSTEM_FONTS = ['System UI', 'Georgia', 'Arial', 'Times New Roman', 'Courier New', 'Verdana', 'Tahoma']
 const ORDER_KEY = 'vr_theme_order'
@@ -16,6 +17,7 @@ export default function Dev() {
   const known = useMemo(() => new Set([...GOOGLE_FONTS, ...SYSTEM_FONTS]), [])
   const options = useMemo(() => [...SYSTEM_FONTS, ...GOOGLE_FONTS], [])
 
+  const iconSet = useIconSet()
   const change = (k, v) => { setVar(k, v); setOv(o => ({ ...o, [k]: v })) }
   const reset = () => { resetVars(); setOv({}); setFontText({}); localStorage.removeItem(ORDER_KEY); setOrder({}) }
 
@@ -54,6 +56,32 @@ export default function Dev() {
       </div>
 
       <datalist id="gfonts">{options.map(f => <option key={f} value={f} />)}</datalist>
+
+      <h3>Sidebar icon set</h3>
+      <div className="iconsets">
+        {Object.entries(ICON_SETS).map(([id, s]) => {
+          const active = iconSet?.setId === id
+          return (
+            <div key={id} className={'iconset-card' + (active ? ' on' : '')} onClick={() => iconSet?.choose(id)}>
+              <div className="iconset-top">
+                <label className="iconset-radio">
+                  <input type="radio" name="iconset" checked={active} onChange={() => iconSet?.choose(id)} />
+                  <b>{s.label}</b>
+                </label>
+                <span className="iconset-hint">{s.hint}</span>
+              </div>
+              <div className="iconset-grid">
+                {ICON_ITEMS.map(([key, lbl]) => (
+                  <div className="iconset-cell" key={key} title={lbl}>
+                    <Icon name={key} set={id} size={26} />
+                    <span>{lbl}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        })}
+      </div>
 
       {THEME_GROUPS.map(g => (
         <div key={g.group}>

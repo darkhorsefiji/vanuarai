@@ -14,7 +14,7 @@ import Trade from './pages/Trade'
 import Emergencies from './pages/Emergencies'
 import Admin from './pages/Admin'
 import Dev from './pages/Dev'
-import { Icon } from './icons'
+import { Icon, IconSetProvider } from './icons'
 import { LevelsProvider } from './levels'
 import { AuthProvider } from './auth'
 import { CopyProvider, DevEditButton } from './copy'
@@ -42,6 +42,7 @@ export default function App() {
     <AuthProvider>
       <LevelsProvider>
         <CopyProvider>
+        <IconSetProvider>
         <div className="app">
           <header className="top">
             {logoOk
@@ -89,6 +90,7 @@ export default function App() {
           </div>
         </div>
         <DevEditButton />
+        </IconSetProvider>
         </CopyProvider>
       </LevelsProvider>
     </AuthProvider>
