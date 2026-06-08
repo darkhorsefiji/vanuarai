@@ -13,43 +13,53 @@ import { LevelsProvider } from './levels'
 import { AuthProvider } from './auth'
 import AuthArea from './AuthArea'
 
-const nav = [
-  ['/', 'Internet'], ['/profile', 'Profile'], ['/hierarchy', 'Hierarchy'], ['/government', 'Government'],
+const TOP_NAV = [['/', 'Internet'], ['/admin', 'Admin']]
+const SIDE_NAV = [
+  ['/profile', 'Profile'], ['/hierarchy', 'Hierarchy'], ['/government', 'Government'],
   ['/projects', 'Projects'], ['/fundraising', 'Fundraising'],
-  ['/financials', 'Financials'], ['/minutes', 'Minutes'], ['/admin', 'Admin'],
+  ['/financials', 'Financials'], ['/minutes', 'Minutes'],
 ]
 
 export default function App() {
   const [logoOk, setLogoOk] = useState(true)
   return (
     <AuthProvider>
-    <LevelsProvider>
-      <header className="top">
-        {logoOk
-          ? <img className="brandlogo" src="/logo.png" alt="VanuaRai — Digital Village WiFi" onError={() => setLogoOk(false)} />
-          : <span className="brand">🌺 VanuaRai</span>}
-        <span className="badge">Village: Bagasau</span>
-        <nav>
-          {nav.map(([to, label]) => (
-            <NavLink key={to} to={to} end={to === '/'}>{label}</NavLink>
-          ))}
-        </nav>
-        <AuthArea />
-      </header>
-      <main>
-        <Routes>
-          <Route path="/" element={<Internet />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/hierarchy" element={<Hierarchy />} />
-          <Route path="/government" element={<Government />} />
-          <Route path="/projects" element={<Projects />} />
-          <Route path="/fundraising" element={<Fundraising />} />
-          <Route path="/financials" element={<Financials />} />
-          <Route path="/minutes" element={<Minutes />} />
-          <Route path="/admin" element={<Admin />} />
-        </Routes>
-      </main>
-    </LevelsProvider>
+      <LevelsProvider>
+        <header className="top">
+          {logoOk
+            ? <img className="brandlogo" src="/logo.png" alt="VanuaRai — Digital Village WiFi" onError={() => setLogoOk(false)} />
+            : <span className="brand">🌺 VanuaRai</span>}
+          <span className="badge">Village: Bagasau</span>
+          <nav>
+            {TOP_NAV.map(([to, label]) => (
+              <NavLink key={to} to={to} end={to === '/'}>{label}</NavLink>
+            ))}
+          </nav>
+          <AuthArea />
+        </header>
+
+        <div className="layout">
+          <aside className="sidebar">
+            {SIDE_NAV.map(([to, label]) => (
+              <NavLink key={to} to={to}>{label}</NavLink>
+            ))}
+          </aside>
+
+          <main>
+            <Routes>
+              <Route path="/" element={<Internet />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/hierarchy" element={<Hierarchy />} />
+              <Route path="/government" element={<Government />} />
+              <Route path="/projects" element={<Projects />} />
+              <Route path="/fundraising" element={<Fundraising />} />
+              <Route path="/financials" element={<Financials />} />
+              <Route path="/minutes" element={<Minutes />} />
+              <Route path="/admin" element={<Admin />} />
+            </Routes>
+          </main>
+        </div>
+      </LevelsProvider>
     </AuthProvider>
   )
 }
