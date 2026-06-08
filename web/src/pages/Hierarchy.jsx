@@ -51,7 +51,7 @@ export default function Hierarchy() {
     <>
       <div className="pagehead">
         <div>
-          <h1>Vanua Hierarchy</h1>
+          <h1>Vanua</h1>
           <p className="sub">Traditional lineage. Click a Vuvale to view its family.{edit ? ' Editing on.' : ''}</p>
         </div>
         <div className="editrow">

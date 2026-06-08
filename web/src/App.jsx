@@ -15,9 +15,9 @@ import AuthArea from './AuthArea'
 
 const TOP_NAV = [['/', 'Internet'], ['/admin', 'Admin']]
 const SIDE_NAV = [
-  ['/profile', 'Profile', '🏠'], ['/hierarchy', 'Hierarchy', '🌳'], ['/government', 'Government', '🏛'],
-  ['/projects', 'Projects', '🛠'], ['/fundraising', 'Fundraising', '💰'],
-  ['/financials', 'Financials', '📊'], ['/minutes', 'Minutes', '📋'],
+  ['/profile', 'Profile', '🌺'], ['/vanua', 'Vanua', '🌴'], ['/government', 'Government', '🛖'],
+  ['/projects', 'Projects', '🛶'], ['/fundraising', 'Fundraising', '🐚'],
+  ['/financials', 'Financials', '🧺'], ['/minutes', 'Minutes', '📜'],
 ]
 
 export default function App() {
@@ -56,7 +56,7 @@ export default function App() {
               <Routes>
                 <Route path="/" element={<Internet />} />
                 <Route path="/profile" element={<Profile />} />
-                <Route path="/hierarchy" element={<Hierarchy />} />
+                <Route path="/vanua" element={<Hierarchy />} />
                 <Route path="/government" element={<Government />} />
                 <Route path="/projects" element={<Projects />} />
                 <Route path="/fundraising" element={<Fundraising />} />
