@@ -10,6 +10,8 @@ const app = express();
 const VILLAGE = "Bagasau";
 const q = (sql, p = []) => pool.query(sql, p).then(r => r.rows);
 const n = v => Number(v);
+const NEXT_LEVEL = { vanua: 'yavusa', yavusa: 'mataqali', mataqali: 'tokatoka', tokatoka: 'vuvale', provincial_council: 'district', district: 'village' };
+const BODY_LEVELS = new Set(['mataqali', 'village', 'soqosoqo']);
 
 // permissive CORS for local dev (Vite on :5173)
 app.use((req, res, next) => { res.set("Access-Control-Allow-Origin", "*"); next(); });
@@ -105,6 +107,77 @@ app.patch("/api/level-styles", async (req, res) => {
   } finally {
     client.release();
   }
+});
+
+// ---- Hierarchy node CRUD (Admin) ----
+app.post("/api/nodes", async (req, res) => {
+  const { parent_id, label } = req.body || {};
+  if (!parent_id || !label) return res.status(400).json({ error: "parent_id and label required" });
+  const [p] = await q(`select id, axis, level, village_id from scope_nodes where id=$1`, [parent_id]);
+  if (!p) return res.status(404).json({ error: "parent not found" });
+  const childLevel = NEXT_LEVEL[p.level];
+  if (!childLevel) return res.status(400).json({ error: `cannot add a child under ${p.level}` });
+  const [row] = await q(
+    `insert into scope_nodes(axis, level, label, parent_id, village_id, is_body)
+     values($1,$2,$3,$4,$5,$6) returning id`,
+    [p.axis, childLevel, label, parent_id, p.village_id, BODY_LEVELS.has(childLevel)]);
+  res.json({ ok: true, id: row.id, level: childLevel });
+});
+
+app.patch("/api/nodes/:id", async (req, res) => {
+  const { label } = req.body || {};
+  if (!label) return res.status(400).json({ error: "label required" });
+  await q(`update scope_nodes set label=$1 where id=$2`, [label, req.params.id]);
+  res.json({ ok: true });
+});
+
+app.delete("/api/nodes/:id", async (req, res) => {
+  const id = req.params.id;
+  if ((await q(`select 1 from scope_nodes where parent_id=$1 limit 1`, [id])).length)
+    return res.status(400).json({ error: "has child nodes — remove them first" });
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query(`delete from persons where vuvale_node_id=$1`, [id]);
+    await client.query(`delete from scope_nodes where id=$1`, [id]);
+    await client.query("COMMIT");
+    res.json({ ok: true });
+  } catch (e) {
+    await client.query("ROLLBACK");
+    res.status(409).json({ error: "cannot delete — still referenced by members or records" });
+  } finally {
+    client.release();
+  }
+});
+
+// ---- Vuvale persons CRUD (Admin) ----
+app.get("/api/vuvale/:id/persons", async (req, res) => {
+  res.json(await q(
+    `select id, full_name, relationship,
+       to_char(date_of_birth,'YYYY-MM-DD') dob, to_char(date_of_death,'YYYY-MM-DD') dod, is_deceased
+     from persons where vuvale_node_id=$1 order by relationship, full_name`, [req.params.id]));
+});
+
+app.post("/api/persons", async (req, res) => {
+  const b = req.body || {};
+  if (!b.vuvale_node_id || !b.full_name) return res.status(400).json({ error: "vuvale_node_id and full_name required" });
+  const [row] = await q(
+    `insert into persons(vuvale_node_id, full_name, relationship, date_of_birth, date_of_death, is_deceased)
+     values($1,$2,$3,$4,$5,$6) returning id`,
+    [b.vuvale_node_id, b.full_name, b.relationship || null, b.date_of_birth || null, b.date_of_death || null, !!b.date_of_death]);
+  res.json({ ok: true, id: row.id });
+});
+
+app.patch("/api/persons/:id", async (req, res) => {
+  const b = req.body || {};
+  await q(`update persons set full_name=$1, relationship=$2, date_of_birth=$3, date_of_death=$4, is_deceased=$5 where id=$6`,
+    [b.full_name, b.relationship || null, b.date_of_birth || null, b.date_of_death || null, !!b.date_of_death, req.params.id]);
+  res.json({ ok: true });
+});
+
+app.delete("/api/persons/:id", async (req, res) => {
+  await q(`delete from persons where id=$1`, [req.params.id]);
+  res.json({ ok: true });
 });
 
 app.get("/api/projects", async (req, res) => {

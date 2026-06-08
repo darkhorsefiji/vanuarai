@@ -121,3 +121,13 @@ ul.people li:last-child{border-bottom:0}
 .lvlrow input[type=color]{width:46px;height:34px;border:1px solid var(--line);border-radius:8px;padding:2px;background:#fff;cursor:pointer}
 .lvlrow input[type=text]{padding:8px 10px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:14px}
 .lvlrow input[type=text]:focus{outline:none;border-color:var(--ocean);box-shadow:0 0 0 3px rgba(58,143,156,.15)}
+
+/* admin CRUD editors */
+.mini{font-size:12px;font-weight:600;border:1px solid var(--line);background:#fff;color:var(--deep);border-radius:8px;padding:4px 9px;cursor:pointer;margin-left:6px}
+.mini:hover{border-color:var(--ocean);color:var(--ocean)}
+.mini.danger{color:#b4543e}.mini.danger:hover{border-color:#b4543e;color:#b4543e}
+.rowacts{white-space:nowrap;margin-left:8px}
+.treeedit ul.tree li{margin:6px 0}
+select{padding:9px 11px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:14px;background:#fff;color:var(--ink)}
+td input{width:100%;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font:inherit;font-size:13px;color:var(--ink)}
+td input:focus{outline:none;border-color:var(--ocean)}

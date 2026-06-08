@@ -4,6 +4,8 @@ import 'leaflet/dist/leaflet.css'
 import { get } from '../api'
 import { makeBaseLayers, pinIcon } from '../map'
 import { useLevels } from '../levels'
+import HierarchyEditor from '../admin/HierarchyEditor'
+import VuvaleEditor from '../admin/VuvaleEditor'
 
 export default function Admin() {
   const [loaded, setLoaded] = useState(false)
@@ -122,6 +124,15 @@ export default function Admin() {
         <button className="btn secondary" onClick={saveStyles}>Save styling</button>
         <span className="status">{styleStatus}</span>
       </div>
+
+      <h3 style={{ marginTop: 28 }}>Edit hierarchy</h3>
+      <p className="sub">Add, rename or remove nodes in either hierarchy. Changes affect the whole portal.</p>
+      <div className="cols">
+        <HierarchyEditor axis="traditional" title="Vanua Hierarchy" />
+        <HierarchyEditor axis="government" title="Provincial Hierarchy" />
+      </div>
+
+      <VuvaleEditor />
     </>
   )
 }
