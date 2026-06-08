@@ -17,27 +17,39 @@ function buildTree(nodes) {
   return { kids, root }
 }
 
-function Node({ n, kids, depth, sel, onSelect, edit, onAdd, onRename, onDel }) {
+function filterNodes(nodes, q) {
+  if (!q.trim()) return nodes
+  const ql = q.toLowerCase()
+  const byId = Object.fromEntries(nodes.map(n => [n.id, n]))
+  const keep = new Set()
+  nodes.forEach(n => {
+    if (n.label.toLowerCase().includes(ql)) { let x = n; while (x) { keep.add(x.id); x = byId[x.parent_id] } }
+  })
+  return nodes.filter(n => keep.has(n.id))
+}
+
+function Node({ n, kids, depth, sel, onSelect, edit, onAdd, onRename, onDel, forceOpen, pathSet }) {
   const has = kids[n.id] && kids[n.id].length
   const [open, setOpen] = useState(depth < 2)
+  const isOpen = forceOpen || open
   const isVuvale = n.level === 'vuvale'
-  const child = CHILD_NAME[n.level]
+  const onPath = pathSet && pathSet.has(n.id)
   return (
     <li>
       {has
-        ? <button className="caret" onClick={() => setOpen(o => !o)} aria-label="toggle">{open ? '−' : '+'}</button>
+        ? <button className="caret" onClick={() => setOpen(o => !o)} aria-label="toggle">{isOpen ? '−' : '+'}</button>
         : <span className="caret spacer" />}
       <LevelBadge level={n.level} />
-      <span className={'nodelabel' + (isVuvale ? ' clickable' : '') + (sel === n.id ? ' selected' : '')}
+      <span className={'nodelabel' + (isVuvale ? ' clickable' : '') + (sel === n.id ? ' selected' : (onPath ? ' onpath' : ''))}
         onClick={isVuvale ? () => onSelect(n.id) : undefined}>{n.label}</span>
       {edit && (
         <span className="rowacts">
           <button className="mini" onClick={() => onRename(n)} title="Rename">✎</button>
-          {child && <button className="mini" onClick={() => onAdd(n, child)}>+ {child}</button>}
+          {CHILD_NAME[n.level] && <button className="mini" onClick={() => onAdd(n, CHILD_NAME[n.level])}>+ {CHILD_NAME[n.level]}</button>}
           <button className="mini danger" onClick={() => onDel(n)} title="Delete">🗑</button>
         </span>
       )}
-      {has && open && <ul className="tree">{kids[n.id].map(c => <Node key={c.id} n={c} kids={kids} depth={depth + 1} sel={sel} onSelect={onSelect} edit={edit} onAdd={onAdd} onRename={onRename} onDel={onDel} />)}</ul>}
+      {has && isOpen && <ul className="tree">{kids[n.id].map(c => <Node key={c.id} n={c} kids={kids} depth={depth + 1} sel={sel} onSelect={onSelect} edit={edit} onAdd={onAdd} onRename={onRename} onDel={onDel} forceOpen={forceOpen} pathSet={pathSet} />)}</ul>}
     </li>
   )
 }
@@ -57,6 +69,7 @@ export default function Hierarchy() {
   const [edit, setEdit] = useState(false)
   const [add, setAdd] = useState(BLANK)
   const [msg, setMsg] = useState('')
+  const [q, setQ] = useState('')
 
   const loadNodes = () => get('/hierarchy').then(setNodes)
   useEffect(() => { loadNodes() }, [])
@@ -69,7 +82,6 @@ export default function Hierarchy() {
   const loadPeople = id => get(`/vuvale/${id}/persons`).then(setPeople)
   useEffect(() => { if (sel) { setPeople(null); loadPeople(sel) } }, [sel])
 
-  // ---- node CRUD ----
   async function onAdd(parent, childName) {
     const label = window.prompt(`New ${childName} name:`); if (!label) return
     const r = await fetch('/api/nodes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ parent_id: parent.id, label }) })
@@ -88,12 +100,11 @@ export default function Hierarchy() {
     loadNodes()
   }
 
-  // ---- person CRUD ----
-  const body = p => ({ full_name: p.full_name, gender: p.gender || null, relationship: p.relationship, date_of_birth: p.dob || null, date_of_death: p.dod || null })
+  const pbody = p => ({ full_name: p.full_name, gender: p.gender || null, relationship: p.relationship, date_of_birth: p.dob || null, date_of_death: p.dod || null })
   const updP = (i, k, v) => setPeople(arr => arr.map((p, idx) => idx === i ? { ...p, [k]: v } : p))
-  async function savePerson(p) { const r = await fetch('/api/persons/' + p.id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body(p)) }); setMsg(r.ok ? 'Saved ✓' : 'Error'); if (r.ok) loadPeople(sel) }
+  async function savePerson(p) { const r = await fetch('/api/persons/' + p.id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(pbody(p)) }); setMsg(r.ok ? 'Saved ✓' : 'Error'); if (r.ok) loadPeople(sel) }
   async function delPerson(p) { if (!window.confirm(`Remove ${p.full_name}?`)) return; await fetch('/api/persons/' + p.id, { method: 'DELETE' }); setMsg('Removed ✓'); loadPeople(sel) }
-  async function addPerson() { if (!add.full_name) return; const r = await fetch('/api/persons', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vuvale_node_id: sel, ...body(add) }) }); if (r.ok) { setAdd(BLANK); loadPeople(sel); setMsg('Added ✓') } else setMsg('Error') }
+  async function addPerson() { if (!add.full_name) return; const r = await fetch('/api/persons', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vuvale_node_id: sel, ...pbody(add) }) }); if (r.ok) { setAdd(BLANK); loadPeople(sel); setMsg('Added ✓') } else setMsg('Error') }
 
   if (!nodes) return <p className="loading">Loading…</p>
   const trad = nodes.filter(n => n.axis === 'traditional')
@@ -102,7 +113,14 @@ export default function Hierarchy() {
   const vnode = sel ? byId[sel] : null
   const tok = vnode ? byId[vnode.parent_id] : null
   const mat = tok ? byId[tok.parent_id] : null
-  const tradTree = buildTree(trad), govTree = buildTree(gov)
+
+  // path from selected vuvale up to the root (for highlighting)
+  const pathSet = new Set()
+  if (vnode) { let x = vnode; while (x) { pathSet.add(x.id); x = byId[x.parent_id] } }
+
+  const tradFiltered = filterNodes(trad, q)
+  const tradTree = buildTree(tradFiltered)
+  const govTree = buildTree(gov)
 
   return (
     <>
@@ -120,7 +138,10 @@ export default function Hierarchy() {
       <div className="cols cols-13">
         <div className="col">
           <h3 style={{ marginTop: 0 }}>Vanua Hierarchy</h3>
-          <ul className="tree">{tradTree.root && <Node n={tradTree.root} kids={tradTree.kids} depth={0} sel={sel} onSelect={setSel} edit={edit} onAdd={onAdd} onRename={onRename} onDel={onDel} />}</ul>
+          <input className="treesearch" placeholder="Search the tree…" value={q} onChange={e => setQ(e.target.value)} />
+          {tradTree.root
+            ? <ul className="tree"><Node n={tradTree.root} kids={tradTree.kids} depth={0} sel={sel} onSelect={setSel} edit={edit} onAdd={onAdd} onRename={onRename} onDel={onDel} forceOpen={!!q.trim()} pathSet={pathSet} /></ul>
+            : <p className="meta">No matches.</p>}
         </div>
 
         <aside className="col">

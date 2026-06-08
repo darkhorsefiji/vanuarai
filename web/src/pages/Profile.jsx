@@ -79,15 +79,18 @@ export default function Profile() {
 
   return (
     <>
-      <div className="pagehead">
-        <div>
-          <h1>{data.name}</h1>
-          <p className="sub">{data.district} · part of {data.province}</p>
-        </div>
-        <div className="editrow">
-          {editing
-            ? (<><button className="btn" onClick={save}>Save</button><button className="mini" onClick={cancel}>Cancel</button><span className="status">{status}</span></>)
-            : <button className="btn secondary" onClick={() => setEditing(true)}>✎ Edit</button>}
+      <div className="profilehero">
+        <div className="pagehead">
+          <div>
+            <div className="tagline">Village Profile</div>
+            <h1>{data.name}</h1>
+            <p className="sub" style={{ color: '#eafaf7', margin: '6px 0 0' }}>{data.district} · part of {data.province}</p>
+          </div>
+          <div className="editrow">
+            {editing
+              ? (<><button className="btn" onClick={save}>Save</button><button className="mini" onClick={cancel}>Cancel</button><span className="status" style={{ color: '#eafaf7' }}>{status}</span></>)
+              : <button className="btn secondary" onClick={() => setEditing(true)}>✎ Edit</button>}
+          </div>
         </div>
       </div>
 
@@ -122,7 +125,7 @@ export default function Profile() {
           </div>
         </div>
 
-        <aside className="col side">
+        <aside className="col side sticky">
           <div className="card">
             <h3>At a glance</h3>
             <div className="kv"><span>Yavusa</span><b>{c.yavusa}</b></div>

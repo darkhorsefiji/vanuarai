@@ -3,7 +3,7 @@ import { useAuth } from './auth'
 
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID
 
-function GoogleButton() {
+export function GoogleButton() {
   const { loginWithGoogle } = useAuth()
   const ref = useRef(null)
   useEffect(() => {

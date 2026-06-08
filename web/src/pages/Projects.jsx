@@ -13,7 +13,7 @@ export default function Projects() {
           return (
             <div className="card" key={r.name}>
               <h3>{r.name}</h3>
-              <div className="meta">{r.owner} · <span className={'pill ' + (r.status === 'completed' ? 'green' : '')}>{r.status}</span></div>
+              <div className="meta">{r.owner} · <span className={'chip ' + r.status}>{r.status}</span></div>
               <div className="meta" style={{ marginTop: 8 }}>Physical progress</div>
               <div className="bar"><i style={{ width: r.prog + '%' }} /></div>
               <div className="meta">{r.prog}%</div>

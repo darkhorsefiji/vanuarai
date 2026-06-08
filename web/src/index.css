@@ -9,6 +9,9 @@
   --ink:#2f4a51;
   --muted:#6f868d;
   --card:#ffffff;--line:#e8edee;
+  --pop:#ef9b2f;        /* logo orange — highlights / "popular" */
+  --logo-blue:#2aa9e0;  /* logo blue */
+  --logo-green:#7cbf3f; /* logo green */
 }
 *{box-sizing:border-box}
 body{margin:0;color:var(--ink);
@@ -151,3 +154,33 @@ td input:focus{outline:none;border-color:var(--ocean)}
 .editrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:4px}
 .inlineedit{width:100%;max-width:760px;border:1px solid var(--line);border-radius:12px;padding:11px 13px;font:inherit;font-size:14px;color:var(--ink);background:#fff;resize:vertical}
 .inlineedit:focus{outline:none;border-color:var(--ocean);box-shadow:0 0 0 3px rgba(58,143,156,.15)}
+
+/* ---- UI polish: hero, plans, chips, sticky, tree search ---- */
+.tagline{letter-spacing:3px;text-transform:uppercase;font-size:12px;opacity:.9;margin-bottom:6px}
+.hero{position:relative;overflow:hidden;border-radius:18px;color:#fff;padding:30px 26px;margin-bottom:22px;
+  background:linear-gradient(120deg,var(--deep),var(--ocean) 55%,var(--sea));box-shadow:0 6px 22px rgba(39,84,92,.16)}
+.hero h1{color:#fff;font-size:30px;margin:0 0 6px}
+.hero p{color:#eafaf7;max-width:640px}
+.hero .herologo{height:52px;margin-bottom:12px;display:block;border-radius:8px}
+.hero .cta{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-top:16px}
+.profilehero{border-radius:18px;overflow:hidden;margin-bottom:20px;color:#fff;padding:26px;
+  background:linear-gradient(120deg,var(--ocean),var(--sea) 60%,var(--aqua))}
+.profilehero h1{color:#fff;margin:0}
+.profilehero .pagehead{align-items:center}
+.popular{position:absolute;top:12px;right:12px;background:var(--pop);color:#3a2a06;font-size:11px;font-weight:800;
+  padding:3px 10px;border-radius:30px;box-shadow:0 2px 6px rgba(239,155,47,.4)}
+.plan{cursor:pointer}
+.plan.selected{border-color:var(--ocean);box-shadow:0 0 0 3px rgba(58,143,156,.25),0 8px 20px rgba(39,84,92,.12)}
+.checkout{margin-top:20px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;max-width:520px;box-shadow:0 4px 16px rgba(39,84,92,.08)}
+.checkout .pays{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.paybtn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:10px 14px;font-weight:600;font-size:14px;cursor:pointer;color:var(--deep)}
+.paybtn:hover{border-color:var(--ocean);color:var(--ocean)}
+.chip{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:30px;background:#eef3f3;color:var(--deep)}
+.chip.active{background:#e2eff5;color:var(--ocean)}
+.chip.completed{background:#e3efe6;color:#3f7a57}
+.chip.draft{background:#eee;color:#777}
+.chip.pop{background:#fdeccf;color:#9a6312}
+.sticky{position:sticky;top:16px;align-self:start}
+.treesearch{width:100%;max-width:280px;border:1px solid var(--line);border-radius:30px;padding:8px 14px;font:inherit;font-size:14px;margin-bottom:10px}
+.treesearch:focus{outline:none;border-color:var(--ocean);box-shadow:0 0 0 3px rgba(58,143,156,.15)}
+.nodelabel.onpath{font-weight:700;color:var(--ocean)}
