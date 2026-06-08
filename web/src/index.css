@@ -32,3 +32,10 @@ ul.tree{list-style:none;padding-left:18px}ul.tree>li{margin:3px 0}
 .tot{background:#fff;border:1px solid #e6e0d5;border-radius:12px;padding:12px 18px}
 .tot b{display:block;font-size:22px;color:var(--blue)}
 .loading{color:var(--muted);padding:20px 0}
+.cols{display:grid;grid-template-columns:1.6fr 1fr;gap:26px;align-items:start}
+@media(max-width:820px){.cols{grid-template-columns:1fr}}
+.col>h3:first-child{margin-top:0}
+.side .card{margin-bottom:16px}
+.side h3{margin-top:18px}.side h3:first-child{margin-top:0}
+.kv{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f0ece3;font-size:14px}
+.kv:last-child{border-bottom:0}.kv b{color:var(--blue)}

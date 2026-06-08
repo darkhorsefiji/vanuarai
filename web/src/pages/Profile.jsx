@@ -31,55 +31,65 @@ export default function Profile() {
       <h1>{data.name}</h1>
       <p className="sub">{data.district} · part of {data.province}</p>
 
-      <h3>Introduction</h3>
-      <p style={{ maxWidth: 760, marginBottom: 18 }}>{data.introduction}</p>
+      <div className="cols">
+        {/* ---- Left: narrative + ratings ---- */}
+        <div className="col">
+          <h3>Introduction</h3>
+          <p style={{ marginBottom: 18 }}>{data.introduction}</p>
 
-      <h3>Background</h3>
-      <p style={{ maxWidth: 760 }}>{data.background}</p>
-      <div className="totrow" style={{ marginTop: 14 }}>
-        <div className="tot"><b>{c.yavusa}</b>Yavusa</div>
-        <div className="tot"><b>{c.mataqali}</b>Mataqali</div>
-        <div className="tot"><b>{c.tokatoka}</b>Tokatoka</div>
-        <div className="tot"><b>{c.vuvale}</b>Vuvale</div>
-        <div className="tot"><b>{c.soqosoqo}</b>Soqosoqo</div>
-        <div className="tot"><b>{c.members}</b>Members</div>
-      </div>
+          <h3>Background</h3>
+          <p>{data.background}</p>
 
-      <h3 style={{ marginTop: 24 }}>Resources &amp; Participation</h3>
-      <p className="sub">Each sector is scored 0–5 for resource endowment (blue) and the village’s level of participation (green).</p>
-      <div className="totrow">
-        <div className="tot"><b>{avgR.toFixed(1)}/5</b>Avg resource</div>
-        <div className="tot"><b>{avgP.toFixed(1)}/5</b>Avg participation</div>
-        <div className="tot"><b>{overall}/100</b>Overall index</div>
-      </div>
-      <div className="grid">
-        {res.map(r => (
-          <div className="card" key={r.sector}>
-            <h3>{r.sector}</h3>
-            <Rate label="Resource" score={r.resource} kind="resource" />
-            <Rate label="Participation" score={r.participation} kind="participation" />
-            {r.notes && <div className="meta" style={{ marginTop: 8 }}>{r.notes}</div>}
+          <h3 style={{ marginTop: 24 }}>Resources &amp; Participation</h3>
+          <p className="sub">Each sector is scored 0–5 for resource endowment (blue) and the village’s level of participation (green).</p>
+          <div className="totrow">
+            <div className="tot"><b>{avgR.toFixed(1)}/5</b>Avg resource</div>
+            <div className="tot"><b>{avgP.toFixed(1)}/5</b>Avg participation</div>
+            <div className="tot"><b>{overall}/100</b>Overall index</div>
           </div>
-        ))}
+          <div className="grid">
+            {res.map(r => (
+              <div className="card" key={r.sector}>
+                <h3>{r.sector}</h3>
+                <Rate label="Resource" score={r.resource} kind="resource" />
+                <Rate label="Participation" score={r.participation} kind="participation" />
+                {r.notes && <div className="meta" style={{ marginTop: 8 }}>{r.notes}</div>}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ---- Right: at-a-glance, map, directions ---- */}
+        <aside className="col side">
+          <div className="card">
+            <h3>At a glance</h3>
+            <div className="kv"><span>Yavusa</span><b>{c.yavusa}</b></div>
+            <div className="kv"><span>Mataqali</span><b>{c.mataqali}</b></div>
+            <div className="kv"><span>Tokatoka</span><b>{c.tokatoka}</b></div>
+            <div className="kv"><span>Vuvale</span><b>{c.vuvale}</b></div>
+            <div className="kv"><span>Soqosoqo</span><b>{c.soqosoqo}</b></div>
+            <div className="kv"><span>Members</span><b>{c.members}</b></div>
+          </div>
+
+          <h3>Location</h3>
+          {bbox ? (
+            <>
+              <iframe
+                title="Village location" width="100%" height="240" loading="lazy"
+                style={{ border: 0, borderRadius: 12 }}
+                src={`https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lon}`}
+              />
+              <p className="meta">
+                <a target="_blank" rel="noreferrer" href={`https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=13/${lat}/${lon}`}>View larger map ↗</a>
+                &nbsp;·&nbsp;{Number(lat).toFixed(4)}, {Number(lon).toFixed(4)} (placeholder)
+              </p>
+            </>
+          ) : <p className="meta">Location not set.</p>}
+
+          <h3>How to get there</h3>
+          <p>{data.how_to_get_there}</p>
+        </aside>
       </div>
-
-      <h3 style={{ marginTop: 28 }}>Location</h3>
-      {bbox ? (
-        <>
-          <iframe
-            title="Village location" width="100%" height="320" loading="lazy"
-            style={{ border: 0, borderRadius: 12 }}
-            src={`https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lon}`}
-          />
-          <p className="meta">
-            <a target="_blank" rel="noreferrer" href={`https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=13/${lat}/${lon}`}>View larger map ↗</a>
-            &nbsp;·&nbsp;{Number(lat).toFixed(4)}, {Number(lon).toFixed(4)} (placeholder coordinates)
-          </p>
-        </>
-      ) : <p className="meta">Location not set.</p>}
-
-      <h3 style={{ marginTop: 28 }}>How to get there</h3>
-      <p style={{ maxWidth: 760 }}>{data.how_to_get_there}</p>
     </>
   )
 }
