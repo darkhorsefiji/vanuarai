@@ -81,7 +81,7 @@ app.get("/api/profile", async (req, res) => {
     from village_resources vr join villages vi on vi.id=vr.village_id
     where vi.name=$1 order by sort_order`, [VILLAGE]);
   res.json({
-    name: v.name, district: "Tikina / District (TBD)", province: "Provincial Council (TBD)",
+    name: v.name, district: "Tikina / District (TBD)", province: "Province (TBD)",
     introduction: v.introduction, background: v.background,
     latitude: v.latitude != null ? n(v.latitude) : null,
     longitude: v.longitude != null ? n(v.longitude) : null,

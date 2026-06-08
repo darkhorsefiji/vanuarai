@@ -121,7 +121,7 @@ ul.people li:last-child{border-bottom:0}
 /* collapsible tree carets (enlarged, boxed +/-) */
 .caret{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;
   width:24px;height:24px;border:1px solid var(--line);border-radius:7px;background:#fff;
-  color:var(--ocean);font-size:17px;font-weight:700;line-height:1;cursor:pointer;padding:0;margin-right:8px}
+  color:var(--ocean);font-size:12px;font-weight:700;line-height:1;cursor:pointer;padding:0;margin-right:8px}
 .caret:hover{border-color:var(--ocean);background:#eef6f5}
 .caret.spacer{display:inline-block;visibility:hidden}
 .cols-13{grid-template-columns:1fr 2fr}

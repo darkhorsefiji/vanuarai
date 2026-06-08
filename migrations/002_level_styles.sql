@@ -12,7 +12,7 @@ insert into level_styles(level,label,color,sort_order) values
   ('mataqali','Mataqali','#3a8f9c',3),
   ('tokatoka','Tokatoka','#7fae93',4),
   ('vuvale','Vuvale','#cf9a86',5),
-  ('provincial_council','Provincial Council','#27545c',6),
+  ('provincial_council','Province','#27545c',6),
   ('district','District','#4f93a0',7),
   ('village','Village','#5b9bb0',8),
   ('soqosoqo','Soqosoqo','#c98a9a',9)

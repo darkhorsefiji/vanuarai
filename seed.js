@@ -30,7 +30,7 @@ const VUVALE_COUNTS = [3, 2, 4, 3, 2, 4, 3, 2]; // total 23
     const vanua = await node("traditional", "vanua", "Vanua (Fiji-wide)", null, { is_platform: true });
 
     // Government axis: Provincial Council -> District -> Village(Bagasau)
-    const prov = await node("government", "provincial_council", "Provincial Council (TBD)", null);
+    const prov = await node("government", "provincial_council", "Province (TBD)", null);
     const dist = await node("government", "district", "Tikina / District (TBD)", prov);
     const govVillage = await node("government", "village", "Bagasau", dist, { village_id: vid, is_body: true });
     await c.query("update villages set village_node_id=$1 where id=$2", [govVillage, vid]);

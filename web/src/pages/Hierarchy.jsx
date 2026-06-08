@@ -37,7 +37,7 @@ function Node({ n, kids, depth, sel, onSelect, edit, onAdd, onRename, onDel, for
   return (
     <li>
       {has
-        ? <button className="caret" onClick={() => setOpen(o => !o)} aria-label="toggle">{isOpen ? '−' : '+'}</button>
+        ? <button className="caret" onClick={() => setOpen(o => !o)} aria-label="toggle">{isOpen ? '▾' : '▸'}</button>
         : <span className="caret spacer" />}
       <LevelBadge level={n.level} />
       <span className={'nodelabel' + (isVuvale ? ' clickable' : '') + (sel === n.id ? ' selected' : (onPath ? ' onpath' : ''))}
