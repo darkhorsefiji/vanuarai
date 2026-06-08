@@ -4,6 +4,8 @@ require("dotenv").config({ path: __dirname + "/.env" });
 const path = require("path");
 const express = require("express");
 const { Pool } = require("pg");
+const { OAuth2Client } = require("google-auth-library");
+const jwt = require("jsonwebtoken");
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
 const app = express();
@@ -12,12 +14,52 @@ const q = (sql, p = []) => pool.query(sql, p).then(r => r.rows);
 const n = v => Number(v);
 const NEXT_LEVEL = { vanua: 'yavusa', yavusa: 'mataqali', mataqali: 'tokatoka', tokatoka: 'vuvale', provincial_council: 'district', district: 'village' };
 const BODY_LEVELS = new Set(['mataqali', 'village', 'soqosoqo']);
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
+const JWT_SECRET = process.env.JWT_SECRET || "dev-secret-change-me";
+const gclient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 // permissive CORS for local dev (Vite on :5173)
-app.use((req, res, next) => { res.set("Access-Control-Allow-Origin", "*"); next(); });
+app.use((req, res, next) => { res.set("Access-Control-Allow-Origin", "*"); res.set("Access-Control-Allow-Headers", "Content-Type, Authorization"); next(); });
 app.use(express.json());
+// decode a Bearer session token (if present) onto req.user
+app.use((req, res, next) => {
+  const m = (req.headers.authorization || "").match(/^Bearer (.+)$/);
+  if (m) { try { req.user = jwt.verify(m[1], JWT_SECRET); } catch { /* ignore invalid token */ } }
+  next();
+});
 
-app.get("/api/health", (req, res) => res.json({ ok: true }));
+app.get("/api/health", (req, res) => res.json({ ok: true, googleConfigured: !!GOOGLE_CLIENT_ID }));
+
+// ---- Auth ----
+app.post("/api/auth/google", async (req, res) => {
+  if (!GOOGLE_CLIENT_ID) return res.status(500).json({ error: "Google login not configured on the server" });
+  const { credential } = req.body || {};
+  if (!credential) return res.status(400).json({ error: "credential required" });
+  try {
+    const ticket = await gclient.verifyIdToken({ idToken: credential, audience: GOOGLE_CLIENT_ID });
+    const p = ticket.getPayload();
+    const [u] = await q(
+      `insert into users(google_sub, email, display_name) values($1,$2,$3)
+       on conflict (google_sub) do update set email=excluded.email, display_name=excluded.display_name
+       returning id, email, display_name, is_app_admin`,
+      [p.sub, p.email, p.name || p.email]);
+    const token = jwt.sign({ uid: u.id, email: u.email, name: u.display_name }, JWT_SECRET, { expiresIn: "30d" });
+    res.json({ token });
+  } catch (e) {
+    res.status(401).json({ error: "invalid Google token" });
+  }
+});
+
+app.get("/api/me", async (req, res) => {
+  if (!req.user) return res.json({ user: null });
+  const [u] = await q(`select id, email, display_name, is_app_admin from users where id=$1`, [req.user.uid]);
+  if (!u) return res.json({ user: null });
+  const [mem] = await q(
+    `select m.role, m.status from memberships m join villages v on v.id=m.village_id
+     where m.user_id=$1 and v.name=$2`, [u.id, VILLAGE]);
+  const offices = await q(`select office, body_node_id from body_offices where user_id=$1 and active=true`, [u.id]);
+  res.json({ user: { id: u.id, email: u.email, name: u.display_name, isAppAdmin: u.is_app_admin, role: mem?.role || null, status: mem?.status || null, offices } });
+});
 
 app.get("/api/plans", async (req, res) => {
   const rows = await q(`select p.name, p.volume_mb, p.validity, p.price_cents from plans p

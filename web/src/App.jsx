@@ -9,6 +9,8 @@ import Financials from './pages/Financials'
 import Minutes from './pages/Minutes'
 import Admin from './pages/Admin'
 import { LevelsProvider } from './levels'
+import { AuthProvider } from './auth'
+import AuthArea from './AuthArea'
 
 const nav = [
   ['/', 'Internet'], ['/profile', 'Profile'], ['/hierarchy', 'Hierarchy'],
@@ -19,6 +21,7 @@ const nav = [
 export default function App() {
   const [logoOk, setLogoOk] = useState(true)
   return (
+    <AuthProvider>
     <LevelsProvider>
       <header className="top">
         {logoOk
@@ -30,6 +33,7 @@ export default function App() {
             <NavLink key={to} to={to} end={to === '/'}>{label}</NavLink>
           ))}
         </nav>
+        <AuthArea />
       </header>
       <main>
         <Routes>
@@ -44,5 +48,6 @@ export default function App() {
         </Routes>
       </main>
     </LevelsProvider>
+    </AuthProvider>
   )
 }
