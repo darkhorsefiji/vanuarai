@@ -39,7 +39,8 @@ export default function Dev() {
                 <div className="themerow" key={it.k}>
                   <label>{it.l}</label>
                   {it.t === 'color' && <input type="color" value={ov[it.k] || it.d} onChange={e => change(it.k, e.target.value)} />}
-                  {it.t === 'range' && <input type="range" min={it.min} max={it.max} value={parseInt(ov[it.k] != null ? ov[it.k] : it.d, 10)} onChange={e => change(it.k, e.target.value + (it.unit || ''))} />}
+                  {it.t === 'range' && <input type="range" min={it.min} max={it.max} step={it.step || 1} value={parseInt(ov[it.k] != null ? ov[it.k] : it.d, 10)} onChange={e => change(it.k, e.target.value + (it.unit || ''))} />}
+                  {it.t === 'toggle' && <input type="checkbox" checked={(ov[it.k] || it.d) === it.on} onChange={e => change(it.k, e.target.checked ? it.on : 'normal')} />}
                   {it.t === 'font' && <input className="fontinput" list="gfonts" placeholder="Search fonts…" value={fontText[it.k] ?? familyFromStack(cur)} onChange={e => onFont(it.k, e.target.value)} />}
                   {it.t !== 'font' && <code className="themeval">{cur}</code>}
                 </div>

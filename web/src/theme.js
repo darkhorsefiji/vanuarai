@@ -34,7 +34,11 @@ export const THEME_GROUPS = [
   {
     group: 'Typography', items: [
       { k: '--head-font', l: 'Heading font', t: 'font', d: AVENIR },
+      { k: '--head-weight', l: 'Heading weight', t: 'range', d: '700', min: 100, max: 900, step: 100 },
+      { k: '--head-style', l: 'Heading italic', t: 'toggle', d: 'normal', on: 'italic' },
       { k: '--font', l: 'Body font', t: 'font', d: AVENIR },
+      { k: '--body-weight', l: 'Body weight', t: 'range', d: '400', min: 100, max: 900, step: 100 },
+      { k: '--body-style', l: 'Body italic', t: 'toggle', d: 'normal', on: 'italic' },
       { k: '--head-color', l: 'Heading colour', t: 'color', d: '#27545c' },
       { k: '--ink', l: 'Body text colour', t: 'color', d: '#2f4a51' },
     ],

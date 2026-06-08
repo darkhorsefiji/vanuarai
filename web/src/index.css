@@ -21,10 +21,11 @@
   --side-c1:#235059; --side-c2:#16363d; --side-angle:180deg;
   --font:Avenir,"Avenir Next","Nunito Sans","Segoe UI",sans-serif;
   --head-font:Avenir,"Avenir Next","Nunito Sans","Segoe UI",sans-serif;
+  --head-weight:700; --head-style:normal; --body-weight:400; --body-style:normal;
 }
 *{box-sizing:border-box}
 body{margin:0;color:var(--ink);
-  font-family:var(--font);
+  font-family:var(--font);font-weight:var(--body-weight);font-style:var(--body-style);
   background:var(--body-bg) fixed;
   min-height:100vh;line-height:1.5}
 a{color:var(--ocean)}
@@ -71,8 +72,8 @@ main{max-width:1040px;margin:28px auto;padding:0 18px}
   .sidebar .lbl{display:inline}
   .sbtoggle{display:none}
 }
-h1{font-size:29px;font-weight:700;margin:0 0 4px;letter-spacing:-.2px;color:var(--head-color);font-family:var(--head-font)}
-h3{font-size:17px;font-weight:700;color:var(--head-color);margin:22px 0 8px;font-family:var(--head-font)}
+h1{font-size:29px;font-weight:var(--head-weight);font-style:var(--head-style);margin:0 0 4px;letter-spacing:-.2px;color:var(--head-color);font-family:var(--head-font)}
+h3{font-size:17px;font-weight:var(--head-weight);font-style:var(--head-style);color:var(--head-color);margin:22px 0 8px;font-family:var(--head-font)}
 .sub{color:var(--muted);margin:0 0 22px}
 
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:18px}
