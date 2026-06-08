@@ -226,12 +226,19 @@ app.delete("/api/persons/:id", async (req, res) => {
 });
 
 app.get("/api/projects", async (req, res) => {
-  const rows = await q(`select p.name, p.budget_cents, p.physical_progress prog, p.status, sn.label owner,
+  const rows = await q(`select p.id, p.name, p.budget_cents, p.physical_progress prog, p.status, sn.label owner,
       coalesce(sum(le.amount_cents) filter (where le.direction='in'),0)::bigint raised,
       coalesce(sum(le.amount_cents) filter (where le.direction='out'),0)::bigint spent
     from projects p join scope_nodes sn on sn.id=p.owner_body_node_id
     left join ledger_entries le on le.pot_id=p.pot_id group by p.id, sn.label order by p.name`);
-  res.json(rows.map(r => ({ ...r, budget_cents: n(r.budget_cents), prog: n(r.prog), raised: n(r.raised), spent: n(r.spent) })));
+  const photos = await q(`select project_id, image_ref, caption from project_photos order by id`);
+  const byProj = {};
+  for (const ph of photos) (byProj[ph.project_id] = byProj[ph.project_id] || []).push({ src: ph.image_ref, caption: ph.caption });
+  res.json(rows.map(r => ({
+    id: r.id, name: r.name, owner: r.owner, status: r.status,
+    budget_cents: n(r.budget_cents), prog: n(r.prog), raised: n(r.raised), spent: n(r.spent),
+    photos: byProj[r.id] || [],
+  })));
 });
 
 app.get("/api/fundraising", async (req, res) => {
