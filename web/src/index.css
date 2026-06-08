@@ -265,7 +265,10 @@ td input:focus{outline:none;border-color:var(--ocean)}
   background:linear-gradient(var(--hero-angle,120deg),var(--hero-c1,#27545c),var(--hero-c2,#3a8f9c) var(--hero-mid,55%),var(--hero-c3,#5b9bb0));box-shadow:0 6px 22px rgba(39,84,92,.16)}
 .hero h1{color:#fff;font-size:30px;margin:0 0 6px}
 .hero p{color:#eafaf7;max-width:640px}
-.hero .cta{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-top:16px}
+.heroline{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-top:14px}
+.heroline-body{margin:0}
+.heroline-cta{flex:none;white-space:nowrap}
+@media(max-width:620px){.heroline{flex-direction:column;align-items:flex-start;gap:14px}}
 .profilehero{border-radius:18px;overflow:hidden;margin-bottom:20px;color:#fff;padding:26px;
   background:linear-gradient(var(--hero-angle,120deg),var(--hero-c1,#27545c),var(--hero-c2,#3a8f9c) var(--hero-mid,55%),var(--hero-c3,#5b9bb0))}
 .profilehero h1{color:#fff;margin:0}

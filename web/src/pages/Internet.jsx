@@ -1,8 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useData, fjd } from '../api'
-import { useAuth } from '../auth'
-import { GoogleButton } from '../AuthArea'
 import { EditableText } from '../copy'
 
 const POPULAR = 'Weekly'
@@ -10,7 +8,6 @@ const vol = mb => (mb >= 1024 ? (mb / 1024) + ' GB' : mb + ' MB')
 
 export default function Internet() {
   const { data: plans } = useData('/plans')
-  const { user } = useAuth()
   const [sel, setSel] = useState(null)
   const [payMsg, setPayMsg] = useState('')
   const selected = plans?.find(p => p.name === sel)
@@ -20,12 +17,9 @@ export default function Internet() {
       <div className="hero">
         <EditableText as="div" id="hero.tagline" className="tagline">Digital Village WiFi</EditableText>
         <EditableText as="h1" id="hero.title">Welcome to Bagasau</EditableText>
-        <EditableText as="p" id="hero.body">Buy an internet plan to get online — then explore your village’s records: family, land, projects, fundraising and more.</EditableText>
-        <div className="cta">
-          {user
-            ? <span style={{ color: '#eafaf7' }}>Signed in as <b>{user.name || user.email}</b></span>
-            : <GoogleButton />}
-          <Link className="btn secondary" to="/profile">Explore the village →</Link>
+        <div className="heroline">
+          <EditableText as="p" id="hero.body" className="heroline-body">Buy an internet plan to get online — then explore your village’s records: family, land, projects, fundraising and more.</EditableText>
+          <Link className="btn secondary heroline-cta" to="/profile">Explore the village →</Link>
         </div>
       </div>
 
