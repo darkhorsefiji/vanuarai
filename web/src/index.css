@@ -275,9 +275,11 @@ td input:focus{outline:none;border-color:var(--ocean)}
   background:linear-gradient(var(--hero-angle,120deg),var(--hero-c1,#27545c),var(--hero-c2,#3a8f9c) var(--hero-mid,55%),var(--hero-c3,#5b9bb0))}
 
 /* Tapa (masi) pattern overlay — subtle Fiji texture on the dark banners + brand bar */
-header.top{position:relative}
-.hero::before,.profilehero::before,header.top::before{content:"";position:absolute;inset:0;
-  pointer-events:none;z-index:0;background-image:url("/tapa.svg");background-size:46px 46px}
+header.top{position:relative;overflow:hidden}
+.hero::before,.profilehero::before,header.top::before{content:"";position:absolute;
+  top:-50%;left:-50%;width:200%;height:200%;pointer-events:none;z-index:0;
+  background-image:url("/tapa.svg");background-size:69px 69px;
+  transform:rotate(-30deg);transform-origin:center}
 .hero::before,.profilehero::before{opacity:.13}
 header.top::before{opacity:.07}
 .hero>*,.profilehero>*,header.top>*{position:relative;z-index:1}
