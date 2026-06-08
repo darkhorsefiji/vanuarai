@@ -67,7 +67,8 @@ main{max-width:1040px;margin:28px auto;padding:0 18px}
   color:var(--side-text);text-decoration:none;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden}
 .sidebar a:hover{background:rgba(255,255,255,.12);text-decoration:none}
 .sidebar a.active{background:var(--side-active);color:#fff}
-.sidebar .ico{width:20px;text-align:center;flex-shrink:0;font-size:16px}
+.sidebar .ico{width:22px;height:22px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center}
+.sidebar .ico svg{width:22px;height:22px;display:block}
 .sidebar.collapsed .lbl{display:none}
 .sidebar.collapsed a{justify-content:center;padding:9px 0}
 @media(max-width:760px){
