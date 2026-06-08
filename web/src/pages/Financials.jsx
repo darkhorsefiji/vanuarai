@@ -1,4 +1,5 @@
 import { useData, fjd } from '../api'
+import { EditableText } from '../copy'
 
 export default function Financials() {
   const { data } = useData('/financials')
@@ -8,7 +9,7 @@ export default function Financials() {
   return (
     <>
       <h1>Village Financials</h1>
-      <p className="sub">Auto-generated from the Tobu ledger (Village body pots). Member-tier view.</p>
+      <EditableText id="financials.sub" className="sub">Auto-generated from the Tobu ledger (Village body pots). Member-tier view.</EditableText>
       <div className="totrow">
         <div className="tot"><b>{fjd(tin)}</b>Inflows</div>
         <div className="tot"><b>{fjd(tout)}</b>Outflows</div>

@@ -96,9 +96,20 @@ h3{font-size:17px;font-weight:var(--head-weight);font-style:var(--head-style);co
 .btn:hover{transform:translateY(-1px);filter:brightness(.98);text-decoration:none}
 .btn.secondary{background:var(--ocean);box-shadow:0 3px 10px rgba(58,143,156,.3)}
 
-.bar{height:9px;background:#eef1f1;border-radius:8px;overflow:hidden;margin:8px 0 4px}
-.bar>i{display:block;height:100%;border-radius:8px;background:var(--sage)}
-.bar.fin>i{background:var(--ocean)}
+.bar{height:var(--bar-height,9px);background:var(--bar-track,#eef1f1);border-radius:8px;overflow:hidden;margin:8px 0 4px}
+.bar>i{display:block;height:100%;border-radius:8px;background:var(--bar-prog,var(--sage))}
+.bar.fin>i{background:var(--bar-fin,var(--ocean))}
+
+/* ---- DEV Edit: inline copy editing ---- */
+.copy-edit{outline:1.5px dashed var(--ocean);outline-offset:3px;border-radius:4px;cursor:text;
+  transition:background .15s}
+.copy-edit:hover{background:rgba(58,143,156,.06)}
+.copy-edit:focus{outline-style:solid;background:rgba(58,143,156,.08)}
+.devedit-fab{position:fixed;right:18px;bottom:18px;z-index:9000;display:flex;gap:8px;align-items:center}
+.devedit-fab button{border:0;cursor:pointer;font-weight:700;font-size:13px;border-radius:30px;
+  padding:9px 15px;box-shadow:0 4px 14px rgba(0,0,0,.22);color:#fff;background:#5a6066}
+.devedit-fab button.on{background:var(--clay)}
+.devedit-fab .devedit-reset{background:#8a9095;padding:9px 12px}
 
 .pill{display:inline-block;font-size:11px;font-weight:600;padding:3px 10px;border-radius:30px;
   background:#e8f1f0;color:var(--deep);margin-right:4px}

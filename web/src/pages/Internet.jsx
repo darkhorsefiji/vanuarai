@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useData, fjd } from '../api'
 import { useAuth } from '../auth'
 import { GoogleButton } from '../AuthArea'
+import { EditableText } from '../copy'
 
 const POPULAR = 'Weekly'
 const vol = mb => (mb >= 1024 ? (mb / 1024) + ' GB' : mb + ' MB')
@@ -30,7 +31,7 @@ export default function Internet() {
       </div>
 
       <h1>Get online</h1>
-      <p className="sub">Choose a plan to reconnect — pay with M-PAiSA, MyCash or card.</p>
+      <EditableText id="internet.sub" className="sub">Choose a plan to reconnect — pay with M-PAiSA, MyCash or card.</EditableText>
       {!plans ? <p className="loading">Loading…</p> : (
         <div className="grid">
           {plans.map(p => (

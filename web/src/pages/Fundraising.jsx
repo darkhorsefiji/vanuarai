@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useData, fjd } from '../api'
+import { EditableText } from '../copy'
 
 export default function Fundraising() {
   const { data } = useData('/fundraising')
@@ -10,7 +11,7 @@ export default function Fundraising() {
   return (
     <>
       <h1>Fundraising</h1>
-      <p className="sub">Endorsed efforts across the village. Contributions are village-wide transparent.</p>
+      <EditableText id="fundraising.sub" className="sub">Endorsed efforts across the village. Contributions are village-wide transparent.</EditableText>
       <div className="totrow">
         <div className="tot"><b>{fjd(totRaised)}</b>Total raised</div>
         <div className="tot"><b>{fjd(totGoal)}</b>Total goals</div>

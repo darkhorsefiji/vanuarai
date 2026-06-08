@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { get } from '../api'
 import { buildTree, filterNodes, TreeNode, useNodes } from '../tree'
+import { EditableText } from '../copy'
 
 const BLANK = { full_name: '', gender: '', relationship: '', dob: '', dod: '' }
 
@@ -52,7 +53,7 @@ export default function Hierarchy() {
       <div className="pagehead">
         <div>
           <h1>Vanua</h1>
-          <p className="sub">Traditional lineage. Click a Vuvale to view its family.{edit ? ' Editing on.' : ''}</p>
+          <p className="sub"><EditableText as="span" id="hierarchy.sub">Traditional lineage. Click a Vuvale to view its family.</EditableText>{edit ? ' Editing on.' : ''}</p>
         </div>
         <div className="editrow">
           <button className={edit ? 'btn' : 'btn secondary'} onClick={() => setEdit(e => !e)}>{edit ? 'Done' : '✎ Edit'}</button>

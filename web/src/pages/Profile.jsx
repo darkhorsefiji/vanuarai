@@ -3,6 +3,7 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { get } from '../api'
 import { makeBaseLayers, pinIcon } from '../map'
+import { EditableText } from '../copy'
 
 function Rate({ label, score, kind }) {
   return (
@@ -107,7 +108,7 @@ export default function Profile() {
             : <p>{form.background}</p>}
 
           <h3 style={{ marginTop: 24 }}>Resources &amp; Participation</h3>
-          <p className="sub">Each sector is scored 0–5 for resource endowment (blue) and the village’s level of participation (green).</p>
+          <EditableText id="profile.resources.sub" className="sub">Each sector is scored 0–5 for resource endowment (blue) and the village’s level of participation (green).</EditableText>
           <div className="totrow">
             <div className="tot"><b>{avgR.toFixed(1)}/5</b>Avg resource</div>
             <div className="tot"><b>{avgP.toFixed(1)}/5</b>Avg participation</div>

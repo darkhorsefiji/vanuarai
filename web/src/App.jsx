@@ -12,6 +12,7 @@ import Admin from './pages/Admin'
 import Dev from './pages/Dev'
 import { LevelsProvider } from './levels'
 import { AuthProvider } from './auth'
+import { CopyProvider, DevEditButton } from './copy'
 import AuthArea from './AuthArea'
 
 const TOP_NAV = [['/', 'Internet'], ['/admin', 'Admin'], ['/dev', 'Dev']]
@@ -27,6 +28,7 @@ export default function App() {
   return (
     <AuthProvider>
       <LevelsProvider>
+        <CopyProvider>
         <div className="app">
           <header className="top">
             {logoOk
@@ -69,6 +71,8 @@ export default function App() {
             </main>
           </div>
         </div>
+        <DevEditButton />
+        </CopyProvider>
       </LevelsProvider>
     </AuthProvider>
   )

@@ -1,5 +1,6 @@
 import { useData } from '../api'
 import { LevelBadge } from '../levels'
+import { EditableText } from '../copy'
 
 export default function Minutes() {
   const { data } = useData('/minutes')
@@ -7,7 +8,7 @@ export default function Minutes() {
   return (
     <>
       <h1>Meeting Minutes</h1>
-      <p className="sub">Classified by level. Member-tier view.</p>
+      <EditableText id="minutes.sub" className="sub">Classified by level. Member-tier view.</EditableText>
       <table>
         <tbody>
           <tr><th>Date</th><th>Level</th><th>Body</th><th>Title</th><th>Resolutions</th></tr>

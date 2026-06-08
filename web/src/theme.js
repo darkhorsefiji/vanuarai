@@ -54,6 +54,14 @@ export const THEME_GROUPS = [
     ],
   },
   {
+    group: 'Progress bars', items: [
+      { k: '--bar-prog', l: 'Physical progress fill', t: 'color', d: '#7fae93' },
+      { k: '--bar-fin', l: 'Financial burn fill', t: 'color', d: '#3a8f9c' },
+      { k: '--bar-track', l: 'Track (empty)', t: 'color', d: '#eef1f1' },
+      { k: '--bar-height', l: 'Bar thickness', t: 'range', d: '9', min: 4, max: 20, step: 1, unit: 'px' },
+    ],
+  },
+  {
     group: 'Cards', items: [
       { k: '--card', l: 'Background', t: 'color', d: '#ffffff' },
       { k: '--line', l: 'Border', t: 'color', d: '#e8edee' },

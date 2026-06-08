@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { buildTree, filterNodes, TreeNode, useNodes } from '../tree'
+import { EditableText } from '../copy'
 
 export default function Government() {
   const { nodes, msg, addNode, renameNode, delNode } = useNodes()
@@ -15,7 +16,7 @@ export default function Government() {
       <div className="pagehead">
         <div>
           <h1>Government</h1>
-          <p className="sub">Provincial administrative structure — Province → District (Tikina) → Village.{edit ? ' Editing on.' : ''}</p>
+          <p className="sub"><EditableText as="span" id="government.sub">Provincial administrative structure — Province → District (Tikina) → Village.</EditableText>{edit ? ' Editing on.' : ''}</p>
         </div>
         <div className="editrow">
           <button className={edit ? 'btn' : 'btn secondary'} onClick={() => setEdit(e => !e)}>{edit ? 'Done' : '✎ Edit'}</button>
