@@ -278,7 +278,7 @@ td input:focus{outline:none;border-color:var(--ocean)}
 header.top{position:relative;overflow:hidden}
 .hero::before,.profilehero::before,header.top::before{content:"";position:absolute;
   top:-50%;left:-50%;width:200%;height:200%;pointer-events:none;z-index:0;
-  background-image:url("/tapa.svg");background-size:69px 69px;
+  background-image:url("/tapa.svg");background-size:130px 130px;
   transform:rotate(-30deg);transform-origin:center}
 .hero::before,.profilehero::before{opacity:.13}
 header.top::before{opacity:.07}
