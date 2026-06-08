@@ -102,3 +102,10 @@ ul.tree{list-style:none;padding-left:18px}ul.tree>li{margin:4px 0}
 .savebar{display:flex;align-items:center;gap:14px;margin:18px 0}
 .status{color:var(--muted);font-size:14px;font-weight:600}
 .coordbox{font-size:13px;color:var(--muted);margin:8px 0}
+
+/* vuvale composition */
+.comp{margin-bottom:14px}
+.comp h3{margin:0 0 2px;font-size:15px}
+ul.people{list-style:none;padding:0;margin:8px 0 0}
+ul.people li{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid #f0f4f5;font-size:13px}
+ul.people li:last-child{border-bottom:0}

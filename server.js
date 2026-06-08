@@ -60,8 +60,27 @@ app.patch("/api/profile", async (req, res) => {
 });
 
 app.get("/api/hierarchy", async (req, res) => {
-  const rows = await q(`select id,label,parent_id,level from scope_nodes where axis='traditional'`);
+  const rows = await q(`select id,label,parent_id,level,axis from scope_nodes`);
   res.json(rows);
+});
+
+app.get("/api/composition", async (req, res) => {
+  const rows = await q(`select vu.id vuvale_id, vu.label vuvale, tok.label tokatoka, mat.label mataqali,
+      p.full_name, p.relationship, to_char(p.date_of_birth,'YYYY') yob, p.is_deceased
+    from scope_nodes vu
+      join scope_nodes tok on tok.id = vu.parent_id
+      join scope_nodes mat on mat.id = tok.parent_id
+      left join persons p on p.vuvale_node_id = vu.id
+    where vu.level='vuvale'
+    order by mat.label, tok.label, vu.label, p.relationship`);
+  const byVuvale = new Map();
+  for (const r of rows) {
+    if (!byVuvale.has(r.vuvale_id))
+      byVuvale.set(r.vuvale_id, { vuvale: r.vuvale, tokatoka: r.tokatoka, mataqali: r.mataqali, persons: [] });
+    if (r.full_name)
+      byVuvale.get(r.vuvale_id).persons.push({ name: r.full_name, relationship: r.relationship, yob: r.yob, deceased: r.is_deceased });
+  }
+  res.json([...byVuvale.values()]);
 });
 
 app.get("/api/projects", async (req, res) => {
