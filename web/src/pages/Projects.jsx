@@ -19,6 +19,8 @@ export default function Projects() {
 
   if (!data) return <p className="loading">Loading…</p>
   const cur = box ? box.photos[box.i] : null
+  const fb = (p, big) => 'https://picsum.photos/seed/' + encodeURIComponent(p.caption) + (big ? '/1200/800' : '/640/420')
+  const onImgErr = (p, big) => e => { if (e.currentTarget.dataset.fb) return; e.currentTarget.dataset.fb = '1'; e.currentTarget.src = fb(p, big) }
 
   return (
     <>
@@ -41,12 +43,16 @@ export default function Projects() {
               {r.photos && r.photos.length > 0 && (
                 <>
                   <div className="meta" style={{ marginTop: 10 }}>Photos ({r.photos.length})</div>
-                  <div className="gallery">
-                    {r.photos.map((p, i) => (
-                      <img key={i} className={'thumb' + (i === 0 ? ' spotlight' : '')}
-                        src={p.src} alt={p.caption} title={p.caption} loading="lazy"
-                        onClick={() => setBox({ photos: r.photos, i })} />
-                    ))}
+                  <div className="gallery2">
+                    {r.photos.slice(0, 5).map((p, idx) => {
+                      const more = idx === 4 ? r.photos.length - 5 : 0
+                      return (
+                        <div key={idx} className={'g-cell' + (idx === 0 ? ' g-spot' : '')} onClick={() => setBox({ photos: r.photos, i: idx })} title={p.caption}>
+                          <img src={p.src} alt={p.caption} loading="lazy" onError={onImgErr(p)} />
+                          {more > 0 && <span className="g-more">+{more}</span>}
+                        </div>
+                      )
+                    })}
                   </div>
                 </>
               )}
@@ -61,7 +67,7 @@ export default function Projects() {
             <button className="lb-arrow left" onClick={e => { e.stopPropagation(); setBox(b => ({ ...b, i: b.i - 1 })) }} aria-label="Previous">‹</button>
           )}
           <div className="lightbox-inner" onClick={e => e.stopPropagation()}>
-            <img src={cur.src.replace('/640/420', '/1200/800')} alt={cur.caption} />
+            <img src={cur.src.replace('/640/420', '/1200/800')} alt={cur.caption} onError={onImgErr(cur, true)} />
             <div className="lightbox-cap">
               <span>{cur.caption} · {box.i + 1} / {box.photos.length}</span>
               <button className="mini" onClick={() => setBox(null)}>Close ✕</button>
