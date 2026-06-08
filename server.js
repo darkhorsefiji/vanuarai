@@ -83,6 +83,30 @@ app.get("/api/composition", async (req, res) => {
   res.json([...byVuvale.values()]);
 });
 
+app.get("/api/level-styles", async (req, res) => {
+  res.json(await q(`select level, label, color, sort_order from level_styles order by sort_order`));
+});
+
+// Admin: update hierarchy level styling (colour + label). Body: { styles:[{level,color,label}] }
+app.patch("/api/level-styles", async (req, res) => {
+  const styles = (req.body && req.body.styles) || [];
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    for (const s of styles) {
+      await client.query(`update level_styles set color=$1, label=$2 where level=$3`,
+        [s.color, s.label, s.level]);
+    }
+    await client.query("COMMIT");
+    res.json({ ok: true, updated: styles.length });
+  } catch (e) {
+    await client.query("ROLLBACK");
+    res.status(500).json({ ok: false, error: e.message });
+  } finally {
+    client.release();
+  }
+});
+
 app.get("/api/projects", async (req, res) => {
   const rows = await q(`select p.name, p.budget_cents, p.physical_progress prog, p.status, sn.label owner,
       coalesce(sum(le.amount_cents) filter (where le.direction='in'),0)::bigint raised,

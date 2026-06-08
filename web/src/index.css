@@ -109,3 +109,15 @@ ul.tree{list-style:none;padding-left:18px}ul.tree>li{margin:4px 0}
 ul.people{list-style:none;padding:0;margin:8px 0 0}
 ul.people li{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid #f0f4f5;font-size:13px}
 ul.people li:last-child{border-bottom:0}
+
+/* collapsible tree carets */
+.caret{background:none;border:none;cursor:pointer;color:var(--muted);font-size:11px;width:18px;padding:0;margin-right:2px;line-height:1}
+.caret:hover{color:var(--ocean)}
+.caret.spacer{display:inline-block;visibility:hidden}
+
+/* hierarchy styling editor */
+.lvlgrid{display:flex;flex-direction:column;gap:8px;max-width:600px}
+.lvlrow{display:grid;grid-template-columns:46px 1fr 130px auto;align-items:center;gap:12px}
+.lvlrow input[type=color]{width:46px;height:34px;border:1px solid var(--line);border-radius:8px;padding:2px;background:#fff;cursor:pointer}
+.lvlrow input[type=text]{padding:8px 10px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:14px}
+.lvlrow input[type=text]:focus{outline:none;border-color:var(--ocean);box-shadow:0 0 0 3px rgba(58,143,156,.15)}

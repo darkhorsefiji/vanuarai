@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { useData } from '../api'
+import { LevelBadge } from '../levels'
 
 function buildTree(nodes) {
   const kids = {}
@@ -9,18 +11,23 @@ function buildTree(nodes) {
   return { kids, root }
 }
 
-function Node({ n, kids }) {
+function Node({ n, kids, depth }) {
+  const has = kids[n.id] && kids[n.id].length
+  const [open, setOpen] = useState(depth < 2)   // top two levels expanded by default
   return (
     <li>
-      <span className={'lvl ' + n.level}>{n.level}</span>{n.label}
-      {kids[n.id] && <ul className="tree">{kids[n.id].map(c => <Node key={c.id} n={c} kids={kids} />)}</ul>}
+      {has
+        ? <button className="caret" onClick={() => setOpen(o => !o)} aria-label="toggle">{open ? '▾' : '▸'}</button>
+        : <span className="caret spacer" />}
+      <LevelBadge level={n.level} />{n.label}
+      {has && open && <ul className="tree">{kids[n.id].map(c => <Node key={c.id} n={c} kids={kids} depth={depth + 1} />)}</ul>}
     </li>
   )
 }
 
 function Tree({ nodes }) {
   const { kids, root } = buildTree(nodes)
-  return <ul className="tree">{root && <Node n={root} kids={kids} />}</ul>
+  return <ul className="tree">{root && <Node n={root} kids={kids} depth={0} />}</ul>
 }
 
 export default function Hierarchy() {
@@ -33,7 +40,7 @@ export default function Hierarchy() {
   return (
     <>
       <h1>Hierarchy</h1>
-      <p className="sub">The village seen two ways — the traditional Vanua lineage and the government administrative structure. Public view shows structure only.</p>
+      <p className="sub">The village seen two ways — the traditional Vanua lineage and the government administrative structure. Click ▸ to expand or collapse.</p>
       <div className="cols">
         <div className="col">
           <h3 style={{ marginTop: 0 }}>Vanua Hierarchy</h3>

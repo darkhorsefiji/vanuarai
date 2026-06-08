@@ -8,6 +8,7 @@ import Fundraising from './pages/Fundraising'
 import Financials from './pages/Financials'
 import Minutes from './pages/Minutes'
 import Admin from './pages/Admin'
+import { LevelsProvider } from './levels'
 
 const nav = [
   ['/', 'Internet'], ['/profile', 'Profile'], ['/hierarchy', 'Hierarchy'],
@@ -18,7 +19,7 @@ const nav = [
 export default function App() {
   const [logoOk, setLogoOk] = useState(true)
   return (
-    <>
+    <LevelsProvider>
       <header className="top">
         {logoOk
           ? <img className="brandlogo" src="/logo.png" alt="VanuaRai — Digital Village WiFi" onError={() => setLogoOk(false)} />
@@ -42,6 +43,6 @@ export default function App() {
           <Route path="/admin" element={<Admin />} />
         </Routes>
       </main>
-    </>
+    </LevelsProvider>
   )
 }

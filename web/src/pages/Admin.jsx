@@ -3,12 +3,16 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { get } from '../api'
 import { makeBaseLayers, pinIcon } from '../map'
+import { useLevels } from '../levels'
 
 export default function Admin() {
   const [loaded, setLoaded] = useState(false)
   const [form, setForm] = useState({ introduction: '', background: '', how_to_get_there: '' })
   const [coords, setCoords] = useState({ lat: -17.8, lon: 178.2 })
   const [status, setStatus] = useState('')
+  const { list: levelList, refresh: refreshLevels } = useLevels()
+  const [styles, setStyles] = useState([])
+  const [styleStatus, setStyleStatus] = useState('')
   const mapDiv = useRef(null)
   const mapObj = useRef(null)
 
@@ -40,7 +44,22 @@ export default function Admin() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loaded])
 
+  // sync editable styles from the levels context
+  useEffect(() => { setStyles(levelList.map(s => ({ ...s }))) }, [levelList])
+
   const upd = k => e => setForm(f => ({ ...f, [k]: e.target.value }))
+  const updStyle = (i, k, v) => setStyles(arr => arr.map((s, idx) => idx === i ? { ...s, [k]: v } : s))
+
+  async function saveStyles() {
+    setStyleStatus('Saving…')
+    try {
+      const r = await fetch('/api/level-styles', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ styles: styles.map(s => ({ level: s.level, color: s.color, label: s.label })) }),
+      })
+      if (r.ok) { setStyleStatus('Saved ✓'); refreshLevels() } else setStyleStatus('Error saving')
+    } catch { setStyleStatus('Network error') }
+  }
 
   async function save() {
     setStatus('Saving…')
@@ -85,6 +104,23 @@ export default function Admin() {
       <div className="savebar">
         <button className="btn" onClick={save}>Save changes</button>
         <span className="status">{status}</span>
+      </div>
+
+      <h3 style={{ marginTop: 28 }}>Hierarchy element styling</h3>
+      <p className="sub">Set the colour and label for each hierarchy level. Changes apply across the whole portal.</p>
+      <div className="lvlgrid">
+        {styles.map((s, i) => (
+          <div className="lvlrow" key={s.level}>
+            <input type="color" value={s.color} onChange={e => updStyle(i, 'color', e.target.value)} />
+            <input type="text" value={s.label} onChange={e => updStyle(i, 'label', e.target.value)} />
+            <span className="lvl" style={{ background: s.color }}>{s.label}</span>
+            <span className="meta">{s.level}</span>
+          </div>
+        ))}
+      </div>
+      <div className="savebar">
+        <button className="btn secondary" onClick={saveStyles}>Save styling</button>
+        <span className="status">{styleStatus}</span>
       </div>
     </>
   )

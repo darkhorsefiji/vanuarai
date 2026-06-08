@@ -1,4 +1,5 @@
 import { useData } from '../api'
+import { LevelBadge } from '../levels'
 
 export default function Minutes() {
   const { data } = useData('/minutes')
@@ -13,7 +14,7 @@ export default function Minutes() {
           {data.map((r, i) => (
             <tr key={i}>
               <td>{r.d}</td>
-              <td><span className={'lvl ' + r.level}>{r.level}</span></td>
+              <td><LevelBadge level={r.level} /></td>
               <td>{r.label}</td>
               <td>{r.title}</td>
               <td className="meta">{r.res || ''}</td>
