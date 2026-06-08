@@ -1,4 +1,5 @@
 // Live theme editor: a registry of editable CSS variables + localStorage persistence.
+import { GOOGLE_FONTS } from './googleFonts'
 const AVENIR = 'Avenir,"Avenir Next","Nunito Sans","Segoe UI",sans-serif'
 
 export const FONT_OPTIONS = [
@@ -68,4 +69,22 @@ export function resetVars() {
   const root = document.documentElement
   Object.keys(o).forEach(k => root.style.removeProperty(k))
   localStorage.removeItem(KEY)
+}
+
+// ---- Google Fonts: dynamic loading + helpers ----
+const GF_SET = new Set(GOOGLE_FONTS)
+const _loaded = new Set()
+export function ensureFont(family) {
+  if (!family || !GF_SET.has(family) || _loaded.has(family)) return
+  _loaded.add(family)
+  const l = document.createElement('link')
+  l.rel = 'stylesheet'
+  // Request the family without forcing weights it may not have (avoids css2 400s).
+  l.href = 'https://fonts.googleapis.com/css2?family=' + family.replace(/ /g, '+') + '&display=swap'
+  document.head.appendChild(l)
+}
+export const fontStack = family => `"${family}", sans-serif`
+export function familyFromStack(stack) {
+  const m = String(stack || '').match(/^\s*"?([^",]+)"?/)
+  return m ? m[1].trim() : ''
 }
