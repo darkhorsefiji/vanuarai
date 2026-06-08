@@ -19,6 +19,11 @@ const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
 const JWT_SECRET = process.env.JWT_SECRET || "dev-secret-change-me";
 const gclient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
+// Resilience: a single bad request (e.g. malformed input -> rejected DB query in
+// an async handler) must never take down the whole API process.
+process.on("unhandledRejection", (err) => console.error("unhandledRejection:", err && err.message ? err.message : err));
+process.on("uncaughtException", (err) => console.error("uncaughtException:", err && err.message ? err.message : err));
+
 // permissive CORS for local dev (Vite on :5173)
 app.use((req, res, next) => { res.set("Access-Control-Allow-Origin", "*"); res.set("Access-Control-Allow-Headers", "Content-Type, Authorization"); next(); });
 app.use(express.json());
@@ -202,22 +207,26 @@ app.patch("/api/level-styles", async (req, res) => {
 app.post("/api/nodes", async (req, res) => {
   const { parent_id, label } = req.body || {};
   if (!parent_id || !label) return res.status(400).json({ error: "parent_id and label required" });
-  const [p] = await q(`select id, axis, level, village_id from scope_nodes where id=$1`, [parent_id]);
-  if (!p) return res.status(404).json({ error: "parent not found" });
-  const childLevel = NEXT_LEVEL[p.level];
-  if (!childLevel) return res.status(400).json({ error: `cannot add a child under ${p.level}` });
-  const [row] = await q(
-    `insert into scope_nodes(axis, level, label, parent_id, village_id, is_body)
-     values($1,$2,$3,$4,$5,$6) returning id`,
-    [p.axis, childLevel, label, parent_id, p.village_id, BODY_LEVELS.has(childLevel)]);
-  res.json({ ok: true, id: row.id, level: childLevel });
+  try {
+    const [p] = await q(`select id, axis, level, village_id from scope_nodes where id=$1`, [parent_id]);
+    if (!p) return res.status(404).json({ error: "parent not found" });
+    const childLevel = NEXT_LEVEL[p.level];
+    if (!childLevel) return res.status(400).json({ error: `cannot add a child under ${p.level}` });
+    const [row] = await q(
+      `insert into scope_nodes(axis, level, label, parent_id, village_id, is_body)
+       values($1,$2,$3,$4,$5,$6) returning id`,
+      [p.axis, childLevel, label, parent_id, p.village_id, BODY_LEVELS.has(childLevel)]);
+    res.json({ ok: true, id: row.id, level: childLevel });
+  } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
 app.patch("/api/nodes/:id", async (req, res) => {
   const { label } = req.body || {};
   if (!label) return res.status(400).json({ error: "label required" });
-  await q(`update scope_nodes set label=$1 where id=$2`, [label, req.params.id]);
-  res.json({ ok: true });
+  try {
+    await q(`update scope_nodes set label=$1 where id=$2`, [label, req.params.id]);
+    res.json({ ok: true });
+  } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
 app.delete("/api/nodes/:id", async (req, res) => {
