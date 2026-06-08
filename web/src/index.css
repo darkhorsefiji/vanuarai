@@ -23,7 +23,7 @@ a:hover{text-decoration:underline}
 
 header.top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;
   padding:16px 22px;color:#fff;
-  background:linear-gradient(120deg,#2b2e32 0%,#3a3e43 55%,#919497 100%);
+  background:linear-gradient(120deg,#2b2e32 0%,#3a3e43 35%,#919497 100%);
   box-shadow:0 3px 14px rgba(0,0,0,.2)}
 header.top .brand{font-weight:700;font-size:21px;letter-spacing:.3px}
 .brandlogo{height:48px;width:auto;display:block;border-radius:8px}
