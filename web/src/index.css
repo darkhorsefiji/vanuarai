@@ -276,16 +276,16 @@ td input:focus{outline:none;border-color:var(--ocean)}
 
 /* Tapa (masi) pattern overlay — subtle Fiji texture on the dark banners + brand bar */
 header.top{position:relative;overflow:hidden}
-.hero::before,.profilehero::before,header.top::before{content:"";position:absolute;
-  top:-50%;left:-50%;width:200%;height:200%;pointer-events:none;z-index:0;
-  background-image:url("/tapa.svg");background-size:230px 230px;
-  transform:rotate(-30deg);transform-origin:center}
+.hero::before,.profilehero::before,header.top::before{content:"";position:absolute;inset:0;
+  pointer-events:none;z-index:0;background-image:url("/tapa.svg");
+  background-size:cover;background-position:center;background-repeat:no-repeat}
 .hero::before,.profilehero::before{opacity:.13}
 header.top::before{opacity:.07}
 .hero>*,.profilehero>*,header.top>*{position:relative;z-index:1}
 /* tapa rising from the bottom half of the sidebar, fading upward */
-.sidebar::after{content:"";position:absolute;left:0;right:0;bottom:0;height:55%;
-  pointer-events:none;z-index:0;background-image:url("/tapa.svg");background-size:190px 190px;opacity:.12;
+.sidebar::after{content:"";position:absolute;left:0;right:0;bottom:0;height:62%;
+  pointer-events:none;z-index:0;background-image:url("/tapa.svg");
+  background-size:cover;background-position:center bottom;background-repeat:no-repeat;opacity:.14;
   -webkit-mask-image:linear-gradient(to top,#000 0%,#000 28%,transparent 100%);
   mask-image:linear-gradient(to top,#000 0%,#000 28%,transparent 100%)}
 .sidebar a{position:relative;z-index:1}
