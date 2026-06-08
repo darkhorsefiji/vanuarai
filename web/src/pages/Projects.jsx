@@ -67,7 +67,7 @@ export default function Projects() {
             <button className="lb-arrow left" onClick={e => { e.stopPropagation(); setBox(b => ({ ...b, i: b.i - 1 })) }} aria-label="Previous">‹</button>
           )}
           <div className="lightbox-inner" onClick={e => e.stopPropagation()}>
-            <img src={cur.src.replace('/640/420', '/1200/800')} alt={cur.caption} onError={onImgErr(cur, true)} />
+            <img src={cur.src.replace(/\/\d+px-/, '/1280px-')} alt={cur.caption} onError={onImgErr(cur, true)} />
             <div className="lightbox-cap">
               <span>{cur.caption} · {box.i + 1} / {box.photos.length}</span>
               <button className="mini" onClick={() => setBox(null)}>Close ✕</button>
