@@ -276,6 +276,8 @@ CREATE TABLE projects (
   budget_cents       integer,                        -- fixed in authorising resolution
   physical_progress  smallint NOT NULL DEFAULT 0,    -- 0-100, manual milestone (spent auto from ledger)
   status             project_status NOT NULL DEFAULT 'draft',
+  start_date         date,
+  end_date           date,
   endorsed_by        uuid REFERENCES users(id),      -- Village Admin (Q22)
   endorsed_at        timestamptz,
   created_at         timestamptz NOT NULL DEFAULT now()

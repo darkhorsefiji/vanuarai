@@ -227,6 +227,7 @@ app.delete("/api/persons/:id", async (req, res) => {
 
 app.get("/api/projects", async (req, res) => {
   const rows = await q(`select p.id, p.name, p.budget_cents, p.physical_progress prog, p.status, sn.label owner,
+      to_char(p.start_date,'YYYY-MM-DD') start_date, to_char(p.end_date,'YYYY-MM-DD') end_date,
       coalesce(sum(le.amount_cents) filter (where le.direction='in'),0)::bigint raised,
       coalesce(sum(le.amount_cents) filter (where le.direction='out'),0)::bigint spent
     from projects p join scope_nodes sn on sn.id=p.owner_body_node_id
@@ -236,6 +237,7 @@ app.get("/api/projects", async (req, res) => {
   for (const ph of photos) (byProj[ph.project_id] = byProj[ph.project_id] || []).push({ src: ph.image_ref, caption: ph.caption });
   res.json(rows.map(r => ({
     id: r.id, name: r.name, owner: r.owner, status: r.status,
+    start_date: r.start_date, end_date: r.end_date,
     budget_cents: n(r.budget_cents), prog: n(r.prog), raised: n(r.raised), spent: n(r.spent),
     photos: byProj[r.id] || [],
   })));
