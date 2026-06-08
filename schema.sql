@@ -47,8 +47,26 @@ CREATE TABLE villages (
   name            text NOT NULL,
   village_node_id uuid REFERENCES scope_nodes(id),  -- the government-axis 'village' node
   profile_public  boolean NOT NULL DEFAULT true,    -- public landing visible (Q15/Q27: public no-login)
+  -- Profile content (public landing — Introduction/Background/Map/How-to-get-there)
+  introduction     text,
+  background       text,
+  latitude         numeric(9,6),
+  longitude        numeric(9,6),
+  how_to_get_there text,
   created_at      timestamptz NOT NULL DEFAULT now()
 );
+
+-- Resources & Participation scoring (per sector, 0-5 endowment + 0-5 participation).
+CREATE TABLE village_resources (
+  id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  village_id          uuid NOT NULL REFERENCES villages(id),
+  sector              text NOT NULL,                 -- Agriculture, Aquaculture, Forestry, Fisheries, Tourism, Commerce, Minerals, Bottling, ...
+  resource_score      smallint NOT NULL DEFAULT 0,   -- 0-5 endowment
+  participation_score smallint NOT NULL DEFAULT 0,   -- 0-5 level of participation
+  notes               text,
+  sort_order          int NOT NULL DEFAULT 0
+);
+CREATE INDEX ON village_resources(village_id);
 ALTER TABLE scope_nodes ADD CONSTRAINT scope_nodes_village_fk
   FOREIGN KEY (village_id) REFERENCES villages(id);
 

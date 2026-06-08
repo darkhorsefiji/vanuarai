@@ -20,7 +20,7 @@ export default function Internet() {
         </div>
       )}
       <div className="note">💬 No funds? When your plan is expired you get a free 5&nbsp;MB pass to message a friend on WhatsApp / Messenger / Viber and ask them to pay for a plan for you.</div>
-      <p><Link className="btn secondary" to="/village">Browse the Village portal (free) →</Link></p>
+      <p><Link className="btn secondary" to="/profile">Browse the Village portal (free) →</Link></p>
     </>
   )
 }

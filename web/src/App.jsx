@@ -1,6 +1,6 @@
 import { NavLink, Routes, Route } from 'react-router-dom'
 import Internet from './pages/Internet'
-import Village from './pages/Village'
+import Profile from './pages/Profile'
 import Hierarchy from './pages/Hierarchy'
 import Projects from './pages/Projects'
 import Fundraising from './pages/Fundraising'
@@ -8,7 +8,7 @@ import Financials from './pages/Financials'
 import Minutes from './pages/Minutes'
 
 const nav = [
-  ['/', 'Internet'], ['/village', 'Village'], ['/hierarchy', 'Hierarchy'],
+  ['/', 'Internet'], ['/profile', 'Profile'], ['/hierarchy', 'Hierarchy'],
   ['/projects', 'Projects'], ['/fundraising', 'Fundraising'],
   ['/financials', 'Financials'], ['/minutes', 'Minutes'],
 ]
@@ -28,7 +28,7 @@ export default function App() {
       <main>
         <Routes>
           <Route path="/" element={<Internet />} />
-          <Route path="/village" element={<Village />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="/hierarchy" element={<Hierarchy />} />
           <Route path="/projects" element={<Projects />} />
           <Route path="/fundraising" element={<Fundraising />} />

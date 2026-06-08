@@ -22,7 +22,9 @@ app.get("/api/plans", async (req, res) => {
   res.json(rows.map(r => ({ ...r, price_cents: n(r.price_cents), volume_mb: n(r.volume_mb) })));
 });
 
-app.get("/api/village", async (req, res) => {
+app.get("/api/profile", async (req, res) => {
+  const [v] = await q(`select name, introduction, background, latitude, longitude, how_to_get_there
+    from villages where name=$1`, [VILLAGE]);
   const [counts] = await q(`select
     (select count(*) from scope_nodes where level='yavusa')::int yavusa,
     (select count(*) from scope_nodes where level='mataqali')::int mataqali,
@@ -30,12 +32,18 @@ app.get("/api/village", async (req, res) => {
     (select count(*) from scope_nodes where level='vuvale')::int vuvale,
     (select count(*) from scope_nodes where axis='soqosoqo')::int soqosoqo,
     (select count(*) from memberships)::int members`);
-  const highlights = await q(`select p.name, p.physical_progress prog,
-      coalesce(sum(le.amount_cents) filter (where le.direction='in'),0)::bigint raised
-    from projects p left join ledger_entries le on le.pot_id=p.pot_id
-    group by p.id order by raised desc limit 3`);
-  res.json({ name: VILLAGE, district: "Tikina / District (TBD)", province: "Provincial Council (TBD)",
-    counts, highlights: highlights.map(h => ({ ...h, prog: n(h.prog), raised: n(h.raised) })) });
+  const resources = await q(`select sector, resource_score, participation_score, notes
+    from village_resources vr join villages vi on vi.id=vr.village_id
+    where vi.name=$1 order by sort_order`, [VILLAGE]);
+  res.json({
+    name: v.name, district: "Tikina / District (TBD)", province: "Provincial Council (TBD)",
+    introduction: v.introduction, background: v.background,
+    latitude: v.latitude != null ? n(v.latitude) : null,
+    longitude: v.longitude != null ? n(v.longitude) : null,
+    how_to_get_there: v.how_to_get_there,
+    counts,
+    resources: resources.map(r => ({ sector: r.sector, resource: n(r.resource_score), participation: n(r.participation_score), notes: r.notes })),
+  });
 });
 
 app.get("/api/hierarchy", async (req, res) => {

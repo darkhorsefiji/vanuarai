@@ -25,14 +25,15 @@ const client = new Client({ connectionString: url, ssl: { rejectUnauthorized: fa
       "select count(*)::int n from information_schema.tables where table_schema='public'");
     console.log("Public tables: " + t.rows[0].n);
   } else if (mode === "apply") {
-    const sql = fs.readFileSync(__dirname + "/schema.sql", "utf8");
+    const file = process.argv[3] || (__dirname + "/schema.sql");
+    const sql = fs.readFileSync(file, "utf8");
     try {
       await client.query("BEGIN");
       await client.query(sql);
       await client.query("COMMIT");
       const t = await client.query(
         "select count(*)::int n from information_schema.tables where table_schema='public'");
-      console.log("Schema applied. Public tables now: " + t.rows[0].n);
+      console.log("Applied " + (process.argv[3] || "schema.sql") + ". Public tables now: " + t.rows[0].n);
     } catch (e) {
       await client.query("ROLLBACK");
       console.error("Apply failed (rolled back): " + e.message);
