@@ -45,10 +45,10 @@ app.post("/api/auth/google", async (req, res) => {
     const ticket = await gclient.verifyIdToken({ idToken: credential, audience: GOOGLE_CLIENT_ID });
     const p = ticket.getPayload();
     const [u] = await q(
-      `insert into users(google_sub, email, display_name) values($1,$2,$3)
-       on conflict (google_sub) do update set email=excluded.email, display_name=excluded.display_name
+      `insert into users(google_sub, email, display_name, photo_url) values($1,$2,$3,$4)
+       on conflict (google_sub) do update set email=excluded.email, display_name=excluded.display_name, photo_url=excluded.photo_url
        returning id, email, display_name, is_app_admin`,
-      [p.sub, p.email, p.name || p.email]);
+      [p.sub, p.email, p.name || p.email, p.picture || null]);
     const token = jwt.sign({ uid: u.id, email: u.email, name: u.display_name }, JWT_SECRET, { expiresIn: "30d" });
     res.json({ token });
   } catch (e) {
@@ -58,13 +58,13 @@ app.post("/api/auth/google", async (req, res) => {
 
 app.get("/api/me", async (req, res) => {
   if (!req.user) return res.json({ user: null });
-  const [u] = await q(`select id, email, display_name, is_app_admin from users where id=$1`, [req.user.uid]);
+  const [u] = await q(`select id, email, display_name, is_app_admin, photo_url from users where id=$1`, [req.user.uid]);
   if (!u) return res.json({ user: null });
   const [mem] = await q(
     `select m.role, m.status from memberships m join villages v on v.id=m.village_id
      where m.user_id=$1 and v.name=$2`, [u.id, VILLAGE]);
   const offices = await q(`select office, body_node_id from body_offices where user_id=$1 and active=true`, [u.id]);
-  res.json({ user: { id: u.id, email: u.email, name: u.display_name, isAppAdmin: u.is_app_admin, role: mem?.role || null, status: mem?.status || null, offices } });
+  res.json({ user: { id: u.id, email: u.email, name: u.display_name, photo: u.photo_url, isAppAdmin: u.is_app_admin, role: mem?.role || null, status: mem?.status || null, offices } });
 });
 
 app.get("/api/plans", async (req, res) => {

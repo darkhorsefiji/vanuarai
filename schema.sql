@@ -95,6 +95,7 @@ CREATE TABLE users (
   google_sub         text UNIQUE,           -- Google OAuth subject (Q3/Q4)
   email              text UNIQUE,           -- also the non-Google magic-link fallback (Q5)
   display_name       text,
+  photo_url          text,                  -- Google profile photo (header avatar)
   preferred_language text NOT NULL DEFAULT 'en',  -- en at launch; iTaukei later (Q31)
   is_app_admin       boolean NOT NULL DEFAULT false, -- platform/App-Developer (break-glass, audited)
   created_at         timestamptz NOT NULL DEFAULT now()
