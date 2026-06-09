@@ -25,9 +25,9 @@ export function filterNodes(nodes, q) {
   return nodes.filter(n => keep.has(n.id))
 }
 
-export function TreeNode({ n, kids, depth, sel, onSelect, edit, onAdd, onRename, onDel, forceOpen, pathSet }) {
+export function TreeNode({ n, kids, depth, sel, onSelect, edit, onAdd, onRename, onDel, forceOpen, pathSet, openDepth = 2 }) {
   const has = kids[n.id] && kids[n.id].length
-  const [open, setOpen] = useState(depth < 2)
+  const [open, setOpen] = useState(depth < openDepth)
   const onPath = pathSet && pathSet.has(n.id)
   // Default view: expand the branch leading to the selected Vuvale (the first one).
   // Depends on the boolean so the user can still collapse a path branch afterwards.
@@ -50,7 +50,7 @@ export function TreeNode({ n, kids, depth, sel, onSelect, edit, onAdd, onRename,
           <button className="mini danger" onClick={() => onDel(n)} title="Delete">🗑</button>
         </span>
       )}
-      {has && isOpen && <ul className="tree">{kids[n.id].map(c => <TreeNode key={c.id} n={c} kids={kids} depth={depth + 1} sel={sel} onSelect={onSelect} edit={edit} onAdd={onAdd} onRename={onRename} onDel={onDel} forceOpen={forceOpen} pathSet={pathSet} />)}</ul>}
+      {has && isOpen && <ul className="tree">{kids[n.id].map(c => <TreeNode key={c.id} n={c} kids={kids} depth={depth + 1} sel={sel} onSelect={onSelect} edit={edit} onAdd={onAdd} onRename={onRename} onDel={onDel} forceOpen={forceOpen} pathSet={pathSet} openDepth={openDepth} />)}</ul>}
     </li>
   )
 }
