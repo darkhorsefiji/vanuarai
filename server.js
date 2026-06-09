@@ -192,6 +192,17 @@ app.patch("/api/gov-contacts/:id", async (req, res) => {
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
+// Lands: request pipeline + allocation register.
+app.get("/api/land-requests", async (req, res) => {
+  res.json(await q(`select lr.id, lr.requester, lr.purpose, lr.size, lr.est_rent_cents, lr.status, lr.votes_for, lr.voters_eligible
+    from land_requests lr join villages v on v.id=lr.village_id where v.name=$1 order by lr.sort_order`, [VILLAGE]));
+});
+app.get("/api/land-allocations", async (req, res) => {
+  res.json(await q(`select la.id, la.leasee, la.purpose, la.term, to_char(la.expiry,'YYYY-MM-DD') expiry,
+      la.lease_mgt, la.premium_cents, la.rent_year_cents
+    from land_allocations la join villages v on v.id=la.village_id where v.name=$1 order by la.sort_order`, [VILLAGE]));
+});
+
 app.get("/api/composition", async (req, res) => {
   const rows = await q(`select vu.id vuvale_id, vu.label vuvale, tok.label tokatoka, mat.label mataqali,
       p.full_name, p.relationship, to_char(p.date_of_birth,'YYYY') yob, p.is_deceased

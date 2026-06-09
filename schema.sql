@@ -89,6 +89,35 @@ CREATE TABLE gov_contacts (
   sort_order  int NOT NULL DEFAULT 0,
   created_at  timestamptz NOT NULL DEFAULT now()
 );
+
+-- Lands: request pipeline (VKB-member voting) + allocation/lease register.
+CREATE TABLE land_requests (
+  id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  village_id      uuid REFERENCES villages(id),
+  requester       text,
+  purpose         text,
+  size            text,
+  est_rent_cents  int DEFAULT 0,
+  status          text DEFAULT 'Pending',   -- Pending | Voting | Approved | Declined
+  votes_for       int DEFAULT 0,
+  voters_eligible int DEFAULT 0,            -- VKB-registered Mataqali members 18+
+  sort_order      int DEFAULT 0,
+  created_at      timestamptz DEFAULT now()
+);
+
+CREATE TABLE land_allocations (
+  id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  village_id       uuid REFERENCES villages(id),
+  leasee           text,
+  purpose          text,
+  term             text,
+  expiry           date,
+  lease_mgt        text,                    -- 'Village' | 'iTLTB'
+  premium_cents    int DEFAULT 0,
+  rent_year_cents  int DEFAULT 0,
+  sort_order       int DEFAULT 0,
+  created_at       timestamptz DEFAULT now()
+);
 ALTER TABLE scope_nodes ADD CONSTRAINT scope_nodes_village_fk
   FOREIGN KEY (village_id) REFERENCES villages(id);
 
