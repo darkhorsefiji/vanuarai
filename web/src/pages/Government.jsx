@@ -1,11 +1,23 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { buildTree, filterNodes, TreeNode, useNodes } from '../tree'
 import { EditableText } from '../copy'
+import { get, send } from '../api'
 
 export default function Government() {
   const { nodes, msg, setMsg, load, addNode, renameNode, delNode } = useNodes()
   const [edit, setEdit] = useState(false)
   const [q, setQ] = useState('')
+  const [contacts, setContacts] = useState(null)
+
+  const loadContacts = () => get('/gov-contacts').then(setContacts)
+  useEffect(() => { loadContacts().catch(() => {}) }, [])
+  const updC = (i, k, v) => setContacts(cs => cs.map((c, j) => (j === i ? { ...c, [k]: v } : c)))
+  async function saveContact(c) {
+    try {
+      await send('PATCH', '/gov-contacts/' + c.id, { name: c.name, role: c.role, mobile: c.mobile, office: c.office, email: c.email })
+      setMsg('Saved ✓'); loadContacts()
+    } catch (e) { setMsg('⚠ ' + e.message) }
+  }
 
   const addSoqosoqo = async () => {
     const label = window.prompt('New Soqosoqo name:'); if (!label) return
@@ -31,12 +43,45 @@ export default function Government() {
         </div>
       </div>
 
-      <input className="treesearch" placeholder="Search…" value={q} onChange={e => setQ(e.target.value)} />
-      {tree.root
-        ? <ul className="tree"><TreeNode n={tree.root} kids={tree.kids} depth={0} edit={edit} onAdd={addNode} onRename={renameNode} onDel={nd => delNode(nd)} forceOpen={!!q.trim()} openDepth={4} /></ul>
-        : <p className="meta">No matches.</p>}
+      <div className="cols">
+        <div className="col">
+          <input className="treesearch" placeholder="Search…" value={q} onChange={e => setQ(e.target.value)} />
+          {tree.root
+            ? <ul className="tree"><TreeNode n={tree.root} kids={tree.kids} depth={0} edit={edit} onAdd={addNode} onRename={renameNode} onDel={nd => delNode(nd)} forceOpen={!!q.trim()} openDepth={4} /></ul>
+            : <p className="meta">No matches.</p>}
+          {edit && <button className="btn secondary" style={{ marginTop: 14 }} onClick={addSoqosoqo}>+ Soqosoqo (under Village)</button>}
+        </div>
 
-      {edit && <button className="btn secondary" style={{ marginTop: 14 }} onClick={addSoqosoqo}>+ Soqosoqo (under Village)</button>}
+        <aside className="col">
+          <h3 style={{ marginTop: 0 }}>Government contacts</h3>
+          <p className="sub">Provincial &amp; divisional officers serving the village.</p>
+          {!contacts ? <p className="loading">Loading…</p> : contacts.map((c, i) => (
+            <div className="card govcontact" key={c.id}>
+              <div className="gc-title">{c.title}</div>
+              {edit ? (
+                <div className="gc-edit">
+                  <label>Name<input value={c.name || ''} onChange={e => updC(i, 'name', e.target.value)} /></label>
+                  <label>Role<input value={c.role || ''} onChange={e => updC(i, 'role', e.target.value)} /></label>
+                  <label>Mobile<input value={c.mobile || ''} onChange={e => updC(i, 'mobile', e.target.value)} /></label>
+                  <label>Office<input value={c.office || ''} onChange={e => updC(i, 'office', e.target.value)} /></label>
+                  <label>Email<input value={c.email || ''} onChange={e => updC(i, 'email', e.target.value)} /></label>
+                  <button className="mini" onClick={() => saveContact(c)}>Save</button>
+                </div>
+              ) : (
+                <>
+                  <div className="gc-name">{c.name}</div>
+                  <div className="gc-role">{c.role}</div>
+                  <div className="gc-rows">
+                    <div><span>Mobile</span>{c.mobile ? <a href={'tel:' + c.mobile.replace(/\s/g, '')}>{c.mobile}</a> : <em>—</em>}</div>
+                    <div><span>Office</span>{c.office ? <a href={'tel:' + c.office.replace(/\s/g, '')}>{c.office}</a> : <em>—</em>}</div>
+                    <div><span>Email</span>{c.email ? <a href={'mailto:' + c.email}>{c.email}</a> : <em>—</em>}</div>
+                  </div>
+                </>
+              )}
+            </div>
+          ))}
+        </aside>
+      </div>
     </>
   )
 }

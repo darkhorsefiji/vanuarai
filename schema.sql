@@ -75,6 +75,20 @@ CREATE TABLE level_styles (
   color       text NOT NULL,      -- hex
   sort_order  int  NOT NULL DEFAULT 0
 );
+
+-- Government contact directory (provincial + divisional officers), shown on the Government page.
+CREATE TABLE gov_contacts (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  village_id  uuid REFERENCES villages(id),
+  title       text NOT NULL,      -- card heading / office
+  name        text,
+  role        text,
+  mobile      text,
+  office      text,
+  email       text,
+  sort_order  int NOT NULL DEFAULT 0,
+  created_at  timestamptz NOT NULL DEFAULT now()
+);
 ALTER TABLE scope_nodes ADD CONSTRAINT scope_nodes_village_fk
   FOREIGN KEY (village_id) REFERENCES villages(id);
 

@@ -176,6 +176,22 @@ app.post("/api/soqosoqo", async (req, res) => {
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
+// Government contact directory (provincial + divisional officers).
+app.get("/api/gov-contacts", async (req, res) => {
+  const rows = await q(`select gc.id, gc.title, gc.name, gc.role, gc.mobile, gc.office, gc.email
+    from gov_contacts gc join villages v on v.id=gc.village_id
+    where v.name=$1 order by gc.sort_order, gc.title`, [VILLAGE]);
+  res.json(rows);
+});
+app.patch("/api/gov-contacts/:id", async (req, res) => {
+  const b = req.body || {};
+  try {
+    await q(`update gov_contacts set name=$1, role=$2, mobile=$3, office=$4, email=$5 where id=$6`,
+      [b.name || null, b.role || null, b.mobile || null, b.office || null, b.email || null, req.params.id]);
+    res.json({ ok: true });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
 app.get("/api/composition", async (req, res) => {
   const rows = await q(`select vu.id vuvale_id, vu.label vuvale, tok.label tokatoka, mat.label mataqali,
       p.full_name, p.relationship, to_char(p.date_of_birth,'YYYY') yob, p.is_deceased
