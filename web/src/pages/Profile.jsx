@@ -38,7 +38,7 @@ export default function Profile() {
   useEffect(() => {
     if (!data || !coords || !mapDiv.current || mapObj.current) return
     const map = L.map(mapDiv.current, { scrollWheelZoom: false }).setView([coords.lat, coords.lon], 12)
-    const layers = makeBaseLayers(); layers.Map.addTo(map); L.control.layers(layers, null, { collapsed: false }).addTo(map)
+    const layers = makeBaseLayers(); layers.Street.addTo(map); L.control.layers(layers, null, { collapsed: false }).addTo(map)
     const marker = L.marker([coords.lat, coords.lon], { draggable: false, icon: pinIcon }).addTo(map)
     marker.on('dragend', () => { const ll = marker.getLatLng(); setCoords({ lat: ll.lat, lon: ll.lng }) })
     map.on('click', e => { if (editingRef.current) { marker.setLatLng(e.latlng); setCoords({ lat: e.latlng.lat, lon: e.latlng.lng }) } })

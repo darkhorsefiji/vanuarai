@@ -9,7 +9,8 @@ export function makeBaseLayers() {
     'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
     maxZoom: 19, attribution: 'Imagery © Esri, Maxar, Earthstar Geographics',
   })
-  return { Map: street, Satellite: satellite }
+  // Keys become the labels in Leaflet's layer control; Street is the default.
+  return { Street: street, Satellite: satellite }
 }
 
 export const pinIcon = L.divIcon({
