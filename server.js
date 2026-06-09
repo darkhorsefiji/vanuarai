@@ -203,6 +203,20 @@ app.get("/api/land-allocations", async (req, res) => {
     from land_allocations la join villages v on v.id=la.village_id where v.name=$1 order by la.sort_order`, [VILLAGE]));
 });
 
+// Financials tabs: transactions, asset register, investments.
+app.get("/api/fin-transactions", async (req, res) => {
+  res.json(await q(`select t.id, to_char(t.tx_date,'YYYY-MM-DD') tx_date, t.description, t.fund, t.type, t.method, t.amount_cents
+    from fin_transactions t join villages v on v.id=t.village_id where v.name=$1 order by t.tx_date desc`, [VILLAGE]));
+});
+app.get("/api/assets", async (req, res) => {
+  res.json(await q(`select a.id, a.name, a.category, to_char(a.acquired,'YYYY-MM-DD') acquired, a.value_cents, a.condition, a.custodian
+    from village_assets a join villages v on v.id=a.village_id where v.name=$1 order by a.sort_order`, [VILLAGE]));
+});
+app.get("/api/investments", async (req, res) => {
+  res.json(await q(`select i.id, i.name, i.type, i.amount_cents, i.current_value_cents, i.return_pct, i.notes
+    from village_investments i join villages v on v.id=i.village_id where v.name=$1 order by i.sort_order`, [VILLAGE]));
+});
+
 app.get("/api/composition", async (req, res) => {
   const rows = await q(`select vu.id vuvale_id, vu.label vuvale, tok.label tokatoka, mat.label mataqali,
       p.full_name, p.relationship, to_char(p.date_of_birth,'YYYY') yob, p.is_deceased

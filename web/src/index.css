@@ -171,6 +171,13 @@ h3{font-size:17px;font-weight:var(--head-weight);font-style:var(--head-style);co
 .gc-edit input{width:100%;padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);font-size:14px}
 .gc-edit .mini{align-self:flex-start;margin-top:2px}
 
+/* ---- Tabs ---- */
+.tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--line);margin:14px 0 18px}
+.tab{border:0;background:none;cursor:pointer;font-family:var(--font);font-size:14px;font-weight:600;
+  color:var(--muted);padding:9px 16px;border-radius:10px 10px 0 0;margin-bottom:-1px;border-bottom:2px solid transparent}
+.tab:hover{color:var(--ink);background:rgba(14,152,165,.06)}
+.tab.active{color:var(--ocean);border-bottom-color:var(--ocean)}
+
 /* ---- Lands ---- */
 .scrollbox{max-height:206px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;background:var(--card)}
 .scrollbox.tall{max-height:300px}

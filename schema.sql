@@ -118,6 +118,41 @@ CREATE TABLE land_allocations (
   sort_order       int DEFAULT 0,
   created_at       timestamptz DEFAULT now()
 );
+
+-- Financials tabs: transactions, asset register, investments.
+CREATE TABLE fin_transactions (
+  id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  village_id   uuid REFERENCES villages(id),
+  tx_date      date,
+  description  text,
+  fund         text,
+  type         text,                 -- 'In' | 'Out'
+  method       text,                 -- M-PAiSA | MyCash | Cash | Bank | Card
+  amount_cents int DEFAULT 0,
+  created_at   timestamptz DEFAULT now()
+);
+CREATE TABLE village_assets (
+  id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  village_id   uuid REFERENCES villages(id),
+  name         text,
+  category     text,
+  acquired     date,
+  value_cents  int DEFAULT 0,
+  condition    text,
+  custodian    text,
+  sort_order   int DEFAULT 0
+);
+CREATE TABLE village_investments (
+  id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  village_id          uuid REFERENCES villages(id),
+  name                text,
+  type                text,
+  amount_cents        int DEFAULT 0,
+  current_value_cents int DEFAULT 0,
+  return_pct          numeric(5,1),
+  notes               text,
+  sort_order          int DEFAULT 0
+);
 ALTER TABLE scope_nodes ADD CONSTRAINT scope_nodes_village_fk
   FOREIGN KEY (village_id) REFERENCES villages(id);
 
