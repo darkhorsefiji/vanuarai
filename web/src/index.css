@@ -153,6 +153,13 @@ h3{font-size:17px;font-weight:var(--head-weight);font-style:var(--head-style);co
   border-radius:9px;background:var(--body-bg);color:var(--ink)}
 .iconset-cell span{font-size:10px;opacity:.75;text-align:center;line-height:1.1}
 
+/* ---- Government: Soqosoqo chips ---- */
+.soqolist{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;align-items:center}
+.soqochip{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);
+  border-radius:30px;padding:9px 16px;font-weight:600;color:var(--ink);box-shadow:0 2px 8px rgba(39,84,92,.06)}
+.soqochip-acts{display:inline-flex;gap:4px}
+.soqoadd{padding:9px 16px}
+
 .cardhead{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .cardhead h3{margin:0;flex:1;min-width:0}
 .cardhead .chip{flex:none}

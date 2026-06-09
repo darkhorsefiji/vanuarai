@@ -160,6 +160,22 @@ app.get("/api/hierarchy", async (req, res) => {
   res.json(rows);
 });
 
+// Add a Soqosoqo (cross-cutting community body) under the village. Rename/delete
+// reuse the generic /api/nodes/:id handlers.
+app.post("/api/soqosoqo", async (req, res) => {
+  const label = String((req.body || {}).label || "").trim();
+  if (!label) return res.status(400).json({ error: "label required" });
+  try {
+    const [v] = await q(`select id village_id, village_node_id from villages where name=$1`, [VILLAGE]);
+    if (!v || !v.village_node_id) return res.status(404).json({ error: "village node not found" });
+    const [row] = await q(
+      `insert into scope_nodes(axis, level, label, parent_id, village_id, is_body)
+       values('soqosoqo','soqosoqo',$1,$2,$3,true) returning id`,
+      [label, v.village_node_id, v.village_id]);
+    res.json({ ok: true, id: row.id });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
 app.get("/api/composition", async (req, res) => {
   const rows = await q(`select vu.id vuvale_id, vu.label vuvale, tok.label tokatoka, mat.label mataqali,
       p.full_name, p.relationship, to_char(p.date_of_birth,'YYYY') yob, p.is_deceased
