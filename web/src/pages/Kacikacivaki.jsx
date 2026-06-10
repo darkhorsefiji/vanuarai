@@ -5,7 +5,7 @@ import { EditableText } from '../copy'
 
 const plusDays = d => { const t = new Date(); t.setDate(t.getDate() + d); return t.toISOString().slice(0, 10) }
 
-function PostBox({ channel, authorName, onPosted }) {
+function PostBox({ channel, onPosted }) {
   const [body, setBody] = useState('')
   const [expires, setExpires] = useState(() => plusDays(14))
   const [busy, setBusy] = useState(false)
@@ -23,7 +23,6 @@ function PostBox({ channel, authorName, onPosted }) {
       <textarea rows={2} placeholder={channel === 'koro' ? 'Post an official notice…' : 'Share something with the village…'}
         value={body} onChange={e => setBody(e.target.value)} />
       <div className="postbox-foot">
-        <span className="meta">Posting as <b>{authorName}</b></span>
         <label className="postbox-expiry meta">Expires <input type="date" value={expires} onChange={e => setExpires(e.target.value)} /></label>
         <button className="btn secondary" disabled={busy || !body.trim()} onClick={post}>Post</button>
       </div>
@@ -88,14 +87,13 @@ function NoticeColumn({ title, subtitle, channel, notices, user, official, onCha
   const activeList = notices ? notices.filter(n => n.status === 'Active') : null
   const expiredList = notices ? notices.filter(n => n.status !== 'Active') : []
   const canPost = channel === 'koro' ? official : !!user
-  const authorName = user?.name || user?.email || ''
 
   return (
     <div className="col">
       <h3 style={{ marginTop: 8 }}>{title}</h3>
       <p className="sub">{subtitle}</p>
       {canPost
-        ? <PostBox channel={channel} authorName={authorName} onPosted={onChanged} />
+        ? <PostBox channel={channel} onPosted={onChanged} />
         : <p className="meta postlock">🔒 {channel === 'koro' ? 'Only village officials can post official notices.' : 'Sign in to post.'}</p>}
       <div className="noticelist">
         {!activeList ? <p className="loading">Loading…</p> : activeList.map(n => (
