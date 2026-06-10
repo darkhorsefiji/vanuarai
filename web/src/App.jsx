@@ -40,11 +40,11 @@ function RequireOfficial({ children }) {
   return children
 }
 
-// Sidebar with in-line drag-to-reorder for officials (drag an item onto another;
-// plain clicks still navigate). Order persists via nav.js.
+// Sidebar with in-line drag-to-reorder for the DEV role only (users.is_app_admin;
+// officials don't get it). Plain clicks still navigate; order persists via nav.js.
 function Sidebar() {
   const { user } = useAuth()
-  const official = !!user && (user.isAppAdmin || user.role === 'official')
+  const dev = !!user && user.isAppAdmin
   const [collapsed, setCollapsed] = useState(false)
   const [navOrder, setNavOrder] = useState(loadNavOrder)
   const [drag, setDrag] = useState(null)
@@ -67,15 +67,15 @@ function Sidebar() {
         {collapsed ? '»' : '«'}
       </button>
       {sideNav.map(([to, label, icon]) => (
-        <NavLink key={to} to={to} title={official ? label + ' — drag to re-arrange' : label}
+        <NavLink key={to} to={to} title={dev ? label + ' — drag to re-arrange' : label}
           className={({ isActive }) =>
             (isActive ? 'active' : '') + (drag === to ? ' nav-dragging' : '') + (over === to && drag && drag !== to ? ' nav-over' : '')}
-          draggable={official || undefined}
-          onDragStart={official ? e => { e.dataTransfer.setData('text/plain', to); setDrag(to) } : undefined}
-          onDragEnd={official ? () => { setDrag(null); setOver(null) } : undefined}
-          onDragOver={official ? e => e.preventDefault() : undefined}
-          onDragEnter={official ? () => setOver(to) : undefined}
-          onDrop={official ? e => { e.preventDefault(); onDrop(to) } : undefined}>
+          draggable={dev || undefined}
+          onDragStart={dev ? e => { e.dataTransfer.setData('text/plain', to); setDrag(to) } : undefined}
+          onDragEnd={dev ? () => { setDrag(null); setOver(null) } : undefined}
+          onDragOver={dev ? e => e.preventDefault() : undefined}
+          onDragEnter={dev ? () => setOver(to) : undefined}
+          onDrop={dev ? e => { e.preventDefault(); onDrop(to) } : undefined}>
           <span className="ico"><Icon name={icon} /></span><span className="lbl">{label}</span>
         </NavLink>
       ))}

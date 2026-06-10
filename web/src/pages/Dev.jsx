@@ -3,6 +3,7 @@ import { THEME_GROUPS, loadOverrides, setVar, resetVars, ensureFont, fontStack, 
 import { GOOGLE_FONTS } from '../googleFonts'
 import { ICON_SETS, ICON_ITEMS, Icon, useIconSet } from '../icons'
 import { resetNavOrder } from '../nav'
+import { useAuth } from '../auth'
 import PlansEditor from '../PlansEditor'
 
 const SYSTEM_FONTS = ['System UI', 'Georgia', 'Arial', 'Times New Roman', 'Courier New', 'Verdana', 'Tahoma']
@@ -20,6 +21,8 @@ export default function Dev() {
   const options = useMemo(() => [...SYSTEM_FONTS, ...GOOGLE_FONTS], [])
 
   const iconSet = useIconSet()
+  const { user } = useAuth()
+  const isDev = !!user && user.isAppAdmin
   const change = (k, v) => { setVar(k, v); setOv(o => ({ ...o, [k]: v })) }
   const reset = () => { resetVars(); setOv({}); setFontText({}); localStorage.removeItem(ORDER_KEY); setOrder({}) }
 
@@ -87,8 +90,12 @@ export default function Dev() {
         })}
       </div>
 
-      <h3>Sidebar menu order</h3>
-      <p className="sub">Drag the items directly <b>in the sidebar</b> to re-arrange — applies immediately. <button className="mini" onClick={resetNavOrder}>↺ Reset order</button></p>
+      {isDev && (
+        <>
+          <h3>Sidebar menu order</h3>
+          <p className="sub">Drag the items directly <b>in the sidebar</b> to re-arrange (DEV role only) — applies immediately. <button className="mini" onClick={resetNavOrder}>↺ Reset order</button></p>
+        </>
+      )}
 
       <h3>Internet plans</h3>
       <p className="sub">Configure the plans &amp; pricing shown on the Internet page. Saved to the database — changes are live for everyone. Inactive plans stay hidden from buyers.</p>
