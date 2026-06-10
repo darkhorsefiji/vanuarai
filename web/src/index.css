@@ -79,13 +79,17 @@ main{max-width:1040px;margin:28px auto;padding:0 18px}
 .app{display:flex;flex-direction:column;height:100vh;min-height:100vh}
 .layout{flex:1;display:flex;align-items:stretch;overflow:hidden;min-height:0}
 .layout > main > h1:first-child,
+.layout > main > .pagetop:first-child,
 .layout > main > .pagehead:first-child{position:sticky;top:0;z-index:30;
   background:rgba(247,243,234,.86);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
   margin:0 -24px 10px;padding:6px 24px 10px}
 /* sticky pins at the scroller's content box (below its padding); this covers the 24px strip above */
 .layout > main > h1:first-child::before,
+.layout > main > .pagetop:first-child::before,
 .layout > main > .pagehead:first-child::before{content:"";position:absolute;left:0;right:0;top:-24px;height:24px;
   background:rgba(247,243,234,.86);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.pagetop h1{margin:0 0 3px}
+.pagetop .sub{margin:0}
 .layout > main{flex:1;min-width:0;margin:0;padding:24px;max-width:1100px;overflow-y:auto}
 .sidebar{position:relative;z-index:2;width:196px;flex-shrink:0;background:linear-gradient(var(--side-angle),var(--side-c1),var(--side-c2));border-right:1px solid rgba(0,0,0,.2);
   padding:12px 10px;display:flex;flex-direction:column;gap:4px;transition:width .18s ease}

@@ -25,8 +25,10 @@ export default function Projects() {
 
   return (
     <>
-      <h1>Projects</h1>
-      <EditableText id="projects.sub" className="sub">“Spent” auto-derives from disbursements; physical progress is set by the owning body. Click a photo to enlarge; use ‹ › to browse.</EditableText>
+      <div className="pagetop">
+        <h1>Projects</h1>
+        <EditableText id="projects.sub" className="sub">“Spent” auto-derives from disbursements; physical progress is set by the owning body. Click a photo to enlarge; use ‹ › to browse.</EditableText>
+      </div>
       <div className="grid3">
         {data.map(r => {
           const burn = r.budget_cents ? Math.round(r.spent / r.budget_cents * 100) : 0

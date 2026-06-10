@@ -127,8 +127,10 @@ export default function Kacikacivaki() {
 
   return (
     <>
-      <h1>Kacikacivaki</h1>
-      <EditableText id="kacikacivaki.sub" className="sub">Village announcements — official notices from the Vanua and Government on the left, community postings from any member on the right.</EditableText>
+      <div className="pagetop">
+        <h1>Kacikacivaki</h1>
+        <EditableText id="kacikacivaki.sub" className="sub">Village announcements — official notices from the Vanua and Government on the left, community postings from any member on the right.</EditableText>
+      </div>
 
       <div className="cols cols-even">
         <NoticeColumn title="Nai Tukutuku in Koro" subtitle="Official — Vanua & Government hierarchies."

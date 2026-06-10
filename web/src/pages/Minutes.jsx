@@ -7,8 +7,10 @@ export default function Minutes() {
   if (!data) return <p className="loading">Loading…</p>
   return (
     <>
-      <h1>Meeting Minutes</h1>
-      <EditableText id="minutes.sub" className="sub">Classified by level. Member-tier view.</EditableText>
+      <div className="pagetop">
+        <h1>Meeting Minutes</h1>
+        <EditableText id="minutes.sub" className="sub">Classified by level. Member-tier view.</EditableText>
+      </div>
       <table>
         <tbody>
           <tr><th>Date</th><th>Level</th><th>Body</th><th>Title</th><th>Resolutions</th></tr>

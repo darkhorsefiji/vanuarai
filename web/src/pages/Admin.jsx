@@ -23,8 +23,10 @@ export default function Admin() {
 
   return (
     <>
-      <h1>Village Admin</h1>
-      <EditableText id="admin.sub" className="sub" html>{'Portal-wide settings. Records (Profile notes & location, Vanua/Provincial hierarchy, Family composition) are edited <b>inline on their own pages</b> — open the page and use its <b>Edit</b> button.'}</EditableText>
+      <div className="pagetop">
+        <h1>Village Admin</h1>
+        <EditableText id="admin.sub" className="sub" html>{'Portal-wide settings. Records (Profile notes & location, Vanua/Provincial hierarchy, Family composition) are edited <b>inline on their own pages</b> — open the page and use its <b>Edit</b> button.'}</EditableText>
+      </div>
 
       <h3>Hierarchy element styling</h3>
       <EditableText id="admin.levels.sub" className="sub">Set the colour and label for each hierarchy level. Changes apply across the whole portal.</EditableText>

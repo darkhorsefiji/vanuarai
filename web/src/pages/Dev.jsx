@@ -49,8 +49,10 @@ export default function Dev() {
 
   return (
     <>
-      <h1>Developer settings</h1>
-      <p className="sub">Live theme editor — changes apply instantly across VanuaRai and persist in this browser. Drag the ⠿ handle to reorder cards within a section. Use “Reset” to return to the built-in defaults &amp; order.</p>
+      <div className="pagetop">
+        <h1>Developer settings</h1>
+        <p className="sub">Live theme editor — changes apply instantly across VanuaRai and persist in this browser. Drag the ⠿ handle to reorder cards within a section. Use “Reset” to return to the built-in defaults &amp; order.</p>
+      </div>
       <div className="savebar">
         <button className="btn secondary" onClick={reset}>Reset to defaults</button>
         <span className="status">{Object.keys(ov).length ? `${Object.keys(ov).length} override(s) active` : 'Using defaults'}</span>

@@ -8,8 +8,10 @@ export default function Financials() {
   const [tab, setTab] = useState('Funds')
   return (
     <>
-      <h1>Village Financials</h1>
-      <EditableText id="financials.sub" className="sub">Member-tier view of the village's funds, transactions, assets and investments.</EditableText>
+      <div className="pagetop">
+        <h1>Village Financials</h1>
+        <EditableText id="financials.sub" className="sub">Member-tier view of the village's funds, transactions, assets and investments.</EditableText>
+      </div>
       <div className="tabs">
         {TABS.map(t => (
           <button key={t} className={'tab' + (tab === t ? ' active' : '')} onClick={() => setTab(t)}>{t}</button>

@@ -10,8 +10,10 @@ export default function Fundraising() {
   const totGoal = data.reduce((s, r) => s + (r.goal_cents || 0), 0)
   return (
     <>
-      <h1>Fundraising</h1>
-      <EditableText id="fundraising.sub" className="sub">Endorsed efforts across the village. Contributions are village-wide transparent.</EditableText>
+      <div className="pagetop">
+        <h1>Fundraising</h1>
+        <EditableText id="fundraising.sub" className="sub">Endorsed efforts across the village. Contributions are village-wide transparent.</EditableText>
+      </div>
       <div className="totrow">
         <div className="tot"><b>{fjd(totRaised)}</b>Total raised</div>
         <div className="tot"><b>{fjd(totGoal)}</b>Total goals</div>

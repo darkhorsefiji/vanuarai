@@ -52,8 +52,10 @@ export default function Lands() {
 
   return (
     <>
-      <h1>Lands</h1>
-      <EditableText id="lands.sub" className="sub">Customary and leased land for the village — Mataqali parcels, requests, allocations and iTLTB leases.</EditableText>
+      <div className="pagetop">
+        <h1>Lands</h1>
+        <EditableText id="lands.sub" className="sub">Customary and leased land for the village — Mataqali parcels, requests, allocations and iTLTB leases.</EditableText>
+      </div>
 
       <div className="cols">
         <div className="col">
