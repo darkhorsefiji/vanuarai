@@ -4,6 +4,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { THEME_GROUPS, loadOverrides, setVar, clearVars, ensureFont, fontStack, familyFromStack } from './theme'
 import { GOOGLE_FONTS } from './googleFonts'
+import { useAuth } from './auth'
 
 // Most-specific first: the first selector that matches via closest() wins.
 const TARGETS = [
@@ -52,6 +53,8 @@ function Control({ it, value, onChange }) {
 }
 
 export default function DevStyler() {
+  const auth = useAuth()
+  const official = !!auth?.user && (auth.user.isAppAdmin || auth.user.role === 'official')
   const [on, setOn] = useState(false)
   const [pop, setPop] = useState(null)        // { group, x, y }
   const [, bump] = useState(0)                 // re-render after setVar
@@ -59,7 +62,7 @@ export default function DevStyler() {
 
   // hover highlight + click-to-open (capture phase so we beat links/buttons)
   useEffect(() => {
-    if (!on) { document.body.classList.remove('styling'); return }
+    if (!on || !official) { document.body.classList.remove('styling'); return }
     document.body.classList.add('styling')
     const over = e => {
       const t = findTarget(e.target)
@@ -83,7 +86,9 @@ export default function DevStyler() {
       hovered.current?.classList.remove('style-hover')
       document.body.classList.remove('styling')
     }
-  }, [on])
+  }, [on, official])
+
+  if (!official) return null
 
   const ov = loadOverrides()
   const g = pop ? groupByName(pop.group) : null

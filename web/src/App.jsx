@@ -17,12 +17,12 @@ import Admin from './pages/Admin'
 import Dev from './pages/Dev'
 import { Icon, IconSetProvider } from './icons'
 import { LevelsProvider } from './levels'
-import { AuthProvider } from './auth'
+import { AuthProvider, useAuth } from './auth'
 import { CopyProvider, DevEditButton } from './copy'
 import DevStyler from './styler'
 import AuthArea from './AuthArea'
 
-const TOP_NAV = [['/', 'Internet'], ['/admin', 'Admin'], ['/dev', 'Dev']]
+const TOP_NAV = [['/', 'Internet']]
 const SIDE_NAV = [
   ['/profile', 'Profile', 'profile'],
   ['/kacikacivaki', 'Kacikacivaki', 'kacikacivaki'],
@@ -37,6 +37,21 @@ const SIDE_NAV = [
   ['/minutes', 'Minutes', 'minutes'],
   ['/emergencies', 'Emergencies', 'emergencies'],
 ]
+
+// Admin/Dev are reached via the avatar menu and require the official role.
+function RequireOfficial({ children }) {
+  const { user, ready } = useAuth()
+  if (!ready) return null
+  if (!user || !(user.isAppAdmin || user.role === 'official')) {
+    return (
+      <div className="card" style={{ marginTop: 20, maxWidth: 460 }}>
+        <h3>Officials only</h3>
+        <p className="sub">Sign in with a village-official account to access this page.</p>
+      </div>
+    )
+  }
+  return children
+}
 
 export default function App() {
   const [logoOk, setLogoOk] = useState(true)
@@ -87,8 +102,8 @@ export default function App() {
                 <Route path="/agreements" element={<Agreements />} />
                 <Route path="/trade" element={<Trade />} />
                 <Route path="/emergencies" element={<Emergencies />} />
-                <Route path="/admin" element={<Admin />} />
-              <Route path="/dev" element={<Dev />} />
+                <Route path="/admin" element={<RequireOfficial><Admin /></RequireOfficial>} />
+                <Route path="/dev" element={<RequireOfficial><Dev /></RequireOfficial>} />
               </Routes>
             </main>
           </div>

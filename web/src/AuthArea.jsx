@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from './auth'
 
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID
@@ -33,6 +34,7 @@ function initials(name, email) {
 
 export default function AuthArea() {
   const { user, ready, logout } = useAuth()
+  const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const [modal, setModal] = useState(null)
   const [imgOk, setImgOk] = useState(true)
@@ -68,6 +70,13 @@ export default function AuthArea() {
             <div className="usermenu-name">{user.name || user.email}</div>
             {user.name && <div className="usermenu-email">{user.email}</div>}
           </div>
+          {(user.isAppAdmin || user.role === 'official') && (
+            <>
+              <button className="usermenu-item" role="menuitem" onClick={() => { setOpen(false); navigate('/admin') }}>Village Admin</button>
+              <button className="usermenu-item" role="menuitem" onClick={() => { setOpen(false); navigate('/dev') }}>Developer Settings</button>
+              <div className="usermenu-sep" />
+            </>
+          )}
           <button className="usermenu-item" role="menuitem" onClick={() => openModal('Change Password')}>Change Password</button>
           <div className="usermenu-group">Settings</div>
           <button className="usermenu-item sub" role="menuitem" onClick={() => openModal('Payment Preferences')}>Payment Preferences</button>
