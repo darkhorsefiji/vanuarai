@@ -16,7 +16,7 @@ import Emergencies from './pages/Emergencies'
 import Admin from './pages/Admin'
 import Dev from './pages/Dev'
 import { Icon, IconSetProvider } from './icons'
-import { loadNavOrder, onNavOrderChange, orderedNav } from './nav'
+import { loadNavOrder, onNavOrderChange, orderedNav, saveNavOrder } from './nav'
 import { LevelsProvider } from './levels'
 import { AuthProvider, useAuth } from './auth'
 import { CopyProvider, DevEditButton } from './copy'
@@ -40,12 +40,51 @@ function RequireOfficial({ children }) {
   return children
 }
 
-export default function App() {
-  const [logoOk, setLogoOk] = useState(true)
+// Sidebar with in-line drag-to-reorder for officials (drag an item onto another;
+// plain clicks still navigate). Order persists via nav.js.
+function Sidebar() {
+  const { user } = useAuth()
+  const official = !!user && (user.isAppAdmin || user.role === 'official')
   const [collapsed, setCollapsed] = useState(false)
   const [navOrder, setNavOrder] = useState(loadNavOrder)
+  const [drag, setDrag] = useState(null)
+  const [over, setOver] = useState(null)
   useEffect(() => onNavOrderChange(() => setNavOrder(loadNavOrder())), [])
   const sideNav = orderedNav(navOrder)
+
+  function onDrop(targetPath) {
+    if (!drag || drag === targetPath) { setDrag(null); setOver(null); return }
+    const cur = sideNav.map(it => it[0])
+    cur.splice(cur.indexOf(drag), 1)
+    cur.splice(cur.indexOf(targetPath), 0, drag)
+    saveNavOrder(cur)
+    setDrag(null); setOver(null)
+  }
+
+  return (
+    <aside className={'sidebar' + (collapsed ? ' collapsed' : '')}>
+      <button className="sbtoggle" onClick={() => setCollapsed(c => !c)} title={collapsed ? 'Expand' : 'Collapse'}>
+        {collapsed ? '»' : '«'}
+      </button>
+      {sideNav.map(([to, label, icon]) => (
+        <NavLink key={to} to={to} title={official ? label + ' — drag to re-arrange' : label}
+          className={({ isActive }) =>
+            (isActive ? 'active' : '') + (drag === to ? ' nav-dragging' : '') + (over === to && drag && drag !== to ? ' nav-over' : '')}
+          draggable={official || undefined}
+          onDragStart={official ? e => { e.dataTransfer.setData('text/plain', to); setDrag(to) } : undefined}
+          onDragEnd={official ? () => { setDrag(null); setOver(null) } : undefined}
+          onDragOver={official ? e => e.preventDefault() : undefined}
+          onDragEnter={official ? () => setOver(to) : undefined}
+          onDrop={official ? e => { e.preventDefault(); onDrop(to) } : undefined}>
+          <span className="ico"><Icon name={icon} /></span><span className="lbl">{label}</span>
+        </NavLink>
+      ))}
+    </aside>
+  )
+}
+
+export default function App() {
+  const [logoOk, setLogoOk] = useState(true)
   return (
     <AuthProvider>
       <LevelsProvider>
@@ -66,16 +105,7 @@ export default function App() {
           </header>
 
           <div className="layout">
-            <aside className={'sidebar' + (collapsed ? ' collapsed' : '')}>
-              <button className="sbtoggle" onClick={() => setCollapsed(c => !c)} title={collapsed ? 'Expand' : 'Collapse'}>
-                {collapsed ? '»' : '«'}
-              </button>
-              {sideNav.map(([to, label, icon]) => (
-                <NavLink key={to} to={to} title={label}>
-                  <span className="ico"><Icon name={icon} /></span><span className="lbl">{label}</span>
-                </NavLink>
-              ))}
-            </aside>
+            <Sidebar />
 
             <main>
               <Routes>
