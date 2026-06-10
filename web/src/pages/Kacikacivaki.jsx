@@ -3,16 +3,19 @@ import { get, send } from '../api'
 import { useAuth } from '../auth'
 import { EditableText } from '../copy'
 
+const plusDays = d => { const t = new Date(); t.setDate(t.getDate() + d); return t.toISOString().slice(0, 10) }
+
 function PostBox({ channel, defaultAuthor, onPosted }) {
   const [body, setBody] = useState('')
+  const [expires, setExpires] = useState(() => plusDays(14))
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
   async function post() {
     if (!body.trim()) return
     setBusy(true); setMsg('')
     try {
-      await send('POST', '/notices', { channel, author: defaultAuthor, body })
-      setBody(''); setMsg('Posted ✓'); onPosted()
+      await send('POST', '/notices', { channel, author: defaultAuthor, body, expires_at: expires || null })
+      setBody(''); setExpires(plusDays(14)); setMsg('Posted ✓'); onPosted()
     } catch (e) { setMsg('⚠ ' + e.message) } finally { setBusy(false) }
   }
   return (
@@ -21,6 +24,7 @@ function PostBox({ channel, defaultAuthor, onPosted }) {
         value={body} onChange={e => setBody(e.target.value)} />
       <div className="postbox-foot">
         <span className="meta">Posting as <b>{defaultAuthor}</b></span>
+        <label className="postbox-expiry meta">Expires <input type="date" value={expires} onChange={e => setExpires(e.target.value)} /></label>
         <button className="btn secondary" disabled={busy || !body.trim()} onClick={post}>Post</button>
       </div>
       {msg && <span className="status">{msg}</span>}
@@ -29,12 +33,16 @@ function PostBox({ channel, defaultAuthor, onPosted }) {
 }
 
 function NoticeCard({ n }) {
+  const active = n.status === 'Active'
   return (
     <div className="card notice">
       <div className="notice-head">
         <span className="notice-author">{n.author}</span>
         {n.author_role && <span className="notice-role">{n.author_role}</span>}
-        <span className="notice-date">{n.posted_at}</span>
+        <span className="notice-date">
+          {n.expires_at && <>Expires {n.expires_at} </>}
+          <span className={'lchip ' + (active ? 'active' : 'expired')}>{n.status}</span>
+        </span>
       </div>
       <p className="notice-body">{n.body}</p>
     </div>

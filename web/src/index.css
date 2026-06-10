@@ -74,9 +74,19 @@ nav a:hover{background:rgba(255,255,255,.18);text-decoration:none}
 nav a.active{background:#fff;color:var(--deep)}
 
 main{max-width:1040px;margin:28px auto;padding:0 18px}
-.app{display:flex;flex-direction:column;min-height:100vh}
-.layout{flex:1;display:flex;align-items:stretch}
-.layout > main{flex:1;min-width:0;margin:0;padding:24px;max-width:1100px}
+/* Locked chrome: the app fills the viewport and only <main> scrolls, so the
+   top bar and sidebar stay put; the page header sticks inside main. */
+.app{display:flex;flex-direction:column;height:100vh;min-height:100vh}
+.layout{flex:1;display:flex;align-items:stretch;overflow:hidden;min-height:0}
+.layout > main > h1:first-child,
+.layout > main > .pagehead:first-child{position:sticky;top:0;z-index:30;
+  background:rgba(247,243,234,.86);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  margin:0 -24px 10px;padding:6px 24px 10px}
+/* sticky pins at the scroller's content box (below its padding); this covers the 24px strip above */
+.layout > main > h1:first-child::before,
+.layout > main > .pagehead:first-child::before{content:"";position:absolute;left:0;right:0;top:-24px;height:24px;
+  background:rgba(247,243,234,.86);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.layout > main{flex:1;min-width:0;margin:0;padding:24px;max-width:1100px;overflow-y:auto}
 .sidebar{position:relative;z-index:2;width:196px;flex-shrink:0;background:linear-gradient(var(--side-angle),var(--side-c1),var(--side-c2));border-right:1px solid rgba(0,0,0,.2);
   padding:12px 10px;display:flex;flex-direction:column;gap:4px;transition:width .18s ease}
 .sidebar.collapsed{width:56px;padding:12px 6px}
@@ -177,7 +187,11 @@ h3{font-size:17px;font-weight:var(--head-weight);font-style:var(--head-style);co
 .noticelist{display:flex;flex-direction:column;gap:10px;margin-top:12px;max-height:560px;overflow-y:auto;padding-right:4px}
 .notice{margin:0;flex-shrink:0} /* flex column would otherwise compress cards to fit max-height, clipping text */
 .notice-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
-.notice-date{margin-left:auto;color:var(--muted);font-size:12px;white-space:nowrap}
+.notice-date{margin-left:auto;color:var(--muted);font-size:12px;white-space:nowrap;display:inline-flex;align-items:center;gap:7px}
+.lchip.active{background:rgba(70,168,119,.2);color:#2f7a52}
+.lchip.expired{background:#e9e9e6;color:#8a8f8d}
+.postbox-expiry{display:inline-flex;align-items:center;gap:6px}
+.postbox-expiry input{border:1px solid var(--line);border-radius:7px;padding:4px 7px;font-family:var(--font);font-size:12.5px;color:var(--ink)}
 .notice-author{font-weight:700;color:var(--head-color)}
 .notice-role{font-size:11px;font-weight:700;background:rgba(14,152,165,.14);color:#0b6b75;
   padding:2px 9px;border-radius:30px}

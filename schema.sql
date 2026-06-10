@@ -151,6 +151,7 @@ CREATE TABLE notices (
   author_role text,                     -- e.g. Turaga ni Koro, District Officer; NULL for members
   body        text NOT NULL,
   posted_at   timestamptz DEFAULT now(),
+  expires_at  date,                      -- status Active/Expired derives from this
   created_by  uuid REFERENCES users(id)
 );
 CREATE INDEX ON notices(channel, posted_at DESC);

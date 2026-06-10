@@ -220,7 +220,10 @@ app.get("/api/investments", async (req, res) => {
 // Kacikacivaki (announcements): channel 'koro' = official, 'lewe' = community.
 app.get("/api/notices", async (req, res) => {
   res.json(await q(`select n.id, n.channel, n.author, n.author_role, n.body,
-      to_char(n.posted_at at time zone 'Pacific/Fiji','YYYY-MM-DD HH24:MI') posted_at
+      to_char(n.posted_at at time zone 'Pacific/Fiji','YYYY-MM-DD HH24:MI') posted_at,
+      to_char(n.expires_at,'YYYY-MM-DD') expires_at,
+      case when n.expires_at is null or n.expires_at >= (now() at time zone 'Pacific/Fiji')::date
+           then 'Active' else 'Expired' end status
     from notices n join villages v on v.id=n.village_id where v.name=$1
     order by n.posted_at desc`, [VILLAGE]));
 });
@@ -233,9 +236,9 @@ app.post("/api/notices", async (req, res) => {
   try {
     const [v] = await q(`select id from villages where name=$1`, [VILLAGE]);
     const [row] = await q(
-      `insert into notices(village_id, channel, author, author_role, body, created_by)
-       values($1,$2,$3,$4,$5,$6) returning id`,
-      [v.id, channel, String(b.author || 'Anonymous').slice(0, 80), b.author_role || null, body.slice(0, 2000), req.user?.uid || null]);
+      `insert into notices(village_id, channel, author, author_role, body, expires_at, created_by)
+       values($1,$2,$3,$4,$5,$6,$7) returning id`,
+      [v.id, channel, String(b.author || 'Anonymous').slice(0, 80), b.author_role || null, body.slice(0, 2000), b.expires_at || null, req.user?.uid || null]);
     res.json({ ok: true, id: row.id });
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
