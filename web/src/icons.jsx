@@ -154,7 +154,7 @@ const SYMBOLS = {
   // Davui (conch shell) — traced from the user's reference; drawn on a 48-unit
   // grid (scaled 0.5) to keep the whorls, fold and spiral true to the design.
   kacikacivaki: (
-    <g transform="scale(0.5)" strokeWidth="3.2">
+    <g transform="translate(1.4 1.5) scale(0.425)" strokeWidth="3.2">
       <path d="M21 20.3 C20.2 11 26 5.4 32.5 6.3 C39.2 7.2 44.6 12.8 44.6 17.6" />
       <path d="M27.8 18.2 C28.6 13.8 35.4 13.2 36.4 17.9" />
       <path d="M21 20.3 C26.5 23.3 32.5 21.2 37 20 C40 19.2 43.3 18.6 44.6 17.6" />
