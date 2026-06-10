@@ -19,6 +19,7 @@ import { Icon, IconSetProvider } from './icons'
 import { LevelsProvider } from './levels'
 import { AuthProvider } from './auth'
 import { CopyProvider, DevEditButton } from './copy'
+import DevStyler from './styler'
 import AuthArea from './AuthArea'
 
 const TOP_NAV = [['/', 'Internet'], ['/admin', 'Admin'], ['/dev', 'Dev']]
@@ -93,6 +94,7 @@ export default function App() {
           </div>
         </div>
         <DevEditButton />
+        <DevStyler />
         </IconSetProvider>
         </CopyProvider>
       </LevelsProvider>

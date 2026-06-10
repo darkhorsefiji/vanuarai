@@ -124,6 +124,13 @@ export function resetVars() {
   Object.keys(o).forEach(k => root.style.removeProperty(k))
   localStorage.removeItem(KEY)
 }
+// Clear a subset of overrides (used by the in-page styler's per-group reset).
+export function clearVars(keys) {
+  const o = loadOverrides()
+  const root = document.documentElement
+  keys.forEach(k => { delete o[k]; root.style.removeProperty(k) })
+  localStorage.setItem(KEY, JSON.stringify(o))
+}
 
 // ---- Google Fonts: dynamic loading + helpers ----
 const GF_SET = new Set(GOOGLE_FONTS)
