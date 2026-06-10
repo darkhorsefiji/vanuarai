@@ -78,9 +78,8 @@ export default function AuthArea() {
             </>
           )}
           <button className="usermenu-item" role="menuitem" onClick={() => openModal('Change Password')}>Change Password</button>
-          <div className="usermenu-group">Settings</div>
-          <button className="usermenu-item sub" role="menuitem" onClick={() => openModal('Payment Preferences')}>Payment Preferences</button>
-          <button className="usermenu-item sub" role="menuitem" onClick={() => openModal('Notification Settings')}>Notification Settings</button>
+          <button className="usermenu-item" role="menuitem" onClick={() => openModal('Payment Preferences')}>Payment Preferences</button>
+          <button className="usermenu-item" role="menuitem" onClick={() => openModal('Notification Settings')}>Notification Settings</button>
           <div className="usermenu-sep" />
           <button className="usermenu-item danger" role="menuitem" onClick={() => { setOpen(false); logout() }}>Logout</button>
         </div>

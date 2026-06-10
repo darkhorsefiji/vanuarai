@@ -415,6 +415,8 @@ header.top{position:relative}
 .hero::before,.profilehero::before{opacity:.13}
 header.top::before{opacity:.07}
 .hero>*,.profilehero>*,header.top>*{position:relative;z-index:1}
+/* the avatar dropdown must paint above the sticky page header (z 30) */
+header.top > .authbox{z-index:40}
 /* tapa rising from the bottom half of the sidebar, fading upward */
 .sidebar::after{content:"";position:absolute;left:0;right:0;bottom:0;height:62%;
   pointer-events:none;z-index:0;background-image:url("/tapa.svg");
