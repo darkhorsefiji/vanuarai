@@ -154,14 +154,14 @@ const SYMBOLS = {
   // Davui (conch shell) — traced from the user's reference; drawn on a 48-unit
   // grid (scaled 0.5) to keep the whorls, fold and spiral true to the design.
   kacikacivaki: (
-    <g transform="translate(1.4 1.5) scale(0.425)" strokeWidth="3.2">
+    <g transform="translate(1.4 1.5) scale(0.425)" strokeWidth="3.7">
       <path d="M21 20.3 C20.2 11 26 5.4 32.5 6.3 C39.2 7.2 44.6 12.8 44.6 17.6" />
       <path d="M27.8 18.2 C28.6 13.8 35.4 13.2 36.4 17.9" />
       <path d="M21 20.3 C26.5 23.3 32.5 21.2 37 20 C40 19.2 43.3 18.6 44.6 17.6" />
       <path d="M44.6 17.6 C46.2 22 44.2 27.2 40.6 30.8 C36.6 34.8 30.4 37.7 25 38.4 C22 38.8 19 38.8 16.5 38.6" />
       <path d="M21 20.3 C18.6 23 16.4 26.2 15.4 28.7" />
       <path d="M15.4 28.7 C12.6 28.2 10.8 30.2 11.8 32.6 C9.2 32.4 7.8 34.4 8.8 36.5 C6.8 36.5 5.5 38 6 39.6 C4.6 39.9 3.8 41 4.5 42.1 C5.3 43.3 7.2 43.1 8.3 42.2 C9.7 41.1 11.7 41.2 13.5 40.4 C14.6 40 15.6 39.4 16.5 38.6" />
-      <path strokeWidth="1.8" d="M22.7 33.1 C22.7 29.7 18.6 28.4 16.5 30.8 C14.7 32.9 16.1 36.2 18.8 36.2 C20.9 36.2 21.8 34.4 20.8 33.1 C20.1 32.2 18.8 32.3 18.3 33.2" />
+      <path strokeWidth="2.1" d="M22.7 33.1 C22.7 29.7 18.6 28.4 16.5 30.8 C14.7 32.9 16.1 36.2 18.8 36.2 C20.9 36.2 21.8 34.4 20.8 33.1 C20.1 32.2 18.8 32.3 18.3 33.2" />
     </g>
   ),
   // Tanoa (kava bowl) on legs — the heart of the vanua ceremony
