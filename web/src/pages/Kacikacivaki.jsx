@@ -34,9 +34,9 @@ function NoticeCard({ n }) {
       <div className="notice-head">
         <span className="notice-author">{n.author}</span>
         {n.author_role && <span className="notice-role">{n.author_role}</span>}
+        <span className="notice-date">{n.posted_at}</span>
       </div>
       <p className="notice-body">{n.body}</p>
-      <div className="meta">{n.posted_at}</div>
     </div>
   )
 }
