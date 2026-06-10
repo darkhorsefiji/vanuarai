@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { NavLink, Routes, Route } from 'react-router-dom'
 import Internet from './pages/Internet'
 import Profile from './pages/Profile'
@@ -16,6 +16,7 @@ import Emergencies from './pages/Emergencies'
 import Admin from './pages/Admin'
 import Dev from './pages/Dev'
 import { Icon, IconSetProvider } from './icons'
+import { loadNavOrder, onNavOrderChange, orderedNav } from './nav'
 import { LevelsProvider } from './levels'
 import { AuthProvider, useAuth } from './auth'
 import { CopyProvider, DevEditButton } from './copy'
@@ -23,20 +24,6 @@ import DevStyler from './styler'
 import AuthArea from './AuthArea'
 
 const TOP_NAV = [['/', 'Internet']]
-const SIDE_NAV = [
-  ['/profile', 'Profile', 'profile'],
-  ['/kacikacivaki', 'Kacikacivaki', 'kacikacivaki'],
-  ['/vanua', 'Vanua', 'vanua'],
-  ['/government', 'Government', 'government'],
-  ['/lands', 'Lands', 'lands'],
-  ['/agreements', 'Agreements', 'agreements'],
-  ['/projects', 'Projects', 'projects'],
-  ['/trade', 'Trade', 'trade'],
-  ['/fundraising', 'Fundraising', 'fundraising'],
-  ['/financials', 'Financials', 'financials'],
-  ['/minutes', 'Minutes', 'minutes'],
-  ['/emergencies', 'Emergencies', 'emergencies'],
-]
 
 // Admin/Dev are reached via the avatar menu and require the official role.
 function RequireOfficial({ children }) {
@@ -56,6 +43,9 @@ function RequireOfficial({ children }) {
 export default function App() {
   const [logoOk, setLogoOk] = useState(true)
   const [collapsed, setCollapsed] = useState(false)
+  const [navOrder, setNavOrder] = useState(loadNavOrder)
+  useEffect(() => onNavOrderChange(() => setNavOrder(loadNavOrder())), [])
+  const sideNav = orderedNav(navOrder)
   return (
     <AuthProvider>
       <LevelsProvider>
@@ -80,7 +70,7 @@ export default function App() {
               <button className="sbtoggle" onClick={() => setCollapsed(c => !c)} title={collapsed ? 'Expand' : 'Collapse'}>
                 {collapsed ? '»' : '«'}
               </button>
-              {SIDE_NAV.map(([to, label, icon]) => (
+              {sideNav.map(([to, label, icon]) => (
                 <NavLink key={to} to={to} title={label}>
                   <span className="ico"><Icon name={icon} /></span><span className="lbl">{label}</span>
                 </NavLink>

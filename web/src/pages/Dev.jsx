@@ -2,9 +2,52 @@ import { useMemo, useState } from 'react'
 import { THEME_GROUPS, loadOverrides, setVar, resetVars, ensureFont, fontStack, familyFromStack } from '../theme'
 import { GOOGLE_FONTS } from '../googleFonts'
 import { ICON_SETS, ICON_ITEMS, Icon, useIconSet } from '../icons'
+import { loadNavOrder, saveNavOrder, resetNavOrder, orderedNav } from '../nav'
 import PlansEditor from '../PlansEditor'
 
 const SYSTEM_FONTS = ['System UI', 'Georgia', 'Arial', 'Times New Roman', 'Courier New', 'Verdana', 'Tahoma']
+
+// Drag-to-reorder the sidebar menu; applies live and persists in this browser.
+function NavOrderEditor() {
+  const [order, setOrder] = useState(() => orderedNav(loadNavOrder()).map(it => it[0]))
+  const [drag, setDrag] = useState(null)
+  const [over, setOver] = useState(null)
+  const items = orderedNav(order)
+
+  function onDrop(targetPath) {
+    if (!drag || drag === targetPath) { setDrag(null); setOver(null); return }
+    const cur = items.map(it => it[0])
+    cur.splice(cur.indexOf(drag), 1)
+    cur.splice(cur.indexOf(targetPath), 0, drag)
+    setOrder(cur); saveNavOrder(cur)
+    setDrag(null); setOver(null)
+  }
+
+  return (
+    <>
+      <div className="themegrid navorder">
+        {items.map(([path, label, icon]) => {
+          const cls = 'themerow' + (drag === path ? ' dragging' : '') + (over === path && drag !== path ? ' over' : '')
+          return (
+            <div className={cls} key={path}
+              onDragOver={e => e.preventDefault()}
+              onDragEnter={() => setOver(path)}
+              onDrop={() => onDrop(path)}>
+              <span className="draghandle" draggable
+                onDragStart={() => setDrag(path)}
+                onDragEnd={() => { setDrag(null); setOver(null) }}
+                title="Drag to reorder">⠿</span>
+              <span className="navorder-ico"><Icon name={icon} size={18} /></span>
+              <label>{label}</label>
+            </div>
+          )
+        })}
+      </div>
+      <button className="mini" style={{ marginTop: 8 }}
+        onClick={() => { resetNavOrder(); setOrder(orderedNav(null).map(it => it[0])) }}>↺ Reset order</button>
+    </>
+  )
+}
 const ORDER_KEY = 'vr_theme_order'
 const loadOrder = () => { try { return JSON.parse(localStorage.getItem(ORDER_KEY)) || {} } catch { return {} } }
 const saveOrder = o => localStorage.setItem(ORDER_KEY, JSON.stringify(o))
@@ -85,6 +128,10 @@ export default function Dev() {
           )
         })}
       </div>
+
+      <h3>Sidebar menu order</h3>
+      <p className="sub">Drag the ⠿ handle to re-arrange the sidebar — applies immediately.</p>
+      <NavOrderEditor />
 
       <h3>Internet plans</h3>
       <p className="sub">Configure the plans &amp; pricing shown on the Internet page. Saved to the database — changes are live for everyone. Inactive plans stay hidden from buyers.</p>
