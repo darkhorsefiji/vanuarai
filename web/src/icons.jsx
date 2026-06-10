@@ -151,13 +151,11 @@ const SYMBOLS = {
       <path d="M5.6 18.6 C5.6 14.6 8.6 12.6 12 12.6 C15.4 12.6 18.4 14.6 18.4 18.6" />
     </>
   ),
-  // Megaphone — announcements
+  // Davui (conch shell) — the announcement call (user-supplied design)
   kacikacivaki: (
     <>
-      <path d="M4.5 10.5 L4.5 14.5 L7 14.5 L12.5 18.5 L12.5 6.5 L7 10.5 Z" />
-      <path d="M8 14.8 L9 18" />
-      <path d="M15.5 9.5 Q17.3 12.5 15.5 15.5" />
-      <path d="M18 7.5 Q21 12.5 18 17.5" />
+      <path d="M9.6 10.8 C9.4 6.9 12.9 4.5 16 5.2 C19.1 5.9 21.1 9.1 20.2 11.8 C18.4 13.3 16.4 12.8 14.7 14 C12.9 15.3 11.6 17.2 9.4 17.9 C7.4 18.5 5 19.2 3.9 18.1 C3.2 17.4 3.8 16.4 5 16 C6.1 13.9 7.5 12.2 9.6 10.8 Z" />
+      <path d="M12.8 9.7 C13 8.1 14.7 7.1 16.2 7.8" />
     </>
   ),
   // Tanoa (kava bowl) on legs — the heart of the vanua ceremony
