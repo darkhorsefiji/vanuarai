@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { NavLink, Routes, Route } from 'react-router-dom'
 import Internet from './pages/Internet'
 import Profile from './pages/Profile'
+import Kacikacivaki from './pages/Kacikacivaki'
 import Hierarchy from './pages/Hierarchy'
 import Government from './pages/Government'
 import Projects from './pages/Projects'
@@ -23,6 +24,7 @@ import AuthArea from './AuthArea'
 const TOP_NAV = [['/', 'Internet'], ['/admin', 'Admin'], ['/dev', 'Dev']]
 const SIDE_NAV = [
   ['/profile', 'Profile', 'profile'],
+  ['/kacikacivaki', 'Kacikacivaki', 'kacikacivaki'],
   ['/vanua', 'Vanua', 'vanua'],
   ['/government', 'Government', 'government'],
   ['/lands', 'Lands', 'lands'],
@@ -73,6 +75,7 @@ export default function App() {
               <Routes>
                 <Route path="/" element={<Internet />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/kacikacivaki" element={<Kacikacivaki />} />
                 <Route path="/vanua" element={<Hierarchy />} />
                 <Route path="/government" element={<Government />} />
                 <Route path="/projects" element={<Projects />} />

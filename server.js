@@ -217,6 +217,29 @@ app.get("/api/investments", async (req, res) => {
     from village_investments i join villages v on v.id=i.village_id where v.name=$1 order by i.sort_order`, [VILLAGE]));
 });
 
+// Kacikacivaki (announcements): channel 'koro' = official, 'lewe' = community.
+app.get("/api/notices", async (req, res) => {
+  res.json(await q(`select n.id, n.channel, n.author, n.author_role, n.body,
+      to_char(n.posted_at at time zone 'Pacific/Fiji','YYYY-MM-DD HH24:MI') posted_at
+    from notices n join villages v on v.id=n.village_id where v.name=$1
+    order by n.posted_at desc`, [VILLAGE]));
+});
+app.post("/api/notices", async (req, res) => {
+  const b = req.body || {};
+  const channel = b.channel === 'koro' ? 'koro' : 'lewe';
+  const body = String(b.body || '').trim();
+  if (!body) return res.status(400).json({ error: "body required" });
+  // Official channel will be role-gated under the access-control work; open for now.
+  try {
+    const [v] = await q(`select id from villages where name=$1`, [VILLAGE]);
+    const [row] = await q(
+      `insert into notices(village_id, channel, author, author_role, body, created_by)
+       values($1,$2,$3,$4,$5,$6) returning id`,
+      [v.id, channel, String(b.author || 'Anonymous').slice(0, 80), b.author_role || null, body.slice(0, 2000), req.user?.uid || null]);
+    res.json({ ok: true, id: row.id });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
 app.get("/api/composition", async (req, res) => {
   const rows = await q(`select vu.id vuvale_id, vu.label vuvale, tok.label tokatoka, mat.label mataqali,
       p.full_name, p.relationship, to_char(p.date_of_birth,'YYYY') yob, p.is_deceased

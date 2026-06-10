@@ -142,6 +142,19 @@ CREATE TABLE village_assets (
   custodian    text,
   sort_order   int DEFAULT 0
 );
+-- Kacikacivaki (announcements): channel 'koro' = official (Vanua + Government), 'lewe' = any member.
+CREATE TABLE notices (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  village_id  uuid REFERENCES villages(id),
+  channel     text NOT NULL,            -- 'koro' | 'lewe'
+  author      text,
+  author_role text,                     -- e.g. Turaga ni Koro, District Officer; NULL for members
+  body        text NOT NULL,
+  posted_at   timestamptz DEFAULT now(),
+  created_by  uuid REFERENCES users(id)
+);
+CREATE INDEX ON notices(channel, posted_at DESC);
+
 CREATE TABLE village_investments (
   id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   village_id          uuid REFERENCES villages(id),

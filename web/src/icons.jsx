@@ -17,6 +17,17 @@ const ARTEFACTS = {
       <circle cx="12" cy="11.6" r="1.5" fill="currentColor" stroke="none" />
     </>
   ),
+  // Lali (slit drum) with beaters — the village announcement call
+  kacikacivaki: (
+    <>
+      <rect x="4" y="12" width="16" height="6.5" rx="3.2" />
+      <path d="M7.5 13.8 L16.5 13.8" />
+      <path d="M9.5 10 L14 5" />
+      <path d="M14.5 10 L10 5" />
+      <circle cx="14.5" cy="4.5" r="1.1" fill="currentColor" stroke="none" />
+      <circle cx="9.5" cy="4.5" r="1.1" fill="currentColor" stroke="none" />
+    </>
+  ),
   // Honu (sea turtle) — kinship, longevity, lineage
   vanua: (
     <>
@@ -140,6 +151,15 @@ const SYMBOLS = {
       <path d="M5.6 18.6 C5.6 14.6 8.6 12.6 12 12.6 C15.4 12.6 18.4 14.6 18.4 18.6" />
     </>
   ),
+  // Megaphone — announcements
+  kacikacivaki: (
+    <>
+      <path d="M4.5 10.5 L4.5 14.5 L7 14.5 L12.5 18.5 L12.5 6.5 L7 10.5 Z" />
+      <path d="M8 14.8 L9 18" />
+      <path d="M15.5 9.5 Q17.3 12.5 15.5 15.5" />
+      <path d="M18 7.5 Q21 12.5 18 17.5" />
+    </>
+  ),
   // Tanoa (kava bowl) on legs — the heart of the vanua ceremony
   vanua: (
     <>
@@ -235,7 +255,7 @@ const DEFAULT_SET = 'artefacts'
 
 // Sidebar order + display labels (used by the Dev comparison grid)
 export const ICON_ITEMS = [
-  ['profile', 'Profile'], ['vanua', 'Vanua'], ['government', 'Government'],
+  ['profile', 'Profile'], ['kacikacivaki', 'Kacikacivaki'], ['vanua', 'Vanua'], ['government', 'Government'],
   ['lands', 'Lands'], ['agreements', 'Agreements'], ['projects', 'Projects'],
   ['trade', 'Trade'], ['fundraising', 'Fundraising'], ['financials', 'Financials'],
   ['minutes', 'Minutes'], ['emergencies', 'Emergencies'],
