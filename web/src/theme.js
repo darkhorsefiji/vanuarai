@@ -71,6 +71,16 @@ export const THEME_GROUPS = [
     ],
   },
   {
+    group: 'Status pills', items: [
+      { k: '--pill-active-bg', l: 'Active background', t: 'color', d: '#daeee4' },
+      { k: '--pill-active-text', l: 'Active text', t: 'color', d: '#2f7a52' },
+      { k: '--pill-expired-bg', l: 'Expired background', t: 'color', d: '#e9e9e6' },
+      { k: '--pill-expired-text', l: 'Expired text', t: 'color', d: '#8a8f8d' },
+      { k: '--pill-radius', l: 'Corner radius', t: 'range', d: '30', min: 0, max: 30, step: 1, unit: 'px' },
+      { k: '--pill-font-size', l: 'Font size', t: 'range', d: '11', min: 9, max: 14, step: 0.5, unit: 'px' },
+    ],
+  },
+  {
     group: 'Cards', items: [
       { k: '--card', l: 'Background', t: 'color', d: '#ffffff' },
       { k: '--line', l: 'Border', t: 'color', d: '#e6eeec' },
