@@ -292,6 +292,8 @@ tr:last-child td{border-bottom:none}
 tbody tr:hover td{background:#f6faf9}
 
 ul.tree{list-style:none;padding-left:16px}ul.tree>li{margin:3px 0}
+/* root tree starts flush with the page text; only nested levels indent */
+.col > ul.tree{padding-left:0}
 .lvl{display:inline-block;font-size:13px;font-weight:700;color:#fff;border-radius:6px;padding:1px 8px;margin-right:7px;text-transform:uppercase;letter-spacing:.3px}
 .lvl.vanua{background:#27545c}.lvl.yavusa{background:#6f8fb0}.lvl.mataqali{background:#3a8f9c}
 .lvl.tokatoka{background:#7fae93}.lvl.vuvale{background:#cf9a86}
