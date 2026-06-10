@@ -192,6 +192,15 @@ h3{font-size:17px;font-weight:var(--head-weight);font-style:var(--head-style);co
 .lchip.expired{background:#e9e9e6;color:#8a8f8d}
 .postbox-expiry{display:inline-flex;align-items:center;gap:6px}
 .postbox-expiry input{border:1px solid var(--line);border-radius:7px;padding:4px 7px;font-family:var(--font);font-size:12.5px;color:var(--ink)}
+.notice.expired{opacity:.62}
+.notice-acts{display:inline-flex;gap:4px;margin-left:6px}
+.notice-edit{display:flex;flex-direction:column;gap:7px;margin-top:6px}
+.notice-edit textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 10px;resize:vertical;
+  font-family:var(--font);font-size:14px;color:var(--ink)}
+.expired-toggle{background:none;border:1px dashed var(--line);width:100%;padding:8px;border-radius:10px;
+  color:var(--muted);font-weight:600;cursor:pointer;font-family:var(--font);font-size:13px;flex-shrink:0}
+.expired-toggle:hover{color:var(--ink);border-color:var(--ocean)}
+.postlock{background:var(--card);border:1px dashed var(--line);border-radius:12px;padding:12px;margin-top:4px}
 .notice-author{font-weight:700;color:var(--head-color)}
 .notice-role{font-size:11px;font-weight:700;background:rgba(14,152,165,.14);color:#0b6b75;
   padding:2px 9px;border-radius:30px}

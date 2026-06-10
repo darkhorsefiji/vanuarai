@@ -218,8 +218,20 @@ app.get("/api/investments", async (req, res) => {
 });
 
 // Kacikacivaki (announcements): channel 'koro' = official, 'lewe' = community.
+// First role-gated surface: posting requires sign-in; 'koro' requires the
+// 'official' membership role (or app admin); edit/delete = owner or official.
+async function noticeActor(req) {
+  if (!req.user) return null;
+  const [u] = await q(`select id, display_name, is_app_admin from users where id=$1`, [req.user.uid]);
+  if (!u) return null;
+  const [mem] = await q(`select m.role from memberships m join villages v on v.id=m.village_id
+    where m.user_id=$1 and v.name=$2`, [u.id, VILLAGE]);
+  return { id: u.id, name: u.display_name, isAppAdmin: u.is_app_admin, role: mem?.role || null };
+}
+const isOfficial = a => !!a && (a.isAppAdmin || a.role === "official");
+
 app.get("/api/notices", async (req, res) => {
-  res.json(await q(`select n.id, n.channel, n.author, n.author_role, n.body,
+  res.json(await q(`select n.id, n.channel, n.author, n.author_role, n.body, n.created_by,
       to_char(n.posted_at at time zone 'Pacific/Fiji','YYYY-MM-DD HH24:MI') posted_at,
       to_char(n.expires_at,'YYYY-MM-DD') expires_at,
       case when n.expires_at is null or n.expires_at >= (now() at time zone 'Pacific/Fiji')::date
@@ -232,14 +244,43 @@ app.post("/api/notices", async (req, res) => {
   const channel = b.channel === 'koro' ? 'koro' : 'lewe';
   const body = String(b.body || '').trim();
   if (!body) return res.status(400).json({ error: "body required" });
-  // Official channel will be role-gated under the access-control work; open for now.
   try {
+    const actor = await noticeActor(req);
+    if (!actor) return res.status(401).json({ error: "sign in to post" });
+    if (channel === 'koro' && !isOfficial(actor)) return res.status(403).json({ error: "only village officials can post official notices" });
     const [v] = await q(`select id from villages where name=$1`, [VILLAGE]);
     const [row] = await q(
       `insert into notices(village_id, channel, author, author_role, body, expires_at, created_by)
        values($1,$2,$3,$4,$5,$6,$7) returning id`,
-      [v.id, channel, String(b.author || 'Anonymous').slice(0, 80), b.author_role || null, body.slice(0, 2000), b.expires_at || null, req.user?.uid || null]);
+      [v.id, channel, actor.name, channel === 'koro' ? (b.author_role || 'Official') : null, body.slice(0, 2000), b.expires_at || null, actor.id]);
     res.json({ ok: true, id: row.id });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+async function noticePermission(req, res) {
+  const actor = await noticeActor(req);
+  if (!actor) { res.status(401).json({ error: "sign in first" }); return null; }
+  const [n] = await q(`select created_by from notices where id=$1`, [req.params.id]);
+  if (!n) { res.status(404).json({ error: "post not found" }); return null; }
+  if (!isOfficial(actor) && !(n.created_by && n.created_by === actor.id)) {
+    res.status(403).json({ error: "you can only change your own posts" }); return null;
+  }
+  return actor;
+}
+app.patch("/api/notices/:id", async (req, res) => {
+  try {
+    if (!(await noticePermission(req, res))) return;
+    const b = req.body || {};
+    const body = String(b.body || '').trim();
+    if (!body) return res.status(400).json({ error: "body required" });
+    await q(`update notices set body=$1, expires_at=$2 where id=$3`, [body.slice(0, 2000), b.expires_at || null, req.params.id]);
+    res.json({ ok: true });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+app.delete("/api/notices/:id", async (req, res) => {
+  try {
+    if (!(await noticePermission(req, res))) return;
+    await q(`delete from notices where id=$1`, [req.params.id]);
+    res.json({ ok: true });
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
@@ -413,5 +454,7 @@ const dist = path.join(__dirname, "web", "dist");
 app.use(express.static(dist));
 app.get(/^(?!\/api).*/, (req, res) => res.sendFile(path.join(dist, "index.html"), err => { if (err) res.status(404).end(); }));
 
-const PORT = process.env.PORT || 3000;
+// API_PORT wins over PORT: dev tooling (e.g. the preview launcher) injects PORT
+// for the front-end; the API must stay on 3000 to match Vite's /api proxy.
+const PORT = process.env.API_PORT || (process.env.npm_lifecycle_event === "dev" ? 3000 : process.env.PORT) || 3000;
 app.listen(PORT, () => console.log("VanuaRai API on http://localhost:" + PORT));
