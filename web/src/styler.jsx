@@ -65,8 +65,10 @@ export default function DevStyler() {
   const hovered = useRef(null)
   const popRef = useRef(null)
   const pinned = useRef(false)                 // once dragged, keep the box where the user put it
+  const selected = useRef(null)                // the element being styled (solid highlight)
 
-  const close = () => { setPop(null); pinned.current = false }
+  const clearSelected = () => { selected.current?.classList.remove('style-selected'); selected.current = null }
+  const close = () => { setPop(null); pinned.current = false; clearSelected() }
 
   function startDrag(e) {
     if (e.target.closest('button, input, select')) return
@@ -94,16 +96,20 @@ export default function DevStyler() {
     const over = e => {
       const t = findTarget(e.target)
       if (hovered.current && hovered.current !== t?.el) hovered.current.classList.remove('style-hover')
-      if (t) { t.el.classList.add('style-hover'); hovered.current = t.el }
+      if (t && t.el !== selected.current) { t.el.classList.add('style-hover'); hovered.current = t.el }
     }
     const click = e => {
       const t = findTarget(e.target)
       if (!t) return
       e.preventDefault(); e.stopPropagation()
+      selected.current?.classList.remove('style-selected')
+      t.el.classList.remove('style-hover')
+      t.el.classList.add('style-selected')
+      selected.current = t.el
       setPop({ group: t.group })
       if (!pinned.current) setPos({ x: e.clientX, y: e.clientY, dragged: false })
     }
-    const esc = e => { if (e.key === 'Escape') { setPop(null); pinned.current = false } }
+    const esc = e => { if (e.key === 'Escape') { setPop(null); pinned.current = false; clearSelected() } }
     document.addEventListener('mouseover', over, true)
     document.addEventListener('click', click, true)
     document.addEventListener('keydown', esc)
@@ -112,6 +118,8 @@ export default function DevStyler() {
       document.removeEventListener('click', click, true)
       document.removeEventListener('keydown', esc)
       hovered.current?.classList.remove('style-hover')
+      selected.current?.classList.remove('style-selected')
+      selected.current = null
       document.body.classList.remove('styling')
     }
   }, [on, official])

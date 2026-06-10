@@ -25,6 +25,7 @@ export const THEME_GROUPS = [
   {
     group: 'Nav links', items: [
       { k: '--nav-text', l: 'Text colour', t: 'color', d: '#eafaf9' },
+      { k: '--nav-link-bg', l: 'Background', t: 'color', d: '#ffffff' },
       { k: '--nav-link-size', l: 'Font size', t: 'range', d: '14', min: 12, max: 18, step: 0.5, unit: 'px' },
       { k: '--nav-link-weight', l: 'Font weight', t: 'range', d: '600', min: 400, max: 800, step: 100 },
       { k: '--nav-hover-bg', l: 'Hover background', t: 'color', d: '#ffffff' },
