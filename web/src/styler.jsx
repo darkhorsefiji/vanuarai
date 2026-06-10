@@ -10,6 +10,9 @@ import { useAuth } from './auth'
 const TARGETS = [
   { sel: '.lchip, .pill', group: 'Status pills' },
   { sel: '.bar', group: 'Progress bars' },
+  { sel: 'header.top .badge', group: 'Village badge' },
+  { sel: '.rolepill', group: 'Role pill' },
+  { sel: 'header.top nav a', group: 'Nav links' },
   { sel: '.btn, .paybtn, .mini', group: 'Buttons' },
   { sel: '.hero, .profilehero', group: 'Welcome banner' },
   { sel: '.card, .postbox, .checkout', group: 'Cards' },
@@ -56,9 +59,33 @@ export default function DevStyler() {
   const auth = useAuth()
   const official = !!auth?.user && (auth.user.isAppAdmin || auth.user.role === 'official')
   const [on, setOn] = useState(false)
-  const [pop, setPop] = useState(null)        // { group, x, y }
+  const [pop, setPop] = useState(null)        // { group }
+  const [pos, setPos] = useState({ x: 0, y: 0, dragged: false })
   const [, bump] = useState(0)                 // re-render after setVar
   const hovered = useRef(null)
+  const popRef = useRef(null)
+  const pinned = useRef(false)                 // once dragged, keep the box where the user put it
+
+  const close = () => { setPop(null); pinned.current = false }
+
+  function startDrag(e) {
+    if (e.target.closest('button, input, select')) return
+    const r = popRef.current.getBoundingClientRect()
+    const off = { dx: e.clientX - r.left, dy: e.clientY - r.top }
+    document.body.classList.add('styler-dragging')
+    const move = ev => {
+      pinned.current = true
+      setPos({ x: ev.clientX - off.dx, y: ev.clientY - off.dy, dragged: true })
+    }
+    const up = () => {
+      document.body.classList.remove('styler-dragging')
+      document.removeEventListener('mousemove', move)
+      document.removeEventListener('mouseup', up)
+    }
+    document.addEventListener('mousemove', move)
+    document.addEventListener('mouseup', up)
+    e.preventDefault()
+  }
 
   // hover highlight + click-to-open (capture phase so we beat links/buttons)
   useEffect(() => {
@@ -73,9 +100,10 @@ export default function DevStyler() {
       const t = findTarget(e.target)
       if (!t) return
       e.preventDefault(); e.stopPropagation()
-      setPop({ group: t.group, x: e.clientX, y: e.clientY })
+      setPop({ group: t.group })
+      if (!pinned.current) setPos({ x: e.clientX, y: e.clientY, dragged: false })
     }
-    const esc = e => { if (e.key === 'Escape') setPop(null) }
+    const esc = e => { if (e.key === 'Escape') { setPop(null); pinned.current = false } }
     document.addEventListener('mouseover', over, true)
     document.addEventListener('click', click, true)
     document.addEventListener('keydown', esc)
@@ -92,15 +120,16 @@ export default function DevStyler() {
 
   const ov = loadOverrides()
   const g = pop ? groupByName(pop.group) : null
+  const W = window.innerWidth || 1200, H = window.innerHeight || 800
   const popStyle = pop ? {
-    left: Math.min(pop.x, (window.innerWidth || 1200) - 330) + 'px',
-    top: Math.min(pop.y + 14, (window.innerHeight || 800) - 420) + 'px',
+    left: Math.max(8, Math.min(pos.x, W - 330)) + 'px',
+    top: Math.max(8, Math.min(pos.dragged ? pos.y : pos.y + 14, H - 440)) + 'px',
   } : null
 
   return (
     <>
       <div className="devedit-fab devstyle-fab">
-        <button className={on ? 'on' : ''} onClick={() => { setOn(o => !o); setPop(null) }}
+        <button className={on ? 'on' : ''} onClick={() => { setOn(o => !o); close() }}
           title="Style the page by clicking elements">
           🎨 DEV Style: {on ? 'On' : 'Off'}
         </button>
@@ -109,12 +138,12 @@ export default function DevStyler() {
       {on && !pop && <div className="styler-hint">🎨 Click any element to style it · Esc closes the panel · toggle off to navigate</div>}
 
       {pop && g && (
-        <div className="styler-pop" style={popStyle}>
-          <div className="styler-pop-head">
-            <b>{g.group}</b>
+        <div className="styler-pop" style={popStyle} ref={popRef}>
+          <div className="styler-pop-head" onMouseDown={startDrag} title="Drag to move">
+            <b><span className="styler-grip">⠿</span>{g.group}</b>
             <span>
               <button className="mini" onClick={() => { clearVars(g.items.map(i => i.k)); bump(n => n + 1) }} title="Reset this group to defaults">↺</button>{' '}
-              <button className="mini" onClick={() => setPop(null)}>✕</button>
+              <button className="mini" onClick={close}>✕</button>
             </span>
           </div>
           <datalist id="gfonts-styler">{GOOGLE_FONTS.map(f => <option key={f} value={f} />)}</datalist>

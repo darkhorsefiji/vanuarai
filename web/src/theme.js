@@ -23,6 +23,29 @@ export const THEME_GROUPS = [
     ],
   },
   {
+    group: 'Nav links', items: [
+      { k: '--nav-text', l: 'Text colour', t: 'color', d: '#eafaf9' },
+      { k: '--nav-link-size', l: 'Font size', t: 'range', d: '14', min: 12, max: 18, step: 0.5, unit: 'px' },
+      { k: '--nav-link-weight', l: 'Font weight', t: 'range', d: '600', min: 400, max: 800, step: 100 },
+      { k: '--nav-active-bg', l: 'Active background', t: 'color', d: '#ffffff' },
+      { k: '--nav-active-text', l: 'Active text', t: 'color', d: '#0c4651' },
+    ],
+  },
+  {
+    group: 'Village badge', items: [
+      { k: '--badge-bg', l: 'Background', t: 'color', d: '#ffffff' },
+      { k: '--badge-text', l: 'Text colour', t: 'color', d: '#ffffff' },
+      { k: '--badge-size', l: 'Font size', t: 'range', d: '12', min: 10, max: 16, step: 0.5, unit: 'px' },
+    ],
+  },
+  {
+    group: 'Role pill', items: [
+      { k: '--rolepill-bg', l: 'Background', t: 'color', d: '#ffffff' },
+      { k: '--rolepill-text', l: 'Text colour', t: 'color', d: '#ffffff' },
+      { k: '--rolepill-size', l: 'Font size', t: 'range', d: '11', min: 9, max: 14, step: 0.5, unit: 'px' },
+    ],
+  },
+  {
     group: 'Sidebar', items: [
       { k: '--side-c1', l: 'Gradient start', t: 'color', d: '#0e5560' },
       { k: '--side-c2', l: 'Gradient end', t: 'color', d: '#0a363d' },
