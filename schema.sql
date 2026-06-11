@@ -151,6 +151,7 @@ CREATE TABLE trade_listings (
   qty_kg         numeric(8,1) NOT NULL DEFAULT 0,
   available_from date,
   available_to   date,
+  mobile         text,                 -- seller contact
   created_by     uuid REFERENCES users(id),
   created_at     timestamptz DEFAULT now()
 );

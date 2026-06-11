@@ -452,7 +452,7 @@ app.get("/api/minutes", async (req, res) => {
 
 // Trade: seller listings (members post), buyer directory, key contacts.
 app.get("/api/trade-listings", async (req, res) => {
-  res.json(await q(`select t.id, t.seller, t.produce, t.qty_kg, t.created_by,
+  res.json(await q(`select t.id, t.seller, t.produce, t.qty_kg, t.created_by, t.mobile,
       to_char(t.available_from,'YYYY-MM-DD') available_from, to_char(t.available_to,'YYYY-MM-DD') available_to
     from trade_listings t join villages v on v.id=t.village_id where v.name=$1
     order by t.created_at desc`, [VILLAGE]));
@@ -467,9 +467,9 @@ app.post("/api/trade-listings", async (req, res) => {
     if (!actor) return res.status(401).json({ error: "sign in to post a listing" });
     const [v] = await q(`select id from villages where name=$1`, [VILLAGE]);
     const [row] = await q(
-      `insert into trade_listings(village_id, seller, produce, qty_kg, available_from, available_to, created_by)
-       values($1,$2,$3,$4,$5,$6,$7) returning id`,
-      [v.id, actor.name, produce.slice(0, 60), qty, b.available_from || null, b.available_to || null, actor.id]);
+      `insert into trade_listings(village_id, seller, produce, qty_kg, available_from, available_to, mobile, created_by)
+       values($1,$2,$3,$4,$5,$6,$7,$8) returning id`,
+      [v.id, actor.name, produce.slice(0, 60), qty, b.available_from || null, b.available_to || null, (b.mobile || '').slice(0, 25) || null, actor.id]);
     res.json({ ok: true, id: row.id });
   } catch (e) { res.status(400).json({ error: e.message }); }
 });

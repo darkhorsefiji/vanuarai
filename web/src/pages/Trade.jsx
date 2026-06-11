@@ -28,12 +28,13 @@ function ListingForm({ onPosted }) {
   const [qty, setQty] = useState('')
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
+  const [mobile, setMobile] = useState('')
   const [msg, setMsg] = useState('')
   const [busy, setBusy] = useState(false)
   async function post() {
     setBusy(true); setMsg('')
     try {
-      await send('POST', '/trade-listings', { produce, qty_kg: Number(qty), available_from: from || null, available_to: to || null })
+      await send('POST', '/trade-listings', { produce, qty_kg: Number(qty), available_from: from || null, available_to: to || null, mobile: mobile || null })
       setProduce(''); setQty(''); setFrom(''); setTo(''); setMsg('Posted ✓'); onPosted()
     } catch (e) { setMsg('⚠ ' + e.message) } finally { setBusy(false) }
   }
@@ -43,6 +44,7 @@ function ListingForm({ onPosted }) {
       <div className="sellform">
         <input list="producelist" placeholder="Produce…" value={produce} onChange={e => setProduce(e.target.value)} />
         <input type="number" min="0" step="0.5" placeholder="kg" value={qty} onChange={e => setQty(e.target.value)} />
+        <input type="tel" placeholder="Mobile (+679…)" value={mobile} onChange={e => setMobile(e.target.value)} style={{ width: 130 }} />
       </div>
       <div className="sellform dates">
         <label className="meta">From <input type="date" value={from} onChange={e => setFrom(e.target.value)} /></label>
@@ -101,16 +103,19 @@ export default function Trade() {
                 <div className="res-head">
                   <b>{l.produce}</b>
                   <span className="res-right">
+                    {availabilityHint(l) && <span className="avail-hint">{availabilityHint(l)}</span>}
                     <span className="lchip approved">{Number(l.qty_kg)} kg</span>
-                    {mine(l) && <button className="mini danger" title="Remove" onClick={() => delListing(l)}>🗑</button>}
                   </span>
                 </div>
                 <div className="meta seller-line">
                   <span>{l.seller}</span>
-                  {availabilityHint(l) && <span className="avail-hint">{availabilityHint(l)}</span>}
+                  {l.mobile && <a className="seller-mob" href={'tel:' + l.mobile.replace(/\s/g, '')}>{l.mobile}</a>}
                 </div>
-                {(l.available_from || l.available_to) && (
-                  <div className="meta">🗓 {l.available_from || '…'}{l.available_to ? ` → ${l.available_to}` : ''}</div>
+                {(l.available_from || l.available_to || mine(l)) && (
+                  <div className="meta seller-line">
+                    <span>{(l.available_from || l.available_to) ? `${l.available_from || '…'}${l.available_to ? ` → ${l.available_to}` : ''}` : ''}</span>
+                    {mine(l) && <button className="mini danger" title="Remove" onClick={() => delListing(l)}>🗑</button>}
+                  </div>
                 )}
               </div>
             ))}

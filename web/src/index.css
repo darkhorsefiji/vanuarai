@@ -288,8 +288,11 @@ table.tight tbody tr:last-child td{border-bottom:0}
 .sellform.dates label{display:inline-flex;align-items:center;gap:5px}
 .sellform.dates .btn{margin-left:auto;padding:7px 16px;font-size:13px}
 .tradecard .res-head b{font-size:14.5px}
-.seller-line{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.seller-line{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .avail-hint{color:var(--ocean);font-weight:700;white-space:nowrap}
+.tradecard .res-head .avail-hint{font-size:14.5px}  /* match the produce label on that line */
+.seller-mob{color:var(--ink);font-weight:600;text-decoration:none;white-space:nowrap}
+.seller-mob:hover{color:var(--ocean);text-decoration:underline}
 
 /* Dev: resolution action types */
 .actiontypes{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:6px 0 22px}
