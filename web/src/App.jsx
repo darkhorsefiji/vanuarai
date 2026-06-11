@@ -18,22 +18,23 @@ import Dev from './pages/Dev'
 import { Icon, IconSetProvider } from './icons'
 import { loadNavOrder, onNavOrderChange, orderedNav, saveNavOrder } from './nav'
 import { LevelsProvider } from './levels'
-import { AuthProvider, useAuth } from './auth'
+import { AuthProvider, useAuth, isDev, isVillageAdmin } from './auth'
 import { CopyProvider, DevEditButton } from './copy'
 import DevStyler from './styler'
 import AuthArea from './AuthArea'
 
 const TOP_NAV = [['/', 'Internet']]
 
-// Admin/Dev are reached via the avatar menu and require the official role.
-function RequireOfficial({ children }) {
+// Admin/Dev are reached via the avatar menu; access follows the role tiers
+// (member < official < village_admin < app_admin/DEV).
+function RequireRole({ check, who, children }) {
   const { user, ready } = useAuth()
   if (!ready) return null
-  if (!user || !(user.isAppAdmin || user.role === 'official')) {
+  if (!check(user)) {
     return (
       <div className="card" style={{ marginTop: 20, maxWidth: 460 }}>
-        <h3>Officials only</h3>
-        <p className="sub">Sign in with a village-official account to access this page.</p>
+        <h3>{who} only</h3>
+        <p className="sub">Sign in with a {who.toLowerCase()} account to access this page.</p>
       </div>
     )
   }
@@ -44,7 +45,7 @@ function RequireOfficial({ children }) {
 // officials don't get it). Plain clicks still navigate; order persists via nav.js.
 function Sidebar() {
   const { user } = useAuth()
-  const dev = !!user && user.isAppAdmin
+  const dev = isDev(user)
   const [collapsed, setCollapsed] = useState(false)
   const [navOrder, setNavOrder] = useState(loadNavOrder)
   const [drag, setDrag] = useState(null)
@@ -122,8 +123,8 @@ export default function App() {
                 <Route path="/agreements" element={<Agreements />} />
                 <Route path="/trade" element={<Trade />} />
                 <Route path="/emergencies" element={<Emergencies />} />
-                <Route path="/admin" element={<RequireOfficial><Admin /></RequireOfficial>} />
-                <Route path="/dev" element={<RequireOfficial><Dev /></RequireOfficial>} />
+                <Route path="/admin" element={<RequireRole check={isVillageAdmin} who="Village Admins"><Admin /></RequireRole>} />
+                <Route path="/dev" element={<RequireRole check={isDev} who="App Admins (DEV)"><Dev /></RequireRole>} />
               </Routes>
             </main>
           </div>

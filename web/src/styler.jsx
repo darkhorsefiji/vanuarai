@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { THEME_GROUPS, loadOverrides, setVar, clearVars, ensureFont, fontStack, familyFromStack } from './theme'
 import { GOOGLE_FONTS } from './googleFonts'
-import { useAuth } from './auth'
+import { useAuth, isDev } from './auth'
 
 // Most-specific first: the first selector that matches via closest() wins.
 const TARGETS = [
@@ -57,7 +57,7 @@ function Control({ it, value, onChange }) {
 
 export default function DevStyler() {
   const auth = useAuth()
-  const official = !!auth?.user && (auth.user.isAppAdmin || auth.user.role === 'official')
+  const official = isDev(auth?.user)   // DEV tier only (variable name kept for the hooks below)
   const [on, setOn] = useState(false)
   const [pop, setPop] = useState(null)        // { group }
   const [pos, setPos] = useState({ x: 0, y: 0, dragged: false })

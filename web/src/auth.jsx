@@ -29,3 +29,10 @@ export function AuthProvider({ children }) {
 }
 
 export const useAuth = () => useContext(Ctx)
+
+// Role tiers: member < official < village_admin < app_admin (DEV).
+// official comes from memberships.role; village_admin from an active body_office;
+// app_admin (DEV) from users.is_app_admin. Higher tiers include the lower checks below.
+export const isDev = u => !!u?.isAppAdmin
+export const isVillageAdmin = u => isDev(u) || !!u?.offices?.some(o => o.office === 'village_admin')
+export const isOfficialRole = u => isDev(u) || u?.role === 'official'

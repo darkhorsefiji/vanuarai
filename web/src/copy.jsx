@@ -2,7 +2,7 @@
 // Overrides + edit-mode flag persist in localStorage; EditableText renders the
 // override when present, falling back to the default passed as children.
 import { createContext, useContext, useState, useCallback } from 'react'
-import { useAuth } from './auth'
+import { useAuth, isDev } from './auth'
 
 const COPY_KEY = 'vr_copy'
 const MODE_KEY = 'vr_copy_edit'
@@ -74,8 +74,7 @@ export function EditableText({ id, as: Tag = 'p', className, html = false, child
 export function DevEditButton() {
   const ctx = useCopy()
   const auth = useAuth()
-  const official = !!auth?.user && (auth.user.isAppAdmin || auth.user.role === 'official')
-  if (!ctx || !official) return null
+  if (!ctx || !isDev(auth?.user)) return null
   return (
     <div className="devedit-fab">
       {ctx.edit && (
