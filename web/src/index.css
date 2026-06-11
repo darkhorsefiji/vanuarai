@@ -275,8 +275,9 @@ table.tight tbody tr:last-child td{border-bottom:0}
 .leaflet-container{isolation:isolate;z-index:0}
 
 /* ---- Trade: 3 columns ---- */
-.cols.cols3{grid-template-columns:1fr 1fr 1fr}
-@media(max-width:1000px){.cols.cols3{grid-template-columns:1fr 1fr}}
+/* minmax(0,1fr) stops wide content (forms/inputs) stretching a column */
+.cols.cols3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:1000px){.cols.cols3{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:700px){.cols.cols3{grid-template-columns:1fr}}
 .tradelist{display:flex;flex-direction:column;gap:10px;margin-top:10px;max-height:560px;overflow-y:auto;padding-right:4px}
 .tradelist>.card{margin:0;flex-shrink:0}
@@ -290,7 +291,7 @@ table.tight tbody tr:last-child td{border-bottom:0}
 .tradecard .res-head b{font-size:14.5px}
 .seller-line{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .avail-hint{color:var(--ocean);font-weight:700;white-space:nowrap}
-.tradecard .res-head .avail-hint{font-size:14.5px}  /* match the produce label on that line */
+.tradecard .res-head .avail-hint{font-size:var(--pill-font-size,11px)}  /* match the kg chip */
 .seller-mob{color:var(--ink);font-weight:600;text-decoration:none;white-space:nowrap}
 .seller-mob:hover{color:var(--ocean);text-decoration:underline}
 

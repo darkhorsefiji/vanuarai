@@ -23,19 +23,21 @@ function availabilityHint(l) {
 }
 const CAT_ICON = { Carrier: '🚚', Bus: '🚌', Boat: '🛥', Hostel: '🛏', Venue: '🏛', School: '🏫' }
 
-function ListingForm({ onPosted }) {
+function ListingForm({ authorName, onPosted }) {
   const [produce, setProduce] = useState('')
   const [qty, setQty] = useState('')
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
+  const [seller, setSeller] = useState(authorName || '')
   const [mobile, setMobile] = useState('')
   const [msg, setMsg] = useState('')
   const [busy, setBusy] = useState(false)
+  useEffect(() => { if (!seller && authorName) setSeller(authorName) }, [authorName, seller])
   async function post() {
     setBusy(true); setMsg('')
     try {
-      await send('POST', '/trade-listings', { produce, qty_kg: Number(qty), available_from: from || null, available_to: to || null, mobile: mobile || null })
-      setProduce(''); setQty(''); setFrom(''); setTo(''); setMsg('Posted ✓'); onPosted()
+      await send('POST', '/trade-listings', { produce, qty_kg: Number(qty), seller: seller || null, available_from: from || null, available_to: to || null, mobile: mobile || null })
+      setProduce(''); setQty(''); setFrom(''); setTo(''); setSeller(authorName || ''); setMobile(''); setMsg('Posted ✓'); onPosted()
     } catch (e) { setMsg('⚠ ' + e.message) } finally { setBusy(false) }
   }
   return (
@@ -44,7 +46,11 @@ function ListingForm({ onPosted }) {
       <div className="sellform">
         <input list="producelist" placeholder="Produce…" value={produce} onChange={e => setProduce(e.target.value)} />
         <input type="number" min="0" step="0.5" placeholder="kg" value={qty} onChange={e => setQty(e.target.value)} />
-        <input type="tel" placeholder="Mobile (+679…)" value={mobile} onChange={e => setMobile(e.target.value)} style={{ width: 130 }} />
+      </div>
+      <div className="sellform" style={{ marginTop: 7 }}>
+        <input placeholder="Seller name…" title="Posting on behalf of someone? Put their name here." style={{ flex: 1 }}
+          value={seller} onChange={e => setSeller(e.target.value)} />
+        <input type="tel" placeholder="Mobile (+679…)" value={mobile} onChange={e => setMobile(e.target.value)} style={{ width: 124 }} />
       </div>
       <div className="sellform dates">
         <label className="meta">From <input type="date" value={from} onChange={e => setFrom(e.target.value)} /></label>
@@ -95,7 +101,7 @@ export default function Trade() {
         <div className="col">
           <h3 style={{ marginTop: 8 }}>Sellers</h3>
           <EditableText id="trade.sellers.sub" className="sub">Produce available from the village.</EditableText>
-          {user ? <ListingForm onPosted={loadListings} /> : <p className="meta postlock">🔒 Sign in to post what you have for sale.</p>}
+          {user ? <ListingForm authorName={user.name || user.email || ''} onPosted={loadListings} /> : <p className="meta postlock">🔒 Sign in to post what you have for sale.</p>}
           {msg && <span className="status">{msg}</span>}
           <div className="tradelist">
             {!listings ? <p className="loading">Loading…</p> : listings.map(l => (
@@ -103,8 +109,8 @@ export default function Trade() {
                 <div className="res-head">
                   <b>{l.produce}</b>
                   <span className="res-right">
-                    {availabilityHint(l) && <span className="avail-hint">{availabilityHint(l)}</span>}
                     <span className="lchip approved">{Number(l.qty_kg)} kg</span>
+                    {availabilityHint(l) && <span className="avail-hint">{availabilityHint(l)}</span>}
                   </span>
                 </div>
                 <div className="meta seller-line">
