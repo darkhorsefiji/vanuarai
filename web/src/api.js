@@ -11,11 +11,17 @@ export async function get(path) {
 }
 
 export async function send(method, path, body) {
-  const r = await fetch('/api' + path, {
-    method,
-    headers: authHeaders({ 'Content-Type': 'application/json' }),
-    body: body != null ? JSON.stringify(body) : undefined,
-  })
+  let r
+  try {
+    r = await fetch('/api' + path, {
+      method,
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: body != null ? JSON.stringify(body) : undefined,
+    })
+  } catch {
+    // network-level failure (server not running / connection refused)
+    throw new Error('Server unreachable — your input is kept; please try again shortly.')
+  }
   if (!r.ok) {
     let msg
     try { msg = (await r.json()).error } catch { /* ignore */ }
