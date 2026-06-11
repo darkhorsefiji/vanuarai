@@ -146,6 +146,7 @@ CREATE TABLE village_assets (
 CREATE TABLE trade_listings (
   id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   village_id     uuid REFERENCES villages(id),
+  group_id       uuid,                 -- one posting (multi-produce) = one group = one card
   seller         text NOT NULL,
   produce        text NOT NULL,
   qty_kg         numeric(8,1) NOT NULL DEFAULT 0,

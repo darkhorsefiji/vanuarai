@@ -452,27 +452,44 @@ app.get("/api/minutes", async (req, res) => {
 
 // Trade: seller listings (members post), buyer directory, key contacts.
 app.get("/api/trade-listings", async (req, res) => {
-  res.json(await q(`select t.id, t.seller, t.produce, t.qty_kg, t.created_by, t.mobile,
+  res.json(await q(`select t.id, t.group_id, t.seller, t.produce, t.qty_kg, t.created_by, t.mobile,
       to_char(t.available_from,'YYYY-MM-DD') available_from, to_char(t.available_to,'YYYY-MM-DD') available_to
     from trade_listings t join villages v on v.id=t.village_id where v.name=$1
-    order by t.created_at desc`, [VILLAGE]));
+    order by t.created_at desc, t.id`, [VILLAGE]));
 });
 app.post("/api/trade-listings", async (req, res) => {
   const b = req.body || {};
-  const produce = String(b.produce || '').trim();
-  const qty = Number(b.qty_kg);
-  if (!produce || !(qty > 0)) return res.status(400).json({ error: "produce and a quantity (kg) are required" });
+  // one posting = one group; accepts items:[{produce, qty_kg}] or a legacy single produce/qty_kg
+  const items = (Array.isArray(b.items) ? b.items : [{ produce: b.produce, qty_kg: b.qty_kg }])
+    .map(it => ({ produce: String(it.produce || '').trim().slice(0, 60), qty: Number(it.qty_kg) }))
+    .filter(it => it.produce && it.qty > 0);
+  if (!items.length) return res.status(400).json({ error: "at least one produce with a quantity (kg) is required" });
   try {
     const actor = await noticeActor(req);
     if (!actor) return res.status(401).json({ error: "sign in to post a listing" });
     // seller is editable (posting on behalf of someone without access); defaults to the poster
     const seller = String(b.seller || '').trim().slice(0, 80) || actor.name;
     const [v] = await q(`select id from villages where name=$1`, [VILLAGE]);
-    const [row] = await q(
-      `insert into trade_listings(village_id, seller, produce, qty_kg, available_from, available_to, mobile, created_by)
-       values($1,$2,$3,$4,$5,$6,$7,$8) returning id`,
-      [v.id, seller, produce.slice(0, 60), qty, b.available_from || null, b.available_to || null, (b.mobile || '').slice(0, 25) || null, actor.id]);
-    res.json({ ok: true, id: row.id });
+    const gid = require("crypto").randomUUID();
+    for (const it of items) {
+      await q(
+        `insert into trade_listings(village_id, group_id, seller, produce, qty_kg, available_from, available_to, mobile, created_by)
+         values($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+        [v.id, gid, seller, it.produce, it.qty, b.available_from || null, b.available_to || null, (b.mobile || '').slice(0, 25) || null, actor.id]);
+    }
+    res.json({ ok: true, group_id: gid, count: items.length });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+app.delete("/api/trade-listing-groups/:gid", async (req, res) => {
+  try {
+    const actor = await noticeActor(req);
+    if (!actor) return res.status(401).json({ error: "sign in first" });
+    const [t] = await q(`select created_by from trade_listings where group_id=$1 limit 1`, [req.params.gid]);
+    if (!t) return res.status(404).json({ error: "listing not found" });
+    if (!isOfficial(actor) && !(t.created_by && t.created_by === actor.id))
+      return res.status(403).json({ error: "you can only remove your own listings" });
+    await q(`delete from trade_listings where group_id=$1`, [req.params.gid]);
+    res.json({ ok: true });
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 app.delete("/api/trade-listings/:id", async (req, res) => {

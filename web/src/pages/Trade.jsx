@@ -40,12 +40,11 @@ function ListingForm({ authorName, onPosted }) {
   async function post() {
     setBusy(true); setMsg('')
     try {
-      for (const it of items) {
-        await send('POST', '/trade-listings', {
-          produce: it.produce, qty_kg: Number(it.qty), seller: seller || null,
-          available_from: from, available_to: to, mobile: mobile || null,
-        })
-      }
+      await send('POST', '/trade-listings', {
+        seller: seller || null, mobile: mobile || null,
+        available_from: from, available_to: to,
+        items: items.map(it => ({ produce: it.produce, qty_kg: Number(it.qty) })),
+      })
       setItems([{ produce: '', qty: '' }]); setFrom(''); setTo(''); setMobile(''); setSeller(authorName || '')
       setMsg('Posted ✓'); onPosted()
     } catch (e) { setMsg('⚠ ' + e.message) } finally { setBusy(false) }
@@ -80,6 +79,43 @@ function ListingForm({ authorName, onPosted }) {
   )
 }
 
+// One posting = one card; produce list expands (collapsed beyond 4 items).
+function TradeGroupCard({ g, canManage, onDelete }) {
+  const [expanded, setExpanded] = useState(false)
+  const totalKg = g.items.reduce((s, it) => s + Number(it.qty_kg), 0)
+  const collapsible = g.items.length > 4
+  const shown = collapsible && !expanded ? g.items.slice(0, 3) : g.items
+  return (
+    <div className="card tradecard">
+      <div className="trade-head">
+        <b>{g.seller}</b>
+        <span className="lchip approved">{totalKg} kg</span>
+        <span className="avail-hint">{availabilityHint(g) || ''}</span>
+      </div>
+      <div className="produce-lines">
+        {shown.map(it => (
+          <div className="produce-line" key={it.id}>
+            <span>{it.produce}</span>
+            <span className="lchip approved">{Number(it.qty_kg)} kg</span>
+          </div>
+        ))}
+        {collapsible && (
+          <button className="expand-toggle" onClick={() => setExpanded(e => !e)}>
+            {expanded ? '▴ show less' : `▾ show all ${g.items.length} items`}
+          </button>
+        )}
+      </div>
+      <div className="meta seller-line">
+        <span>{(g.available_from || g.available_to) ? `${g.available_from || '…'}${g.available_to ? ` → ${g.available_to}` : ''}` : ''}</span>
+        {g.mobile && <a className="seller-mob" href={'tel:' + g.mobile.replace(/\s/g, '')}>{g.mobile}</a>}
+      </div>
+      {canManage && (
+        <div className="meta seller-line"><span /><button className="mini danger" title="Remove listing" onClick={onDelete}>🗑</button></div>
+      )}
+    </div>
+  )
+}
+
 export default function Trade() {
   const { user } = useAuth()
   const [listings, setListings] = useState(null)
@@ -96,12 +132,23 @@ export default function Trade() {
     get('/trade-contacts').then(setContacts).catch(() => {})
   }, [])
 
-  const mine = l => user && (isOfficialRole(user) || l.created_by === user.id)
-  async function delListing(l) {
-    if (!window.confirm(`Remove the ${l.produce} listing?`)) return
-    try { await send('DELETE', '/trade-listings/' + l.id); setMsg('Removed ✓'); loadListings() }
+  const mine = g => user && (isOfficialRole(user) || g.created_by === user.id)
+  async function delGroup(g) {
+    if (!window.confirm(`Remove ${g.seller}'s listing (${g.items.length} item${g.items.length === 1 ? '' : 's'})?`)) return
+    try { await send('DELETE', '/trade-listing-groups/' + g.group_id); setMsg('Removed ✓'); loadListings() }
     catch (e) { setMsg('⚠ ' + e.message) }
   }
+
+  // one card per posting: group rows by group_id, preserving newest-first order
+  const groups = listings ? (() => {
+    const by = new Map()
+    for (const l of listings) {
+      const k = l.group_id || l.id
+      if (!by.has(k)) by.set(k, { group_id: k, seller: l.seller, mobile: l.mobile, created_by: l.created_by, available_from: l.available_from, available_to: l.available_to, items: [] })
+      by.get(k).items.push(l)
+    }
+    return [...by.values()]
+  })() : null
 
   const fB = qBuyer.trim().toLowerCase()
   const buyersShown = buyers ? buyers.filter(b => !fB || [b.name, b.buys, b.location].join(' ').toLowerCase().includes(fB)) : null
@@ -122,26 +169,10 @@ export default function Trade() {
           {user ? <ListingForm authorName={user.name || user.email || ''} onPosted={loadListings} /> : <p className="meta postlock">🔒 Sign in to post what you have for sale.</p>}
           {msg && <span className="status">{msg}</span>}
           <div className="tradelist">
-            {!listings ? <p className="loading">Loading…</p> : listings.map(l => (
-              <div className="card tradecard" key={l.id}>
-                <div className="trade-head">
-                  <b>{l.produce}</b>
-                  <span className="lchip approved">{Number(l.qty_kg)} kg</span>
-                  <span className="avail-hint">{availabilityHint(l) || ''}</span>
-                </div>
-                <div className="meta seller-line">
-                  <span>{l.seller}</span>
-                  {l.mobile && <a className="seller-mob" href={'tel:' + l.mobile.replace(/\s/g, '')}>{l.mobile}</a>}
-                </div>
-                {(l.available_from || l.available_to || mine(l)) && (
-                  <div className="meta seller-line">
-                    <span>{(l.available_from || l.available_to) ? `${l.available_from || '…'}${l.available_to ? ` → ${l.available_to}` : ''}` : ''}</span>
-                    {mine(l) && <button className="mini danger" title="Remove" onClick={() => delListing(l)}>🗑</button>}
-                  </div>
-                )}
-              </div>
+            {!groups ? <p className="loading">Loading…</p> : groups.map(g => (
+              <TradeGroupCard key={g.group_id} g={g} canManage={mine(g)} onDelete={() => delGroup(g)} />
             ))}
-            {listings && listings.length === 0 && <p className="meta">Nothing listed yet.</p>}
+            {groups && groups.length === 0 && <p className="meta">Nothing listed yet.</p>}
           </div>
         </div>
 

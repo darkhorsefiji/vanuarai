@@ -299,6 +299,12 @@ table.tight tbody tr:last-child td{border-bottom:0}
 .avail-hint{color:var(--ocean);font-weight:700;white-space:nowrap}
 .seller-mob{color:var(--ink);font-weight:600;text-decoration:none;white-space:nowrap}
 .seller-mob:hover{color:var(--ocean);text-decoration:underline}
+.produce-lines{margin:4px 0 6px;border-top:1px solid var(--line)}
+.produce-line{display:flex;justify-content:space-between;align-items:center;gap:10px;
+  padding:5px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.expand-toggle{display:block;width:100%;background:none;border:0;border-bottom:1px solid var(--line);cursor:pointer;
+  color:var(--ocean);font-weight:700;font-size:12px;padding:6px 0;font-family:var(--font);text-align:left}
+.expand-toggle:hover{color:var(--deep)}
 
 /* Dev: resolution action types */
 .actiontypes{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:6px 0 22px}
