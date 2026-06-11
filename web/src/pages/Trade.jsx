@@ -105,12 +105,12 @@ export default function Trade() {
                     {mine(l) && <button className="mini danger" title="Remove" onClick={() => delListing(l)}>🗑</button>}
                   </span>
                 </div>
-                <div className="meta">{l.seller}</div>
+                <div className="meta seller-line">
+                  <span>{l.seller}</span>
+                  {availabilityHint(l) && <span className="avail-hint">{availabilityHint(l)}</span>}
+                </div>
                 {(l.available_from || l.available_to) && (
-                  <div className="meta">
-                    🗓 {l.available_from || '…'}{l.available_to ? ` → ${l.available_to}` : ''}
-                    {availabilityHint(l) && <span className="avail-hint"> · {availabilityHint(l)}</span>}
-                  </div>
+                  <div className="meta">🗓 {l.available_from || '…'}{l.available_to ? ` → ${l.available_to}` : ''}</div>
                 )}
               </div>
             ))}
