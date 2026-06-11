@@ -4,6 +4,23 @@ import { useAuth, isOfficialRole } from '../auth'
 import { EditableText } from '../copy'
 
 const PRODUCE = ['Tavioka', 'Dalo', 'Kumala', 'Rourou', 'Bele', 'Duruka', 'Fish', 'Kava', 'Coconut', 'Vudi', 'Uvi', 'Baigani', 'Pawpaw', 'Banana']
+
+// Days from the viewer's "today" to a yyyy-mm-dd date (0 = today).
+const daysTo = s => {
+  const d = new Date(s + 'T00:00:00'); const t = new Date(); t.setHours(0, 0, 0, 0)
+  return Math.round((d - t) / 86400000)
+}
+// e.g. "in 3–6 days", "now – 4 days", "available now", "ended"
+function availabilityHint(l) {
+  const f = l.available_from ? daysTo(l.available_from) : null
+  const t = l.available_to ? daysTo(l.available_to) : null
+  const day = n => `${n} day${n === 1 ? '' : 's'}`
+  if (t != null && t < 0) return 'ended'
+  if (f != null && t != null) return f <= 0 ? `now – ${day(t)}` : `in ${f}–${t} days`
+  if (f != null) return f <= 0 ? 'available now' : `in ${day(f)}`
+  if (t != null) return `${day(t)} left`
+  return null
+}
 const CAT_ICON = { Carrier: '🚚', Bus: '🚌', Boat: '🛥', Hostel: '🛏', Venue: '🏛', School: '🏫' }
 
 function ListingForm({ onPosted }) {
@@ -90,7 +107,10 @@ export default function Trade() {
                 </div>
                 <div className="meta">{l.seller}</div>
                 {(l.available_from || l.available_to) && (
-                  <div className="meta">🗓 {l.available_from || '…'}{l.available_to ? ` → ${l.available_to}` : ''}</div>
+                  <div className="meta">
+                    🗓 {l.available_from || '…'}{l.available_to ? ` → ${l.available_to}` : ''}
+                    {availabilityHint(l) && <span className="avail-hint"> · {availabilityHint(l)}</span>}
+                  </div>
                 )}
               </div>
             ))}

@@ -288,6 +288,7 @@ table.tight tbody tr:last-child td{border-bottom:0}
 .sellform.dates label{display:inline-flex;align-items:center;gap:5px}
 .sellform.dates .btn{margin-left:auto;padding:7px 16px;font-size:13px}
 .tradecard .res-head b{font-size:14.5px}
+.avail-hint{color:var(--ocean);font-weight:700}
 
 /* Dev: resolution action types */
 .actiontypes{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:6px 0 22px}
