@@ -81,7 +81,7 @@ function NoticeCard({ n, canManage, onChanged }) {
   )
 }
 
-function NoticeColumn({ title, subtitle, channel, notices, user, official, onChanged }) {
+function NoticeColumn({ title, subtitle, subId, channel, notices, user, official, onChanged }) {
   const [showExpired, setShowExpired] = useState(false)
   const mine = n => user && (official || n.created_by === user.id)
   const activeList = notices ? notices.filter(n => n.status === 'Active') : null
@@ -91,7 +91,7 @@ function NoticeColumn({ title, subtitle, channel, notices, user, official, onCha
   return (
     <div className="col">
       <h3 style={{ marginTop: 8 }}>{title}</h3>
-      <p className="sub">{subtitle}</p>
+      <EditableText id={subId} className="sub">{subtitle}</EditableText>
       {canPost
         ? <PostBox channel={channel} onPosted={onChanged} />
         : <p className="meta postlock">🔒 {channel === 'koro' ? 'Only village officials can post official notices.' : 'Sign in to post.'}</p>}
@@ -133,9 +133,9 @@ export default function Kacikacivaki() {
       </div>
 
       <div className="cols cols-even">
-        <NoticeColumn title="Nai Tukutuku in Koro" subtitle="Official — Vanua & Government hierarchies."
+        <NoticeColumn title="Nai Tukutuku in Koro" subtitle="Official — Vanua & Government hierarchies." subId="kacikacivaki.koro.sub"
           channel="koro" notices={koro} user={user} official={official} onChanged={load} />
-        <NoticeColumn title="Nai Tukutuku in Lewe ni Vanua" subtitle="Community — postings from any village member."
+        <NoticeColumn title="Nai Tukutuku in Lewe ni Vanua" subtitle="Community — postings from any village member." subId="kacikacivaki.lewe.sub"
           channel="lewe" notices={lewe} user={user} official={official} onChanged={load} />
       </div>
     </>

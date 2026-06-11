@@ -75,7 +75,7 @@ export default function Trade() {
       <div className="cols cols3">
         <div className="col">
           <h3 style={{ marginTop: 8 }}>Sellers</h3>
-          <p className="sub">Produce available from the village.</p>
+          <EditableText id="trade.sellers.sub" className="sub">Produce available from the village.</EditableText>
           {user ? <ListingForm onPosted={loadListings} /> : <p className="meta postlock">🔒 Sign in to post what you have for sale.</p>}
           {msg && <span className="status">{msg}</span>}
           <div className="tradelist">
@@ -100,7 +100,7 @@ export default function Trade() {
 
         <div className="col">
           <h3 style={{ marginTop: 8 }}>Buyers</h3>
-          <p className="sub">Who's buying village produce.</p>
+          <EditableText id="trade.buyers.sub" className="sub">Who's buying village produce.</EditableText>
           <input className="treesearch" placeholder="Search buyers…" value={qBuyer} onChange={e => setQBuyer(e.target.value)} />
           <div className="tradelist">
             {!buyersShown ? <p className="loading">Loading…</p> : buyersShown.map(b => (
@@ -120,7 +120,7 @@ export default function Trade() {
 
         <div className="col">
           <h3 style={{ marginTop: 8 }}>Key Contacts</h3>
-          <p className="sub">Carriers, buses, boats, hostels, venues and schools.</p>
+          <EditableText id="trade.contacts.sub" className="sub">Carriers, buses, boats, hostels, venues and schools.</EditableText>
           <input className="treesearch" placeholder="Search contacts…" value={qContact} onChange={e => setQContact(e.target.value)} />
           <div className="tradelist">
             {!contactsShown ? <p className="loading">Loading…</p> : contactsShown.map(c => (

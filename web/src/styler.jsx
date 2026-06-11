@@ -27,6 +27,8 @@ const groupByName = name => THEME_GROUPS.find(g => g.group === name)
 
 function findTarget(el) {
   if (!el || el.closest('.styler-pop, .devedit-fab, .devstyle-fab, .styler-hint')) return null
+  // don't steal clicks from text being edited via DEV Edit mode
+  if (el.closest('[contenteditable="true"]')) return null
   for (const t of TARGETS) {
     const hit = el.closest(t.sel)
     if (hit && groupByName(t.group)) return { group: t.group, el: hit }
