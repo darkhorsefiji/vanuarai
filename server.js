@@ -304,18 +304,41 @@ app.get("/api/composition", async (req, res) => {
 });
 
 app.get("/api/level-styles", async (req, res) => {
-  res.json(await q(`select level, label, color, sort_order from level_styles order by sort_order`));
+  res.json(await q(`select level, label, label_en, color, sort_order from level_styles order by sort_order`));
 });
 
-// Admin: update hierarchy level styling (colour + label). Body: { styles:[{level,color,label}] }
+// DEV: add / remove hierarchy level name rows.
+app.post("/api/level-styles", async (req, res) => {
+  const b = req.body || {};
+  const level = String(b.level || "").trim().toLowerCase().replace(/\s+/g, "_");
+  if (!level || !b.label) return res.status(400).json({ error: "level key and Fijian label required" });
+  try {
+    const [row] = await q(`insert into level_styles(level, label, label_en, color, sort_order)
+      values($1,$2,$3,$4, coalesce((select max(sort_order) from level_styles),0)+1)
+      on conflict (level) do nothing returning level`,
+      [level, String(b.label).slice(0, 40), (b.label_en || null), b.color || "#6f8a8f"]);
+    if (!row) return res.status(409).json({ error: "that level already exists" });
+    res.json({ ok: true, level: row.level });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+app.delete("/api/level-styles/:level", async (req, res) => {
+  try {
+    await q(`delete from level_styles where level=$1`, [req.params.level]);
+    res.json({ ok: true });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+// Admin/DEV: update hierarchy level styling + names. Body: { styles:[{level,color,label,label_en?}] }
+// label_en only updates when supplied, so the Admin colour editor doesn't wipe it.
 app.patch("/api/level-styles", async (req, res) => {
   const styles = (req.body && req.body.styles) || [];
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
     for (const s of styles) {
-      await client.query(`update level_styles set color=$1, label=$2 where level=$3`,
-        [s.color, s.label, s.level]);
+      await client.query(`update level_styles set color=coalesce($1,color), label=coalesce($2,label),
+          label_en=coalesce($3,label_en) where level=$4`,
+        [s.color ?? null, s.label ?? null, s.label_en ?? null, s.level]);
     }
     await client.query("COMMIT");
     res.json({ ok: true, updated: styles.length });

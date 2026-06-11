@@ -1,16 +1,12 @@
 import { useState, useEffect, useCallback } from 'react'
 import { get } from './api'
-import { LevelBadge } from './levels'
+import { LevelBadge, LevelEn } from './levels'
 
 export const CHILD_NAME = {
   vanua: 'Yavusa', yavusa: 'Mataqali', mataqali: 'Tokatoka', tokatoka: 'Vuvale',
   provincial_council: 'District', district: 'Village',
 }
 
-// English equivalent shown in brackets outside the level pill, before the node name.
-export const LEVEL_EN = {
-  provincial_council: 'Province', district: 'District', village: 'Village', soqosoqo: 'Club',
-}
 
 export function buildTree(nodes) {
   const kids = {}
@@ -46,7 +42,7 @@ export function TreeNode({ n, kids, depth, sel, onSelect, edit, onAdd, onRename,
         ? <button className={'caret' + (isOpen ? ' open' : '')} onClick={() => setOpen(o => !o)} aria-label="toggle"><span className="chev">›</span></button>
         : <span className="caret spacer" />}
       <LevelBadge level={n.level} />
-      {LEVEL_EN[n.level] && <span className="lvlen">({LEVEL_EN[n.level]})</span>}
+      <LevelEn level={n.level} />
       <span className={'nodelabel' + (selectable ? ' clickable' : '') + (sel === n.id ? ' selected' : (onPath ? ' onpath' : ''))}
         onClick={selectable ? () => onSelect(n.id) : undefined}>{n.label}</span>
       {edit && (

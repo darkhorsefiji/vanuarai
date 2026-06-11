@@ -23,3 +23,10 @@ export function LevelBadge({ level }) {
     </span>
   )
 }
+
+// English equivalent shown in brackets after the pill (DB-driven, DEV-editable).
+export function LevelEn({ level }) {
+  const { map } = useLevels()
+  const en = map[level]?.label_en
+  return en ? <span className="lvlen">({en})</span> : null
+}

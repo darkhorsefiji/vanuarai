@@ -71,7 +71,8 @@ CREATE INDEX ON village_resources(village_id);
 -- Editable styling (colour + label) per hierarchy level (Admin-configurable).
 CREATE TABLE level_styles (
   level       text PRIMARY KEY,   -- matches scope_level values
-  label       text NOT NULL,
+  label       text NOT NULL,      -- Fijian name (shown in the pill)
+  label_en    text,               -- English equivalent (shown in brackets); DEV-editable
   color       text NOT NULL,      -- hex
   sort_order  int  NOT NULL DEFAULT 0
 );
