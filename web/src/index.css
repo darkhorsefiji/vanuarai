@@ -310,8 +310,9 @@ table.tight tbody tr:last-child td{border-bottom:0}
 .expand-toggle:hover{color:var(--deep)}
 
 /* Dev: hierarchy level names */
-.lvlnames{display:flex;flex-direction:column;gap:7px;margin:6px 0 22px;max-width:640px}
-.lvlnames-head,.lvlnames-row{display:grid;grid-template-columns:130px 1fr 1fr 110px;gap:10px;align-items:center}
+.lvlnames{display:flex;flex-direction:column;gap:7px;margin:6px 0 22px;max-width:700px}
+.lvlnames-head,.lvlnames-row{display:grid;grid-template-columns:130px 48px 1fr 1fr 110px;gap:10px;align-items:center}
+.lvlnames-row input[type=color]{width:42px;height:28px;padding:1px;border:1px solid var(--line);border-radius:6px;background:#fff}
 .lvlnames-head{font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);font-weight:700}
 .lvlnames-row input{border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-family:var(--font);font-size:13.5px;min-width:0}
 .lvlnames-acts{display:inline-flex;gap:5px}

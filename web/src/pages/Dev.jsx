@@ -20,7 +20,7 @@ function LevelNamesEditor() {
 
   const upd = (i, k, v) => setRows(rs => rs.map((r, j) => (j === i ? { ...r, [k]: v } : r)))
   async function saveRow(r) {
-    try { await send('PATCH', '/level-styles', { styles: [{ level: r.level, label: r.label, label_en: r.label_en || '' }] }); setMsg('Saved ✓'); refresh() }
+    try { await send('PATCH', '/level-styles', { styles: [{ level: r.level, label: r.label, label_en: r.label_en || '', color: r.color }] }); setMsg('Saved ✓'); refresh() }
     catch (e) { setMsg('⚠ ' + e.message) }
   }
   async function delRow(r) {
@@ -37,10 +37,11 @@ function LevelNamesEditor() {
   if (!rows) return <p className="loading">Loading…</p>
   return (
     <div className="lvlnames">
-      <div className="lvlnames-head"><span>Level</span><span>Fijian name (pill)</span><span>English (bracket)</span><span /></div>
+      <div className="lvlnames-head"><span>Level</span><span>Colour</span><span>Fijian name (pill)</span><span>English (bracket)</span><span /></div>
       {rows.map((r, i) => (
         <div className="lvlnames-row" key={r.level}>
           <span className="lvl" style={{ background: r.color }}>{r.label}</span>
+          <input type="color" value={r.color} onChange={e => upd(i, 'color', e.target.value)} />
           <input value={r.label} onChange={e => upd(i, 'label', e.target.value)} />
           <input value={r.label_en || ''} onChange={e => upd(i, 'label_en', e.target.value)} placeholder="(none)" />
           <span className="lvlnames-acts">
@@ -51,6 +52,7 @@ function LevelNamesEditor() {
       ))}
       <div className="lvlnames-row">
         <input placeholder="level key…" value={add.level} onChange={e => setAdd(a => ({ ...a, level: e.target.value }))} />
+        <span />
         <input placeholder="Fijian name…" value={add.label} onChange={e => setAdd(a => ({ ...a, label: e.target.value }))} />
         <input placeholder="English…" value={add.label_en} onChange={e => setAdd(a => ({ ...a, label_en: e.target.value }))} />
         <span className="lvlnames-acts"><button className="mini" onClick={addRow}>+ Add</button></span>
@@ -184,8 +186,8 @@ export default function Dev() {
           <h3>Sidebar menu order</h3>
           <p className="sub">Drag the items directly <b>in the sidebar</b> to re-arrange (DEV role only) — applies immediately. <button className="mini" onClick={resetNavOrder}>↺ Reset order</button></p>
 
-          <h3>Hierarchy level names</h3>
-          <p className="sub">Fijian pill text and the English equivalent shown in brackets, across the Vanua and Government trees. Colours are set on the Village Admin page.</p>
+          <h3>Hierarchy level styling &amp; names</h3>
+          <p className="sub">Pill colour, Fijian name and the English equivalent shown in brackets — applies across the Vanua and Government trees portal-wide.</p>
           <LevelNamesEditor />
 
           <h3>Resolution actions</h3>
