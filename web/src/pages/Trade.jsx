@@ -16,7 +16,7 @@ function availabilityHint(l) {
   const t = l.available_to ? daysTo(l.available_to) : null
   const day = n => `${n} day${n === 1 ? '' : 's'}`
   if (t != null && t < 0) return 'ended'
-  if (f != null && t != null) return f <= 0 ? `now – ${day(t)}` : `in ${f}–${t} days`
+  if (f != null && t != null) return f <= 0 ? `now – ${day(t)}` : (f === t ? `in ${day(f)}` : `in ${f}–${t} days`)
   if (f != null) return f <= 0 ? 'available now' : `in ${day(f)}`
   if (t != null) return `${day(t)} left`
   return null
@@ -88,9 +88,9 @@ function TradeGroupCard({ g, canManage, onDelete }) {
   return (
     <div className="card tradecard">
       <div className="trade-head">
-        <b>{g.seller}</b>
-        <span className="lchip approved">{totalKg} kg</span>
+        <b>{(g.seller || '').split(/\s+/)[0]}</b>
         <span className="avail-hint">{availabilityHint(g) || ''}</span>
+        <span className="lchip approved">{totalKg} kg</span>
       </div>
       <div className="produce-lines">
         {shown.map(it => (
