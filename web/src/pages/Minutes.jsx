@@ -77,20 +77,23 @@ export default function Minutes() {
               {cur.resolutions.length === 0
                 ? <p className="meta" style={{ marginTop: 10 }}>No resolutions recorded for this meeting.</p>
                 : (
-                  <ul className="reslist">
-                    {cur.resolutions.map((r, i) => (
-                      <li key={i}>
-                        <div className="res-head">
-                          <b>{r.ref}</b>
-                          <span className="res-right">
+                  <div className="ressubs">
+                    {cur.resolutions.map((r, i) => {
+                      const actionable = ACTIONABLE.has(r.status)
+                      return (
+                        <div key={i} className={'rescard' + (actionable ? ' actionable' : '')}
+                          title={actionable ? 'Click to choose an action' : undefined}
+                          onClick={actionable ? () => setActionFor(r) : undefined}>
+                          <div className="res-head">
+                            <b>{r.ref}</b>
                             <span className={'lchip ' + (PILL[r.status] || 'pending')}>{r.status || 'Noted'}</span>
-                            {ACTIONABLE.has(r.status) && <button className="mini" onClick={() => setActionFor(r)}>Action</button>}
-                          </span>
+                          </div>
+                          <span className="res-summary">{r.summary}</span>
+                          {actionable && <span className="res-hint">▸ click for actions</span>}
                         </div>
-                        <span>{r.summary}</span>
-                      </li>
-                    ))}
-                  </ul>
+                      )
+                    })}
+                  </div>
                 )}
             </div>
           )}
