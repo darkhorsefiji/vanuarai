@@ -56,12 +56,6 @@ function NoticeCard({ n, canManage, onChanged }) {
         <span className="notice-date">
           {n.expires_at && <>Ends {n.expires_at} </>}
           <span className={'lchip ' + (active ? 'active' : 'expired')}>{n.status}</span>
-          {canManage && !editing && (
-            <span className="notice-acts">
-              <button className="mini" title="Edit" onClick={() => { setBody(n.body); setExp(n.expires_at || ''); setEditing(true) }}>✎</button>
-              <button className="mini danger" title="Delete" onClick={del}>🗑</button>
-            </span>
-          )}
         </span>
       </div>
       {editing ? (
@@ -75,7 +69,17 @@ function NoticeCard({ n, canManage, onChanged }) {
             </span>
           </div>
         </div>
-      ) : <p className="notice-body">{n.body}</p>}
+      ) : (
+        <>
+          <p className="notice-body">{n.body}</p>
+          {canManage && (
+            <div className="notice-acts-row">
+              <button className="mini" title="Edit" onClick={() => { setBody(n.body); setExp(n.expires_at || ''); setEditing(true) }}>✎</button>
+              <button className="mini danger" title="Delete" onClick={del}>🗑</button>
+            </div>
+          )}
+        </>
+      )}
       {msg && <span className="status">{msg}</span>}
     </div>
   )
