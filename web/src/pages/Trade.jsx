@@ -24,38 +24,56 @@ function availabilityHint(l) {
 const CAT_ICON = { Carrier: '🚚', Bus: '🚌', Boat: '🛥', Hostel: '🛏', Venue: '🏛', School: '🏫' }
 
 function ListingForm({ authorName, onPosted }) {
-  const [produce, setProduce] = useState('')
-  const [qty, setQty] = useState('')
-  const [from, setFrom] = useState('')
-  const [to, setTo] = useState('')
   const [seller, setSeller] = useState(authorName || '')
   const [mobile, setMobile] = useState('')
+  const [from, setFrom] = useState('')
+  const [to, setTo] = useState('')
+  const [items, setItems] = useState([{ produce: '', qty: '' }])
   const [msg, setMsg] = useState('')
   const [busy, setBusy] = useState(false)
   useEffect(() => { if (!seller && authorName) setSeller(authorName) }, [authorName, seller])
+
+  const updItem = (i, k, v) => setItems(arr => arr.map((it, j) => (j === i ? { ...it, [k]: v } : it)))
+  const itemsValid = items.every(it => it.produce.trim() && Number(it.qty) > 0)
+  const canPost = itemsValid && !!from && !!to && !busy
+
   async function post() {
     setBusy(true); setMsg('')
     try {
-      await send('POST', '/trade-listings', { produce, qty_kg: Number(qty), seller: seller || null, available_from: from || null, available_to: to || null, mobile: mobile || null })
-      setProduce(''); setQty(''); setFrom(''); setTo(''); setSeller(authorName || ''); setMobile(''); setMsg('Posted ✓'); onPosted()
+      for (const it of items) {
+        await send('POST', '/trade-listings', {
+          produce: it.produce, qty_kg: Number(it.qty), seller: seller || null,
+          available_from: from, available_to: to, mobile: mobile || null,
+        })
+      }
+      setItems([{ produce: '', qty: '' }]); setFrom(''); setTo(''); setMobile(''); setSeller(authorName || '')
+      setMsg('Posted ✓'); onPosted()
     } catch (e) { setMsg('⚠ ' + e.message) } finally { setBusy(false) }
   }
+
   return (
     <div className="postbox">
       <datalist id="producelist">{PRODUCE.map(p => <option key={p} value={p} />)}</datalist>
       <div className="sellform">
-        <input list="producelist" placeholder="Produce…" value={produce} onChange={e => setProduce(e.target.value)} />
-        <input type="number" min="0" step="0.5" placeholder="kg" value={qty} onChange={e => setQty(e.target.value)} />
-      </div>
-      <div className="sellform" style={{ marginTop: 7 }}>
         <input placeholder="Seller name…" title="Posting on behalf of someone? Put their name here." style={{ flex: 1 }}
           value={seller} onChange={e => setSeller(e.target.value)} />
         <input type="tel" placeholder="Mobile (+679…)" value={mobile} onChange={e => setMobile(e.target.value)} style={{ width: 124 }} />
       </div>
       <div className="sellform dates">
-        <label className="meta">From <input type="date" value={from} onChange={e => setFrom(e.target.value)} /></label>
-        <label className="meta">To <input type="date" value={to} onChange={e => setTo(e.target.value)} /></label>
-        <button className="btn secondary" disabled={busy || !produce.trim() || !(Number(qty) > 0)} onClick={post}>Post</button>
+        <label>From <input type="date" value={from} onChange={e => setFrom(e.target.value)} /></label>
+        <label>To <input type="date" value={to} onChange={e => setTo(e.target.value)} /></label>
+      </div>
+      {items.map((it, i) => (
+        <div className="sellform" style={{ marginTop: 7 }} key={i}>
+          <input list="producelist" placeholder="Produce…" value={it.produce} onChange={e => updItem(i, 'produce', e.target.value)} />
+          <input type="number" min="0" step="0.5" placeholder="kg" value={it.qty} onChange={e => updItem(i, 'qty', e.target.value)} />
+          {items.length > 1 && <button className="mini danger" title="Remove line" onClick={() => setItems(arr => arr.filter((_, j) => j !== i))}>✕</button>}
+        </div>
+      ))}
+      <div className="sellform foot">
+        <button className="mini" onClick={() => setItems(arr => [...arr, { produce: '', qty: '' }])}>+ Add Produce</button>
+        <button className="btn secondary" disabled={!canPost} onClick={post}
+          title={canPost ? 'Post listing' : 'Produce, weight and both dates are required'}>Post</button>
       </div>
       {msg && <span className="status">{msg}</span>}
     </div>
