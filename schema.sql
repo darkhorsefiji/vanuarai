@@ -142,6 +142,39 @@ CREATE TABLE village_assets (
   custodian    text,
   sort_order   int DEFAULT 0
 );
+-- Trade: seller produce listings (members post), buyer directory, key contacts.
+CREATE TABLE trade_listings (
+  id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  village_id     uuid REFERENCES villages(id),
+  seller         text NOT NULL,
+  produce        text NOT NULL,
+  qty_kg         numeric(8,1) NOT NULL DEFAULT 0,
+  available_from date,
+  available_to   date,
+  created_by     uuid REFERENCES users(id),
+  created_at     timestamptz DEFAULT now()
+);
+CREATE TABLE trade_buyers (
+  id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  village_id uuid REFERENCES villages(id),
+  name       text NOT NULL,
+  buys       text,
+  location   text,
+  mobile     text,
+  email      text,
+  sort_order int DEFAULT 0
+);
+CREATE TABLE trade_contacts (
+  id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  village_id uuid REFERENCES villages(id),
+  category   text NOT NULL,        -- Carrier | Bus | Boat | Hostel | Venue | School
+  name       text NOT NULL,
+  detail     text,
+  mobile     text,
+  location   text,
+  sort_order int DEFAULT 0
+);
+
 -- Kacikacivaki (announcements): channel 'koro' = official (Vanua + Government), 'lewe' = any member.
 CREATE TABLE notices (
   id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),

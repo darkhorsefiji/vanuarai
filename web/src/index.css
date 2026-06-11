@@ -275,6 +275,21 @@ table.tight tbody tr:last-child td{border-bottom:0}
 /* contain Leaflet's internal z-indexes (up to ~1000) so maps never paint over the sticky page header */
 .leaflet-container{isolation:isolate;z-index:0}
 
+/* ---- Trade: 3 columns ---- */
+.cols.cols3{grid-template-columns:1fr 1fr 1fr}
+@media(max-width:1000px){.cols.cols3{grid-template-columns:1fr 1fr}}
+@media(max-width:700px){.cols.cols3{grid-template-columns:1fr}}
+.tradelist{display:flex;flex-direction:column;gap:10px;margin-top:10px;max-height:560px;overflow-y:auto;padding-right:4px}
+.tradelist>.card{margin:0;flex-shrink:0}
+.sellform{display:flex;gap:8px;align-items:center}
+.sellform input{border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-family:var(--font);font-size:13.5px;min-width:0}
+.sellform input[list]{flex:1}
+.sellform input[type=number]{width:76px}
+.sellform.dates{margin-top:7px;flex-wrap:wrap}
+.sellform.dates label{display:inline-flex;align-items:center;gap:5px}
+.sellform.dates .btn{margin-left:auto;padding:7px 16px;font-size:13px}
+.tradecard .res-head b{font-size:14.5px}
+
 /* Dev: resolution action types */
 .actiontypes{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:6px 0 22px}
 .atchip{display:inline-flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);

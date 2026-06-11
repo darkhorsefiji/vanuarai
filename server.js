@@ -450,6 +450,50 @@ app.get("/api/minutes", async (req, res) => {
   res.json(rows);
 });
 
+// Trade: seller listings (members post), buyer directory, key contacts.
+app.get("/api/trade-listings", async (req, res) => {
+  res.json(await q(`select t.id, t.seller, t.produce, t.qty_kg, t.created_by,
+      to_char(t.available_from,'YYYY-MM-DD') available_from, to_char(t.available_to,'YYYY-MM-DD') available_to
+    from trade_listings t join villages v on v.id=t.village_id where v.name=$1
+    order by t.created_at desc`, [VILLAGE]));
+});
+app.post("/api/trade-listings", async (req, res) => {
+  const b = req.body || {};
+  const produce = String(b.produce || '').trim();
+  const qty = Number(b.qty_kg);
+  if (!produce || !(qty > 0)) return res.status(400).json({ error: "produce and a quantity (kg) are required" });
+  try {
+    const actor = await noticeActor(req);
+    if (!actor) return res.status(401).json({ error: "sign in to post a listing" });
+    const [v] = await q(`select id from villages where name=$1`, [VILLAGE]);
+    const [row] = await q(
+      `insert into trade_listings(village_id, seller, produce, qty_kg, available_from, available_to, created_by)
+       values($1,$2,$3,$4,$5,$6,$7) returning id`,
+      [v.id, actor.name, produce.slice(0, 60), qty, b.available_from || null, b.available_to || null, actor.id]);
+    res.json({ ok: true, id: row.id });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+app.delete("/api/trade-listings/:id", async (req, res) => {
+  try {
+    const actor = await noticeActor(req);
+    if (!actor) return res.status(401).json({ error: "sign in first" });
+    const [t] = await q(`select created_by from trade_listings where id=$1`, [req.params.id]);
+    if (!t) return res.status(404).json({ error: "listing not found" });
+    if (!isOfficial(actor) && !(t.created_by && t.created_by === actor.id))
+      return res.status(403).json({ error: "you can only remove your own listings" });
+    await q(`delete from trade_listings where id=$1`, [req.params.id]);
+    res.json({ ok: true });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+app.get("/api/trade-buyers", async (req, res) => {
+  res.json(await q(`select b.id, b.name, b.buys, b.location, b.mobile, b.email
+    from trade_buyers b join villages v on v.id=b.village_id where v.name=$1 order by b.sort_order, b.name`, [VILLAGE]));
+});
+app.get("/api/trade-contacts", async (req, res) => {
+  res.json(await q(`select c.id, c.category, c.name, c.detail, c.mobile, c.location
+    from trade_contacts c join villages v on v.id=c.village_id where v.name=$1 order by c.sort_order, c.name`, [VILLAGE]));
+});
+
 // Resolution action types (DEV-administered list offered by the Action button / future workflow).
 app.get("/api/resolution-action-types", async (req, res) => {
   res.json(await q(`select id, label from resolution_action_types order by sort_order, label`));
