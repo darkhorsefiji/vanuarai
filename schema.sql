@@ -409,7 +409,15 @@ CREATE TABLE resolutions (
   minutes_id  uuid NOT NULL REFERENCES minutes(id),
   ref_label   text NOT NULL,           -- e.g. "Res 2026-04/3"
   summary     text NOT NULL,
+  status      text,                    -- Approved | Deferred | Rejected | Withdrawn | Noted
   created_at  timestamptz NOT NULL DEFAULT now()
+);
+
+-- DEV-administered actions offered when an Approved/Rejected resolution's Action button is pressed.
+CREATE TABLE resolution_action_types (
+  id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  label      text NOT NULL UNIQUE,
+  sort_order int NOT NULL DEFAULT 0
 );
 -- now wire the deferred FK from ledger to resolutions
 ALTER TABLE ledger_entries ADD CONSTRAINT ledger_resolution_fk

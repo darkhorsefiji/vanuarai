@@ -1,12 +1,50 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { THEME_GROUPS, loadOverrides, setVar, resetVars, ensureFont, fontStack, familyFromStack } from '../theme'
 import { GOOGLE_FONTS } from '../googleFonts'
 import { ICON_SETS, ICON_ITEMS, Icon, useIconSet } from '../icons'
 import { resetNavOrder } from '../nav'
 import { useAuth } from '../auth'
+import { get, send } from '../api'
 import PlansEditor from '../PlansEditor'
 
 const SYSTEM_FONTS = ['System UI', 'Georgia', 'Arial', 'Times New Roman', 'Courier New', 'Verdana', 'Tahoma']
+
+// DEV-administered list of actions offered by the resolution Action button (Minutes page).
+function ActionTypesEditor() {
+  const [items, setItems] = useState(null)
+  const [label, setLabel] = useState('')
+  const [msg, setMsg] = useState('')
+  const load = () => get('/resolution-action-types').then(setItems)
+  useEffect(() => { load().catch(() => {}) }, [])
+
+  async function add() {
+    if (!label.trim()) return
+    try { await send('POST', '/resolution-action-types', { label: label.trim() }); setLabel(''); setMsg('Added ✓'); load() }
+    catch (e) { setMsg('⚠ ' + e.message) }
+  }
+  async function del(it) {
+    if (!window.confirm(`Remove “${it.label}”?`)) return
+    try { await send('DELETE', '/resolution-action-types/' + it.id); setMsg('Removed ✓'); load() }
+    catch (e) { setMsg('⚠ ' + e.message) }
+  }
+
+  return (
+    <div className="actiontypes">
+      {!items ? <p className="loading">Loading…</p> : items.map(it => (
+        <span className="atchip" key={it.id}>
+          <span>{it.label}</span>
+          <button className="mini danger" title="Remove" onClick={() => del(it)}>✕</button>
+        </span>
+      ))}
+      <span className="actiontypes-add">
+        <input placeholder="New action…" value={label} onChange={e => setLabel(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && add()} />
+        <button className="mini" onClick={add}>+ Add</button>
+      </span>
+      {msg && <span className="status">{msg}</span>}
+    </div>
+  )
+}
 const ORDER_KEY = 'vr_theme_order'
 const loadOrder = () => { try { return JSON.parse(localStorage.getItem(ORDER_KEY)) || {} } catch { return {} } }
 const saveOrder = o => localStorage.setItem(ORDER_KEY, JSON.stringify(o))
@@ -94,6 +132,10 @@ export default function Dev() {
         <>
           <h3>Sidebar menu order</h3>
           <p className="sub">Drag the items directly <b>in the sidebar</b> to re-arrange (DEV role only) — applies immediately. <button className="mini" onClick={resetNavOrder}>↺ Reset order</button></p>
+
+          <h3>Resolution actions</h3>
+          <p className="sub">The actions offered when an Approved/Rejected resolution’s <b>Action</b> button is pressed (Minutes page). Saved to the database.</p>
+          <ActionTypesEditor />
         </>
       )}
 

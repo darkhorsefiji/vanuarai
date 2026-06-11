@@ -275,14 +275,25 @@ table.tight tbody tr:last-child td{border-bottom:0}
 /* contain Leaflet's internal z-indexes (up to ~1000) so maps never paint over the sticky page header */
 .leaflet-container{isolation:isolate;z-index:0}
 
+/* Dev: resolution action types */
+.actiontypes{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:6px 0 22px}
+.atchip{display:inline-flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);
+  border-radius:30px;padding:7px 8px 7px 14px;font-weight:600;font-size:13.5px;color:var(--ink)}
+.actiontypes-add{display:inline-flex;gap:6px;align-items:center}
+.actiontypes-add input{border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-family:var(--font);font-size:13.5px}
+.actionlist{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.actionlist .btn{text-align:left}
+
 /* Minutes: selectable rows + resolutions list */
 tr.rowsel{cursor:pointer}
 tr.rowsel:hover td{background:rgba(14,152,165,.06)}
 tr.rowsel.sel td{background:rgba(14,152,165,.12)}
-.reslist{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:10px}
+.reslist{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:12px}
 .reslist li{border-left:3px solid var(--ocean);padding-left:10px}
-.reslist b{display:block;color:var(--head-color);font-size:13px}
+.reslist b{color:var(--head-color);font-size:13px}
 .reslist span{font-size:13.5px}
+.res-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:3px}
+.res-right{display:inline-flex;align-items:center;gap:7px}
 
 /* Sidebar: in-line drag-to-reorder (officials) */
 .sidebar a.nav-dragging{opacity:.45}

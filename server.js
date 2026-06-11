@@ -443,11 +443,32 @@ app.get("/api/financials", async (req, res) => {
 
 app.get("/api/minutes", async (req, res) => {
   const rows = await q(`select m.id, m.title, to_char(m.meeting_date,'YYYY-MM-DD') d, sn.level, sn.label,
-      coalesce(json_agg(json_build_object('ref', r.ref_label, 'summary', r.summary) order by r.ref_label)
+      coalesce(json_agg(json_build_object('ref', r.ref_label, 'summary', r.summary, 'status', r.status) order by r.ref_label)
                filter (where r.id is not null), '[]') resolutions
     from minutes m join scope_nodes sn on sn.id=m.classification_node_id
     left join resolutions r on r.minutes_id=m.id group by m.id, sn.level, sn.label order by m.meeting_date desc`);
   res.json(rows);
+});
+
+// Resolution action types (DEV-administered list offered by the Action button / future workflow).
+app.get("/api/resolution-action-types", async (req, res) => {
+  res.json(await q(`select id, label from resolution_action_types order by sort_order, label`));
+});
+app.post("/api/resolution-action-types", async (req, res) => {
+  const label = String((req.body || {}).label || "").trim();
+  if (!label) return res.status(400).json({ error: "label required" });
+  try {
+    const [row] = await q(`insert into resolution_action_types(label, sort_order)
+      values($1, coalesce((select max(sort_order) from resolution_action_types),0)+1)
+      on conflict (label) do nothing returning id`, [label]);
+    res.json({ ok: true, id: row?.id || null });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+app.delete("/api/resolution-action-types/:id", async (req, res) => {
+  try {
+    await q(`delete from resolution_action_types where id=$1`, [req.params.id]);
+    res.json({ ok: true });
+  } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
 // Serve built React app if present (production); dev uses the Vite server with a proxy.
