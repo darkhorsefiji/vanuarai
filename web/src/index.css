@@ -290,18 +290,21 @@ table.tight tbody tr:last-child td{border-bottom:0}
   font-size:13.5px;color:var(--muted)}  /* labels match the input value size */
 .sellform.foot{margin-top:8px}
 .sellform.foot .btn{margin-left:auto;padding:7px 16px;font-size:13px}
-/* produce | centred kg chip | right-aligned availability hint */
-.trade-head{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;margin-bottom:3px}
-.trade-head b{font-size:14.5px;color:var(--head-color)}
+/* supply-card title band: seller | centred hint | kg total — distinct from card content */
+.trade-head{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;cursor:pointer;
+  background:var(--tradehead-bg,#e7f3f1);
+  margin:calc(var(--card-pad) * -1) calc(var(--card-pad) * -1) 6px;
+  padding:9px var(--card-pad);border-radius:calc(var(--card-radius) - 3px) calc(var(--card-radius) - 3px) 0 0}
+.trade-head b{font-size:var(--tradehead-size,14.5px);color:var(--tradehead-text,#0c4651)}
 .trade-head .avail-hint{justify-self:center;font-size:var(--pill-font-size,11px)}
 .trade-head .lchip{justify-self:end}
 .seller-line{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .avail-hint{color:var(--ocean);font-weight:700;white-space:nowrap}
 .seller-mob{color:var(--ink);font-weight:600;text-decoration:none;white-space:nowrap}
 .seller-mob:hover{color:var(--ocean);text-decoration:underline}
-.produce-lines{margin:4px 0 6px;border-top:1px solid var(--line)}
+.produce-lines{margin:0 0 6px}
 .produce-line{display:flex;justify-content:space-between;align-items:center;gap:10px;
-  padding:5px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+  padding:5px 0;border-bottom:1px solid var(--line);font-size:var(--tradeline-size,13.5px)}
 .expand-toggle{display:block;width:100%;background:none;border:0;border-bottom:1px solid var(--line);cursor:pointer;
   color:var(--ocean);font-weight:700;font-size:12px;padding:6px 0;font-family:var(--font);text-align:left}
 .expand-toggle:hover{color:var(--deep)}

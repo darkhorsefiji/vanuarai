@@ -106,6 +106,14 @@ export const THEME_GROUPS = [
     ],
   },
   {
+    group: 'Supply card', items: [
+      { k: '--tradehead-bg', l: 'Title background', t: 'color', d: '#e7f3f1' },
+      { k: '--tradehead-text', l: 'Title text', t: 'color', d: '#0c4651' },
+      { k: '--tradehead-size', l: 'Title font size', t: 'range', d: '14.5', min: 12, max: 19, step: 0.5, unit: 'px' },
+      { k: '--tradeline-size', l: 'Produce line font size', t: 'range', d: '13.5', min: 11, max: 17, step: 0.5, unit: 'px' },
+    ],
+  },
+  {
     group: 'Resolution pills', items: [
       { k: '--pill-approved-bg', l: 'Approved background', t: 'color', d: '#daeee4' },
       { k: '--pill-approved-text', l: 'Approved text', t: 'color', d: '#2f7a52' },

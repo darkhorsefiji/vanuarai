@@ -79,15 +79,17 @@ function ListingForm({ authorName, onPosted }) {
   )
 }
 
-// One posting = one card; produce list expands (collapsed beyond 4 items).
+// One posting = one card. Standard size shows the title line + first produce;
+// "▾ N more" expands the full list and "▴ less" minimises it back.
 function TradeGroupCard({ g, canManage, onDelete }) {
   const [expanded, setExpanded] = useState(false)
   const totalKg = g.items.reduce((s, it) => s + Number(it.qty_kg), 0)
-  const collapsible = g.items.length > 4
-  const shown = collapsible && !expanded ? g.items.slice(0, 3) : g.items
+  const more = g.items.length - 1
+  const shown = expanded ? g.items : g.items.slice(0, 1)
   return (
     <div className="card tradecard">
-      <div className="trade-head">
+      <div className="trade-head" onClick={() => more > 0 && setExpanded(e => !e)}
+        title={more > 0 ? 'Click to expand / minimise' : undefined}>
         <b>{(g.seller || '').split(/\s+/)[0]}</b>
         <span className="avail-hint">{availabilityHint(g) || ''}</span>
         <span className="lchip approved">{totalKg} kg</span>
@@ -99,9 +101,9 @@ function TradeGroupCard({ g, canManage, onDelete }) {
             <span className="lchip approved">{Number(it.qty_kg)} kg</span>
           </div>
         ))}
-        {collapsible && (
+        {more > 0 && (
           <button className="expand-toggle" onClick={() => setExpanded(e => !e)}>
-            {expanded ? '▴ show less' : `▾ show all ${g.items.length} items`}
+            {expanded ? '▴ less' : `▾ ${more} more`}
           </button>
         )}
       </div>

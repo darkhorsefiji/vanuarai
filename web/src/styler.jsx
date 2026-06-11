@@ -8,6 +8,8 @@ import { useAuth, isDev } from './auth'
 
 // Most-specific first: the first selector that matches via closest() wins.
 const TARGETS = [
+  { sel: '.trade-head', group: 'Supply card' },
+  { sel: '.produce-line', group: 'Supply card' },
   { sel: '.rescard .lchip', group: 'Resolution pills' },
   { sel: '.lchip, .pill', group: 'Status pills' },
   { sel: '.bar', group: 'Progress bars' },
