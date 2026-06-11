@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { get } from '../api'
 import { buildTree, filterNodes, TreeNode, useNodes } from '../tree'
 import { EditableText } from '../copy'
+import { useAuth, isVillageAdmin } from '../auth'
 
 const BLANK = { full_name: '', gender: '', is_deceased: false }
 
@@ -22,6 +23,8 @@ function StatusSelect({ value, onChange }) {
 }
 
 export default function Hierarchy() {
+  const { user } = useAuth()
+  const canEdit = isVillageAdmin(user)   // page-level editing is village_admin tier
   const { nodes, msg, setMsg, addNode, renameNode, delNode } = useNodes()
   const [sel, setSel] = useState(null)
   const [people, setPeople] = useState(null)
@@ -65,7 +68,7 @@ export default function Hierarchy() {
           <p className="sub"><EditableText as="span" id="hierarchy.sub">Traditional lineage. Click a Vuvale to view its family.</EditableText>{edit ? ' Editing on.' : ''}</p>
         </div>
         <div className="editrow">
-          <button className={edit ? 'btn' : 'btn secondary'} onClick={() => setEdit(e => !e)}>{edit ? 'Done' : '✎ Edit'}</button>
+          {canEdit && <button className={edit ? 'btn' : 'btn secondary'} onClick={() => setEdit(e => !e)}>{edit ? 'Done' : '✎ Edit'}</button>}
           {msg && <span className="status">{msg}</span>}
         </div>
       </div>

@@ -4,6 +4,7 @@ import 'leaflet/dist/leaflet.css'
 import { get } from '../api'
 import { makeBaseLayers, pinIcon } from '../map'
 import { EditableText } from '../copy'
+import { useAuth, isVillageAdmin } from '../auth'
 
 function Rate({ label, score, kind }) {
   return (
@@ -19,6 +20,8 @@ function Rate({ label, score, kind }) {
 }
 
 export default function Profile() {
+  const { user } = useAuth()
+  const canEdit = isVillageAdmin(user)   // page-level editing is village_admin tier
   const [data, setData] = useState(null)
   const [form, setForm] = useState({ introduction: '', background: '', how_to_get_there: '' })
   const [coords, setCoords] = useState(null)
@@ -92,11 +95,13 @@ export default function Profile() {
                     : 'Location not set in Government'
             }</p>
           </div>
-          <div className="editrow">
-            {editing
-              ? (<><button className="btn" onClick={save}>Save</button><button className="mini" onClick={cancel}>Cancel</button><span className="status" style={{ color: '#eafaf7' }}>{status}</span></>)
-              : <button className="btn secondary" onClick={() => setEditing(true)}>✎ Edit</button>}
-          </div>
+          {canEdit && (
+            <div className="editrow">
+              {editing
+                ? (<><button className="btn" onClick={save}>Save</button><button className="mini" onClick={cancel}>Cancel</button><span className="status" style={{ color: '#eafaf7' }}>{status}</span></>)
+                : <button className="btn secondary" onClick={() => setEditing(true)}>✎ Edit</button>}
+            </div>
+          )}
         </div>
       </div>
 

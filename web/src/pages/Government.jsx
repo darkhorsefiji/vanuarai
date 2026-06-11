@@ -2,8 +2,11 @@ import { useState, useEffect } from 'react'
 import { buildTree, filterNodes, TreeNode, useNodes } from '../tree'
 import { EditableText } from '../copy'
 import { get, send } from '../api'
+import { useAuth, isVillageAdmin } from '../auth'
 
 export default function Government() {
+  const { user } = useAuth()
+  const canEdit = isVillageAdmin(user)   // page-level editing is village_admin tier
   const { nodes, msg, setMsg, load, addNode, renameNode, delNode } = useNodes()
   const [edit, setEdit] = useState(false)
   const [q, setQ] = useState('')
@@ -38,7 +41,7 @@ export default function Government() {
           <p className="sub"><EditableText as="span" id="government.sub">Provincial administrative structure — Province → District (Tikina) → Village.</EditableText>{edit ? ' Editing on.' : ''}</p>
         </div>
         <div className="editrow">
-          <button className={edit ? 'btn' : 'btn secondary'} onClick={() => setEdit(e => !e)}>{edit ? 'Done' : '✎ Edit'}</button>
+          {canEdit && <button className={edit ? 'btn' : 'btn secondary'} onClick={() => setEdit(e => !e)}>{edit ? 'Done' : '✎ Edit'}</button>}
           {msg && <span className="status">{msg}</span>}
         </div>
       </div>
