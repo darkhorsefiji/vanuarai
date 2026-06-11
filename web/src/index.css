@@ -265,11 +265,11 @@ table.tight td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-ali
 table.tight tbody tr:last-child td{border-bottom:0}
 .lchip{display:inline-block;font-size:var(--pill-font-size,11px);font-weight:700;padding:3px 9px;
   border-radius:var(--pill-radius,30px);white-space:nowrap}
-.lchip.pending{background:#eef1f1;color:#5b6b6f}
-.lchip.voting{background:rgba(244,167,44,.18);color:#9a6a12}
-.lchip.approved{background:rgba(70,168,119,.2);color:#2f7a52}
-.lchip.declined{background:rgba(192,73,47,.16);color:#a83b25}
-.lchip.itltb{background:rgba(14,152,165,.16);color:#0b6b75}
+.lchip.pending{background:var(--pill-withdrawn-bg,#eef1f1);color:var(--pill-withdrawn-text,#5b6b6f)}
+.lchip.voting{background:var(--pill-deferred-bg,#fdefd9);color:var(--pill-deferred-text,#9a6a12)}
+.lchip.approved{background:var(--pill-approved-bg,#daeee4);color:var(--pill-approved-text,#2f7a52)}
+.lchip.declined{background:var(--pill-rejected-bg,#f5e2de);color:var(--pill-rejected-text,#a83b25)}
+.lchip.itltb{background:var(--pill-noted-bg,#d8eff1);color:var(--pill-noted-text,#0b6b75)}
 .lchip.village{background:rgba(239,111,86,.16);color:#b54a32}
 .landmap{height:340px;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
 /* contain Leaflet's internal z-indexes (up to ~1000) so maps never paint over the sticky page header */

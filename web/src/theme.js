@@ -106,6 +106,20 @@ export const THEME_GROUPS = [
     ],
   },
   {
+    group: 'Resolution pills', items: [
+      { k: '--pill-approved-bg', l: 'Approved background', t: 'color', d: '#daeee4' },
+      { k: '--pill-approved-text', l: 'Approved text', t: 'color', d: '#2f7a52' },
+      { k: '--pill-rejected-bg', l: 'Rejected background', t: 'color', d: '#f5e2de' },
+      { k: '--pill-rejected-text', l: 'Rejected text', t: 'color', d: '#a83b25' },
+      { k: '--pill-deferred-bg', l: 'Deferred background', t: 'color', d: '#fdefd9' },
+      { k: '--pill-deferred-text', l: 'Deferred text', t: 'color', d: '#9a6a12' },
+      { k: '--pill-withdrawn-bg', l: 'Withdrawn background', t: 'color', d: '#eef1f1' },
+      { k: '--pill-withdrawn-text', l: 'Withdrawn text', t: 'color', d: '#5b6b6f' },
+      { k: '--pill-noted-bg', l: 'Noted background', t: 'color', d: '#d8eff1' },
+      { k: '--pill-noted-text', l: 'Noted text', t: 'color', d: '#0b6b75' },
+    ],
+  },
+  {
     group: 'Cards', items: [
       { k: '--card', l: 'Background', t: 'color', d: '#ffffff' },
       { k: '--line', l: 'Border', t: 'color', d: '#e6eeec' },
