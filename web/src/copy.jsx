@@ -71,22 +71,19 @@ export function EditableText({ id, as: Tag = 'p', className, html = false, child
     : <Tag {...rest} className={cls || undefined}>{text}</Tag>
 }
 
+// Header chip (DEV role only): toggles inline copy editing; ↺ clears all edits.
 export function DevEditButton() {
   const ctx = useCopy()
   const auth = useAuth()
   if (!ctx || !isDev(auth?.user)) return null
   return (
-    <div className="devedit-fab">
+    <>
       {ctx.edit && (
-        <button className="devedit-reset" title="Clear all copy edits"
-          onClick={() => { if (confirm('Reset all DEV copy edits to defaults?')) ctx.resetCopy() }}>
-          ↺ Reset copy
-        </button>
+        <button className="hdrtool" title="Clear all copy edits"
+          onClick={() => { if (confirm('Reset all DEV copy edits to defaults?')) ctx.resetCopy() }}>↺</button>
       )}
-      <button className={ctx.edit ? 'on' : ''} onClick={ctx.toggle}
-        title="Toggle inline editing of page text">
-        ✎ DEV Edit: {ctx.edit ? 'On' : 'Off'}
-      </button>
-    </div>
+      <button className={'hdrtool' + (ctx.edit ? ' on' : '')} onClick={ctx.toggle}
+        title="DEV Edit — click page text to rewrite it">✎</button>
+    </>
   )
 }

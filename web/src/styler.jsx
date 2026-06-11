@@ -1,7 +1,7 @@
-// DEV Style mode: in-page theming. Toggle on, hover highlights themeable
+// DEV Style mode: in-page theming. Toggle (header 🎨), hover highlights themeable
 // elements, click one and a popover with that element's theme controls opens
 // beside it — changes apply live via the same CSS-variable mechanism as /dev.
-import { useEffect, useRef, useState } from 'react'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { THEME_GROUPS, loadOverrides, setVar, clearVars, ensureFont, fontStack, familyFromStack } from './theme'
 import { GOOGLE_FONTS } from './googleFonts'
 import { useAuth, isDev } from './auth'
@@ -26,7 +26,7 @@ const TARGETS = [
 const groupByName = name => THEME_GROUPS.find(g => g.group === name)
 
 function findTarget(el) {
-  if (!el || el.closest('.styler-pop, .devedit-fab, .devstyle-fab, .styler-hint')) return null
+  if (!el || el.closest('.styler-pop, .hdrtools, .styler-hint')) return null
   // don't steal clicks from text being edited via DEV Edit mode
   if (el.closest('[contenteditable="true"]')) return null
   for (const t of TARGETS) {
@@ -58,9 +58,22 @@ function Control({ it, value, onChange }) {
   return null
 }
 
-export default function DevStyler() {
+const StyleCtx = createContext(null)
+export const useStyleMode = () => useContext(StyleCtx)
+
+// Header toggle (DEV role only).
+export function DevStyleToggle() {
+  const s = useStyleMode()
+  if (!s?.dev) return null
+  return (
+    <button className={'hdrtool' + (s.on ? ' on' : '')} onClick={s.toggle}
+      title="DEV Style — click any element on the page to style it">🎨</button>
+  )
+}
+
+export function StyleModeProvider({ children }) {
   const auth = useAuth()
-  const official = isDev(auth?.user)   // DEV tier only (variable name kept for the hooks below)
+  const dev = isDev(auth?.user)
   const [on, setOn] = useState(false)
   const [pop, setPop] = useState(null)        // { group }
   const [pos, setPos] = useState({ x: 0, y: 0, dragged: false })
@@ -72,6 +85,7 @@ export default function DevStyler() {
 
   const clearSelected = () => { selected.current?.classList.remove('style-selected'); selected.current = null }
   const close = () => { setPop(null); pinned.current = false; clearSelected() }
+  const toggle = () => { setOn(o => !o); close() }
 
   function startDrag(e) {
     if (e.target.closest('button, input, select')) return
@@ -94,7 +108,7 @@ export default function DevStyler() {
 
   // hover highlight + click-to-open (capture phase so we beat links/buttons)
   useEffect(() => {
-    if (!on || !official) { document.body.classList.remove('styling'); return }
+    if (!on || !dev) { document.body.classList.remove('styling'); return }
     document.body.classList.add('styling')
     const over = e => {
       const t = findTarget(e.target)
@@ -125,12 +139,10 @@ export default function DevStyler() {
       selected.current = null
       document.body.classList.remove('styling')
     }
-  }, [on, official])
-
-  if (!official) return null
+  }, [on, dev])
 
   const ov = loadOverrides()
-  const g = pop ? groupByName(pop.group) : null
+  const g = dev && pop ? groupByName(pop.group) : null
   const W = window.innerWidth || 1200, H = window.innerHeight || 800
   const popStyle = pop ? {
     left: Math.max(8, Math.min(pos.x, W - 330)) + 'px',
@@ -138,17 +150,12 @@ export default function DevStyler() {
   } : null
 
   return (
-    <>
-      <div className="devedit-fab devstyle-fab">
-        <button className={on ? 'on' : ''} onClick={() => { setOn(o => !o); close() }}
-          title="Style the page by clicking elements">
-          🎨 DEV Style: {on ? 'On' : 'Off'}
-        </button>
-      </div>
+    <StyleCtx.Provider value={{ on, toggle, dev }}>
+      {children}
 
-      {on && !pop && <div className="styler-hint">🎨 Click any element to style it · Esc closes the panel · toggle off to navigate</div>}
+      {dev && on && !pop && <div className="styler-hint">🎨 Click any element to style it · Esc closes the panel · toggle 🎨 off to navigate</div>}
 
-      {pop && g && (
+      {g && (
         <div className="styler-pop" style={popStyle} ref={popRef}>
           <div className="styler-pop-head" onMouseDown={startDrag} title="Drag to move">
             <b><span className="styler-grip">⠿</span>{g.group}</b>
@@ -167,6 +174,6 @@ export default function DevStyler() {
           <div className="meta" style={{ marginTop: 8 }}>Changes save instantly · full editor on the Dev page</div>
         </div>
       )}
-    </>
+    </StyleCtx.Provider>
   )
 }

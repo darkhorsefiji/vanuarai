@@ -20,7 +20,7 @@ import { loadNavOrder, onNavOrderChange, orderedNav, saveNavOrder } from './nav'
 import { LevelsProvider } from './levels'
 import { AuthProvider, useAuth, isDev, isVillageAdmin } from './auth'
 import { CopyProvider, DevEditButton } from './copy'
-import DevStyler from './styler'
+import { StyleModeProvider, DevStyleToggle } from './styler'
 import AuthArea from './AuthArea'
 
 const TOP_NAV = [['/', 'Internet']]
@@ -91,6 +91,7 @@ export default function App() {
       <LevelsProvider>
         <CopyProvider>
         <IconSetProvider>
+        <StyleModeProvider>
         <div className="app">
           <header className="top">
             {logoOk
@@ -102,6 +103,7 @@ export default function App() {
                 <NavLink key={to} to={to} end={to === '/'}>{label}</NavLink>
               ))}
             </nav>
+            <span className="hdrtools"><DevEditButton /><DevStyleToggle /></span>
             <AuthArea />
           </header>
 
@@ -129,8 +131,7 @@ export default function App() {
             </main>
           </div>
         </div>
-        <DevEditButton />
-        <DevStyler />
+        </StyleModeProvider>
         </IconSetProvider>
         </CopyProvider>
       </LevelsProvider>

@@ -212,7 +212,6 @@ h3{font-size:17px;font-weight:var(--head-weight);font-style:var(--head-style);co
 .postlock{background:var(--card);border:1px dashed var(--line);border-radius:12px;padding:12px;margin-top:4px}
 
 /* ---- DEV Style: in-page theming ---- */
-.devstyle-fab{bottom:66px}
 body.styling, body.styling *{cursor:crosshair}
 .style-hover{outline:2px dashed var(--pop) !important;outline-offset:2px}
 .style-selected{outline:3px solid var(--pop) !important;outline-offset:2px;
@@ -331,11 +330,12 @@ tr.rowsel.sel td{background:rgba(14,152,165,.12)}
   transition:background .15s}
 .copy-edit:hover{background:rgba(58,143,156,.06)}
 .copy-edit:focus{outline-style:solid;background:rgba(58,143,156,.08)}
-.devedit-fab{position:fixed;right:18px;bottom:18px;z-index:9000;display:flex;gap:8px;align-items:center}
-.devedit-fab button{border:0;cursor:pointer;font-weight:700;font-size:13px;border-radius:30px;
-  padding:9px 15px;box-shadow:0 4px 14px rgba(0,0,0,.22);color:#fff;background:#5a6066}
-.devedit-fab button.on{background:var(--clay)}
-.devedit-fab .devedit-reset{background:#8a9095;padding:9px 12px}
+/* DEV toggles live in the locked header bar so they're always visible */
+.hdrtools{display:inline-flex;gap:6px;align-items:center}
+.hdrtool{border:0;cursor:pointer;background:rgba(255,255,255,.18);color:#fff;border-radius:30px;
+  padding:7px 12px;font-size:15px;line-height:1;transition:.15s}
+.hdrtool:hover{background:rgba(255,255,255,.34)}
+.hdrtool.on{background:var(--clay);box-shadow:0 2px 8px rgba(0,0,0,.3)}
 
 .pill{display:inline-block;font-size:11px;font-weight:600;padding:3px 10px;border-radius:30px;
   background:#e8f1f0;color:var(--deep);margin-right:4px}
