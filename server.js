@@ -442,8 +442,9 @@ app.get("/api/financials", async (req, res) => {
 });
 
 app.get("/api/minutes", async (req, res) => {
-  const rows = await q(`select m.title, to_char(m.meeting_date,'YYYY-MM-DD') d, sn.level, sn.label,
-      string_agg(r.ref_label||': '||r.summary,' • ') res
+  const rows = await q(`select m.id, m.title, to_char(m.meeting_date,'YYYY-MM-DD') d, sn.level, sn.label,
+      coalesce(json_agg(json_build_object('ref', r.ref_label, 'summary', r.summary) order by r.ref_label)
+               filter (where r.id is not null), '[]') resolutions
     from minutes m join scope_nodes sn on sn.id=m.classification_node_id
     left join resolutions r on r.minutes_id=m.id group by m.id, sn.level, sn.label order by m.meeting_date desc`);
   res.json(rows);
