@@ -23,7 +23,7 @@ function PostBox({ channel, onPosted }) {
       <textarea rows={2} placeholder={channel === 'koro' ? 'Post an official notice…' : 'Share something with the village…'}
         value={body} onChange={e => setBody(e.target.value)} />
       <div className="postbox-foot">
-        <label className="postbox-expiry meta">Expires <input type="date" value={expires} onChange={e => setExpires(e.target.value)} /></label>
+        <label className="postbox-expiry meta">Ends <input type="date" value={expires} onChange={e => setExpires(e.target.value)} /></label>
         <button className="btn secondary" disabled={busy || !body.trim()} onClick={post}>Post</button>
       </div>
       {msg && <span className="status">{msg}</span>}
@@ -54,7 +54,7 @@ function NoticeCard({ n, canManage, onChanged }) {
         <span className="notice-author">{n.author}</span>
         {n.author_role && <span className="notice-role">{n.author_role}</span>}
         <span className="notice-date">
-          {n.expires_at && <>Expires {n.expires_at} </>}
+          {n.expires_at && <>Ends {n.expires_at} </>}
           <span className={'lchip ' + (active ? 'active' : 'expired')}>{n.status}</span>
           {canManage && !editing && (
             <span className="notice-acts">
@@ -68,7 +68,7 @@ function NoticeCard({ n, canManage, onChanged }) {
         <div className="notice-edit">
           <textarea rows={3} value={body} onChange={e => setBody(e.target.value)} />
           <div className="postbox-foot">
-            <label className="postbox-expiry meta">Expires <input type="date" value={exp} onChange={e => setExp(e.target.value)} /></label>
+            <label className="postbox-expiry meta">Ends <input type="date" value={exp} onChange={e => setExp(e.target.value)} /></label>
             <span>
               <button className="mini" onClick={save}>Save</button>{' '}
               <button className="mini" onClick={() => setEditing(false)}>Cancel</button>
