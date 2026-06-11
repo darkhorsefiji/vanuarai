@@ -288,10 +288,13 @@ table.tight tbody tr:last-child td{border-bottom:0}
 .sellform.dates{margin-top:7px;flex-wrap:wrap}
 .sellform.dates label{display:inline-flex;align-items:center;gap:5px}
 .sellform.dates .btn{margin-left:auto;padding:7px 16px;font-size:13px}
-.tradecard .res-head b{font-size:14.5px}
+/* produce | centred kg chip | right-aligned availability hint */
+.trade-head{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;margin-bottom:3px}
+.trade-head b{font-size:14.5px;color:var(--head-color)}
+.trade-head .lchip{justify-self:center}
+.trade-head .avail-hint{justify-self:end;font-size:var(--pill-font-size,11px)}
 .seller-line{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .avail-hint{color:var(--ocean);font-weight:700;white-space:nowrap}
-.tradecard .res-head .avail-hint{font-size:var(--pill-font-size,11px)}  /* match the kg chip */
 .seller-mob{color:var(--ink);font-weight:600;text-decoration:none;white-space:nowrap}
 .seller-mob:hover{color:var(--ocean);text-decoration:underline}
 

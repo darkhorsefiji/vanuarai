@@ -106,12 +106,10 @@ export default function Trade() {
           <div className="tradelist">
             {!listings ? <p className="loading">Loading…</p> : listings.map(l => (
               <div className="card tradecard" key={l.id}>
-                <div className="res-head">
+                <div className="trade-head">
                   <b>{l.produce}</b>
-                  <span className="res-right">
-                    <span className="lchip approved">{Number(l.qty_kg)} kg</span>
-                    {availabilityHint(l) && <span className="avail-hint">{availabilityHint(l)}</span>}
-                  </span>
+                  <span className="lchip approved">{Number(l.qty_kg)} kg</span>
+                  <span className="avail-hint">{availabilityHint(l) || ''}</span>
                 </div>
                 <div className="meta seller-line">
                   <span>{l.seller}</span>
