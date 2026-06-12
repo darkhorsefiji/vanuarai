@@ -397,29 +397,33 @@ app.delete("/api/nodes/:id", async (req, res) => {
 
 // ---- Vuvale persons CRUD (Admin) ----
 app.get("/api/vuvale/:id/persons", async (req, res) => {
+  // household owners first (male then female), then everyone else oldest-first
   res.json(await q(
-    `select id, full_name, gender, relationship,
+    `select id, full_name, gender, relationship, is_owner,
        to_char(date_of_birth,'YYYY-MM-DD') dob, to_char(date_of_death,'YYYY-MM-DD') dod, is_deceased,
        case when date_of_birth is null then null
             when date_of_death is not null then extract(year from age(date_of_death, date_of_birth))::int
             else extract(year from age(date_of_birth))::int end age
-     from persons where vuvale_node_id=$1 order by relationship, full_name`, [req.params.id]));
+     from persons where vuvale_node_id=$1
+     order by is_owner desc,
+       case when is_owner and gender='Male' then 0 when is_owner then 1 else 2 end,
+       date_of_birth asc nulls last, full_name`, [req.params.id]));
 });
 
 app.post("/api/persons", async (req, res) => {
   const b = req.body || {};
   if (!b.vuvale_node_id || !b.full_name) return res.status(400).json({ error: "vuvale_node_id and full_name required" });
   const [row] = await q(
-    `insert into persons(vuvale_node_id, full_name, gender, relationship, date_of_birth, date_of_death, is_deceased)
-     values($1,$2,$3,$4,$5,$6,$7) returning id`,
-    [b.vuvale_node_id, b.full_name, b.gender || null, b.relationship || null, b.date_of_birth || null, b.date_of_death || null, !!b.is_deceased]);
+    `insert into persons(vuvale_node_id, full_name, gender, relationship, date_of_birth, date_of_death, is_deceased, is_owner)
+     values($1,$2,$3,$4,$5,$6,$7,$8) returning id`,
+    [b.vuvale_node_id, b.full_name, b.gender || null, b.relationship || null, b.date_of_birth || null, b.date_of_death || null, !!b.is_deceased, !!b.is_owner]);
   res.json({ ok: true, id: row.id });
 });
 
 app.patch("/api/persons/:id", async (req, res) => {
   const b = req.body || {};
-  await q(`update persons set full_name=$1, gender=$2, relationship=$3, date_of_birth=$4, date_of_death=$5, is_deceased=$6 where id=$7`,
-    [b.full_name, b.gender || null, b.relationship || null, b.date_of_birth || null, b.date_of_death || null, !!b.is_deceased, req.params.id]);
+  await q(`update persons set full_name=$1, gender=$2, relationship=$3, date_of_birth=$4, date_of_death=$5, is_deceased=$6, is_owner=$7 where id=$8`,
+    [b.full_name, b.gender || null, b.relationship || null, b.date_of_birth || null, b.date_of_death || null, !!b.is_deceased, !!b.is_owner, req.params.id]);
   res.json({ ok: true });
 });
 

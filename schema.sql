@@ -516,6 +516,7 @@ CREATE TABLE persons (
   date_of_birth   date,
   date_of_death   date,
   is_deceased     boolean NOT NULL DEFAULT false,
+  is_owner        boolean NOT NULL DEFAULT false,  -- household owner (male + female pair shown first)
   relationship    text,
   birth_cert_ref  text,     -- encrypted, Vuvale-scoped, non-downloadable
   death_cert_ref  text,     -- encrypted, Vuvale-scoped

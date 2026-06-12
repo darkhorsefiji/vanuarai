@@ -4,7 +4,7 @@ import { buildTree, filterNodes, TreeNode, useNodes } from '../tree'
 import { EditableText } from '../copy'
 import { useAuth, isVillageAdmin } from '../auth'
 
-const BLANK = { full_name: '', gender: '', is_deceased: false }
+const BLANK = { full_name: '', gender: '', is_deceased: false, is_owner: false }
 
 function GenderSelect({ value, onChange }) {
   return (
@@ -44,7 +44,7 @@ export default function Hierarchy() {
   const onDel = nd => delNode(nd, d => { if (sel === d.id) setSel(null) })
 
   // Birth/death dates are no longer surfaced here, but we preserve any existing values on save.
-  const pbody = p => ({ full_name: p.full_name, gender: p.gender || null, relationship: p.relationship || null, date_of_birth: p.dob || null, date_of_death: p.dod || null, is_deceased: !!p.is_deceased })
+  const pbody = p => ({ full_name: p.full_name, gender: p.gender || null, relationship: p.relationship || null, date_of_birth: p.dob || null, date_of_death: p.dod || null, is_deceased: !!p.is_deceased, is_owner: !!p.is_owner })
   const updP = (i, k, v) => setPeople(arr => arr.map((p, idx) => idx === i ? { ...p, [k]: v } : p))
   async function savePerson(p) { const r = await fetch('/api/persons/' + p.id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(pbody(p)) }); setMsg(r.ok ? 'Saved ✓' : 'Error'); if (r.ok) loadPeople(sel) }
   async function delPerson(p) { if (!window.confirm(`Remove ${p.full_name}?`)) return; await fetch('/api/persons/' + p.id, { method: 'DELETE' }); setMsg('Removed ✓'); loadPeople(sel) }
@@ -90,18 +90,19 @@ export default function Hierarchy() {
               {!people ? <p className="loading">Loading…</p> : (
                 <table style={{ marginTop: 12 }}>
                   <tbody>
-                    <tr><th>Name</th><th>Gender</th><th>Age</th><th>Status</th>{edit && <th></th>}</tr>
+                    <tr><th>Name</th><th>Gender</th><th>Age</th><th>Status</th>{edit && <th>Owner</th>}{edit && <th></th>}</tr>
                     {people.map((p, i) => edit ? (
                       <tr key={p.id}>
                         <td><input value={p.full_name || ''} onChange={e => updP(i, 'full_name', e.target.value)} /></td>
                         <td><GenderSelect value={p.gender} onChange={e => updP(i, 'gender', e.target.value)} /></td>
                         <td className="meta">{p.age != null ? p.age : ''}</td>
                         <td><StatusSelect value={p.is_deceased} onChange={e => updP(i, 'is_deceased', e.target.value === 'Deceased')} /></td>
+                        <td style={{ textAlign: 'center' }}><input type="checkbox" checked={!!p.is_owner} onChange={e => updP(i, 'is_owner', e.target.checked)} title="Household owner" /></td>
                         <td className="rowacts"><button className="mini" onClick={() => savePerson(p)}>Save</button><button className="mini danger" onClick={() => delPerson(p)}>🗑</button></td>
                       </tr>
                     ) : (
                       <tr key={p.id}>
-                        <td>{p.full_name}</td>
+                        <td>{p.full_name}{p.is_owner && <span className="lchip itltb owner-chip">Owner</span>}</td>
                         <td>{p.gender || ''}</td>
                         <td>{p.age != null ? p.age : ''}</td>
                         <td>{p.is_deceased ? 'Deceased' : 'Living'}</td>
@@ -113,6 +114,7 @@ export default function Hierarchy() {
                         <td><GenderSelect value={add.gender} onChange={e => setAdd({ ...add, gender: e.target.value })} /></td>
                         <td className="meta">—</td>
                         <td><StatusSelect value={add.is_deceased} onChange={e => setAdd({ ...add, is_deceased: e.target.value === 'Deceased' })} /></td>
+                        <td style={{ textAlign: 'center' }}><input type="checkbox" checked={!!add.is_owner} onChange={e => setAdd({ ...add, is_owner: e.target.checked })} title="Household owner" /></td>
                         <td><button className="mini" onClick={addPerson}>+ Add</button></td>
                       </tr>
                     )}
