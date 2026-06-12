@@ -4,7 +4,7 @@ import { LevelBadge, LevelEn } from './levels'
 
 export const CHILD_NAME = {
   vanua: 'Yavusa', yavusa: 'Mataqali', mataqali: 'Tokatoka', tokatoka: 'Vuvale',
-  provincial_council: 'District', district: 'Village',
+  matanitu: 'Province', provincial_council: 'District', district: 'Village',
 }
 
 

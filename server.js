@@ -12,7 +12,7 @@ const app = express();
 const VILLAGE = "Bagasau";
 const q = (sql, p = []) => pool.query(sql, p).then(r => r.rows);
 const n = v => Number(v);
-const NEXT_LEVEL = { vanua: 'yavusa', yavusa: 'mataqali', mataqali: 'tokatoka', tokatoka: 'vuvale', provincial_council: 'district', district: 'village' };
+const NEXT_LEVEL = { vanua: 'yavusa', yavusa: 'mataqali', mataqali: 'tokatoka', tokatoka: 'vuvale', matanitu: 'provincial_council', provincial_council: 'district', district: 'village' };
 const BODY_LEVELS = new Set(['mataqali', 'village', 'soqosoqo']);
 const VALIDITY = new Set(['daily', 'weekly', 'fortnightly', 'monthly']);
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";

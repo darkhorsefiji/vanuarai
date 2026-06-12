@@ -18,7 +18,7 @@ CREATE EXTENSION IF NOT EXISTS postgis;
 CREATE TYPE scope_axis  AS ENUM ('traditional','government','soqosoqo');
 CREATE TYPE scope_level AS ENUM (
   'vanua','yavusa','mataqali','tokatoka','vuvale',   -- traditional
-  'provincial_council','district','village',          -- government
+  'matanitu','provincial_council','district','village', -- government (Matanitu = national apex)
   'soqosoqo'                                          -- soqosoqo
 );
 
