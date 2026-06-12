@@ -328,6 +328,15 @@ table.tight tbody tr:last-child td{border-bottom:0}
 .actionlist{display:flex;flex-direction:column;gap:8px;margin-top:8px}
 .actionlist .btn{text-align:left}
 
+/* Minutes: single-line table with sort + filter headers */
+.minutes-table th,.minutes-table td{white-space:nowrap}
+.minutes-table .title-cell{max-width:300px;overflow:hidden;text-overflow:ellipsis}
+.th-sort{cursor:pointer;user-select:none}
+.th-sort:hover{color:var(--ocean)}
+.filterrow td{padding:4px 8px}
+.filterrow input{width:100%;min-width:0;border:1px solid var(--line);border-radius:7px;padding:4px 8px;
+  font-family:var(--font);font-size:12px;color:var(--ink)}
+
 /* Minutes: selectable rows + resolutions list */
 tr.rowsel{cursor:pointer}
 tr.rowsel:hover td{background:rgba(14,152,165,.06)}

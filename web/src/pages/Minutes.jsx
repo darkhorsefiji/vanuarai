@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useData } from '../api'
-import { LevelBadge } from '../levels'
+import { LevelBadge, useLevels } from '../levels'
 import { EditableText } from '../copy'
 
 const PILL = { Approved: 'approved', Rejected: 'declined', Deferred: 'voting', Withdrawn: 'pending', Noted: 'itltb' }
@@ -35,14 +35,25 @@ function ActionModal({ resolution, onClose }) {
   )
 }
 
+const COLS = [['d', 'Date'], ['level', 'Level'], ['label', 'Body'], ['title', 'Title']]
+
 export default function Minutes() {
   const { data } = useData('/minutes')
+  const { map: levelMap } = useLevels()
   const [sel, setSel] = useState(null)
   const [actionFor, setActionFor] = useState(null)
+  const [sort, setSort] = useState({ key: 'd', dir: -1 })
+  const [filters, setFilters] = useState({ d: '', level: '', label: '', title: '' })
   useEffect(() => { if (data && data.length && sel == null) setSel(data[0].id) }, [data, sel])
 
   if (!data) return <p className="loading">Loading…</p>
   const cur = data.find(m => m.id === sel)
+
+  const colText = (r, k) => (k === 'level' ? (levelMap[r.level]?.label || r.level) : (r[k] || ''))
+  const rows = data
+    .filter(r => COLS.every(([k]) => !filters[k].trim() || colText(r, k).toLowerCase().includes(filters[k].trim().toLowerCase())))
+    .sort((a, b) => colText(a, sort.key).localeCompare(colText(b, sort.key)) * sort.dir)
+  const toggleSort = k => setSort(s => ({ key: k, dir: s.key === k ? -s.dir : 1 }))
 
   return (
     <>
@@ -53,17 +64,29 @@ export default function Minutes() {
 
       <div className="cols">
         <div className="col">
-          <table>
+          <table className="minutes-table">
             <tbody>
-              <tr><th>Date</th><th>Level</th><th>Body</th><th>Title</th></tr>
-              {data.map(r => (
+              <tr>
+                {COLS.map(([k, name]) => (
+                  <th key={k} className="th-sort" onClick={() => toggleSort(k)} title="Click to sort">
+                    {name}{sort.key === k ? (sort.dir === 1 ? ' ▲' : ' ▼') : ''}
+                  </th>
+                ))}
+              </tr>
+              <tr className="filterrow">
+                {COLS.map(([k]) => (
+                  <td key={k}><input placeholder="Filter…" value={filters[k]} onChange={e => setFilters(f => ({ ...f, [k]: e.target.value }))} /></td>
+                ))}
+              </tr>
+              {rows.map(r => (
                 <tr key={r.id} className={'rowsel' + (r.id === sel ? ' sel' : '')} onClick={() => setSel(r.id)}>
                   <td>{r.d}</td>
                   <td><LevelBadge level={r.level} /></td>
                   <td>{r.label}</td>
-                  <td>{r.title}</td>
+                  <td className="title-cell" title={r.title}>{r.title}</td>
                 </tr>
               ))}
+              {rows.length === 0 && <tr><td colSpan={4} className="meta">No meetings match the filters.</td></tr>}
             </tbody>
           </table>
         </div>
