@@ -348,23 +348,17 @@ table.tight tbody tr:last-child td{border-bottom:0}
 .fundcards{display:flex;flex-direction:column;gap:14px}
 .fundchart{position:sticky;top:14px}
 .fundchart .finfilter{margin:8px 0 12px}
-.barchart{display:flex;align-items:flex-end;gap:10px;height:260px;overflow-x:auto;padding:4px 2px 0;border-bottom:2px solid var(--line)}
-.barcol{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:5px;min-width:48px;flex:0 0 auto;height:100%}
-.barcol .barval{font-size:11px;font-weight:700;color:var(--ink);white-space:nowrap}
-.chartbar{width:30px;border-radius:6px 6px 0 0;background:var(--bar-prog,var(--ocean));transition:height .2s}
+/* compact: bar area sized to ~two cards; values sit inside the top of each bar */
+.barchart{display:flex;align-items:flex-end;gap:10px;height:195px;overflow-x:auto;padding:4px 2px 0;border-bottom:2px solid var(--line)}
+.barcol{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:5px;min-width:60px;flex:0 0 auto;height:100%}
+.chartbar{width:52px;border-radius:6px 6px 0 0;background:var(--bar-prog,var(--ocean));transition:height .2s;
+  display:flex;justify-content:center;align-items:flex-start;padding-top:5px}
+.barcol .barval{font-size:10px;font-weight:700;color:#fff;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,.4)}
 .barcol .barlbl{font-size:10.5px;color:var(--muted);text-align:center;line-height:1.15;max-width:64px}
-/* congested charts: stagger labels (one low, one high, repeat) + pack bars tighter
-   so more fit in frame — labels overlap horizontally but clear vertically */
+/* congested charts: stagger names (one low, one high) + fixed-width cols so names overflow/overlap */
 .barchart.stagger{padding-bottom:22px;gap:4px}
-/* fixed-width columns (flex-basis + min-width override the auto min-content floor)
-   so labels overflow/overlap instead of widening each column.
-   col = 30px bar + 5px each side, gap 4px → spacing between bars stays constant. */
-.barchart.stagger .barcol{flex:0 0 40px;min-width:40px}
-.barchart.stagger .chartbar{width:30px}
-/* values + names both overflow and stagger (one high, one low) so they read at density */
-.barchart.stagger .barval{white-space:nowrap;overflow:visible}
+.barchart.stagger .barcol{flex:0 0 60px;min-width:60px}
 .barchart.stagger .barlbl{white-space:nowrap;max-width:none;overflow:visible}
-.barchart.stagger .barcol:nth-child(even) .barval{transform:translateY(-16px)}
 .barchart.stagger .barcol:nth-child(even) .barlbl{transform:translateY(18px)}
 
 /* Minutes: single-line table with sort + filter headers */

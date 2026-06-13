@@ -28,8 +28,9 @@ function ContributionsChart() {
             <div className={'barchart' + (data.length > 6 ? ' stagger' : '')}>
               {data.map(d => (
                 <div className="barcol" key={d.label} title={`${d.label} — ${fjd(d.total)}`}>
-                  <span className="barval">{fjd(d.total)}</span>
-                  <div className="chartbar" style={{ height: Math.round((d.total / max) * 200) + 6 + 'px' }} />
+                  <div className="chartbar" style={{ height: Math.round((d.total / max) * 130) + 26 + 'px' }}>
+                    <span className="barval">{fjd(d.total)}</span>
+                  </div>
                   <span className="barlbl">{d.label}</span>
                 </div>
               ))}
