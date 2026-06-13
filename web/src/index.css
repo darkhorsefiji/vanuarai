@@ -342,9 +342,9 @@ table.tight tbody tr:last-child td{border-bottom:0}
 .body-cell{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 
 /* Fundraising: cards | contributions chart split */
-.fund-cols{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr)}
-.fund-cols>.col{min-width:0}   /* let the chart scroll instead of stretching its column */
-@media(max-width:900px){.fund-cols{grid-template-columns:1fr}}
+.cols.fund-cols{grid-template-columns:repeat(2,minmax(0,1fr))}
+.cols.fund-cols>.col{min-width:0}   /* let the chart scroll instead of stretching its column */
+@media(max-width:900px){.cols.fund-cols{grid-template-columns:1fr}}
 .fundcards{display:flex;flex-direction:column;gap:14px}
 .fundchart{position:sticky;top:14px}
 .fundchart .finfilter{margin:8px 0 12px}
