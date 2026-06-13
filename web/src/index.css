@@ -348,6 +348,8 @@ table.tight tbody tr:last-child td{border-bottom:0}
 .fundcards{display:flex;flex-direction:column;gap:14px}
 .fundchart{position:sticky;top:14px}
 .fundchart .finfilter{margin:8px 0 12px}
+.contrib-total{margin-left:auto;background:var(--ocean);color:#fff;border-radius:999px;
+  padding:5px 13px;font-size:12.5px;font-weight:700;white-space:nowrap}
 .contrib-h{margin:16px 0 6px;font-size:13px;color:var(--head-color,var(--ink))}
 .contrib-detail{max-height:200px;overflow-y:auto}
 .contrib-detail table{width:100%}

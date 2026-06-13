@@ -13,6 +13,7 @@ function ContributionsChart() {
   const { data: detail } = useData('/contributions-detail?level=' + lvl)
   const { map } = useLevels()
   const max = data && data.length ? Math.max(...data.map(d => d.total)) : 1
+  const total = data ? data.reduce((s, d) => s + d.total, 0) : 0
   return (
     <div className="fundchart card">
       <h3 style={{ marginTop: 0 }}>Contributions</h3>
@@ -20,6 +21,7 @@ function ContributionsChart() {
         {CHART_LEVELS.map(l => (
           <button key={l} className={'fchip' + (lvl === l ? ' active' : '')} onClick={() => setLvl(l)}>{map[l]?.label || l}</button>
         ))}
+        {data && <span className="contrib-total">Total {fjd(total)}</span>}
       </div>
       {!data ? <p className="loading">Loading…</p>
         : data.length === 0 ? <p className="meta">No contributions recorded at this level.</p>
@@ -49,7 +51,7 @@ function ContributionsChart() {
                     <td>{r.date}</td>
                     <td>{r.name}</td>
                     <td>{r.body}</td>
-                    <td style={{ textAlign: 'right', fontWeight: 600 }}>{fjd(r.amount)}</td>
+                    <td style={{ textAlign: 'right', fontWeight: 600 }}>{fjd(r.amount).replace(/^FJD\s*/, '')}</td>
                   </tr>
                 ))}
           </tbody>
