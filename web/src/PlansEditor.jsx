@@ -46,7 +46,7 @@ export default function PlansEditor() {
   return (
     <div className="plansedit">
       <div className="plansedit-head">
-        <span>Name</span><span>Data (MB)</span><span>Validity</span><span>Price</span><span>Active</span><span />
+        <span>Name</span><span>Data (MB)</span><span>Validity</span><span>Price ($)</span><span>Active</span><span />
       </div>
       {rows.map((r, i) => (
         <div className={'plansedit-row' + (r._dirty ? ' dirty' : '')} key={r.id || 'new' + i}>
