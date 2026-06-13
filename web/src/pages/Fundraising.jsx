@@ -31,7 +31,7 @@ function ContributionsChart() {
               {data.map(d => (
                 <div className="barcol" key={d.label} title={`${d.label} — ${fjd(d.total)}`}>
                   <div className="chartbar" style={{ height: Math.round((d.total / max) * 130) + 26 + 'px' }}>
-                    <span className="barval">{fjd(d.total).replace(/^FJD\s*/, '')}</span>
+                    <span className="barval">{fjd(d.total)}</span>
                   </div>
                   <span className="barlbl">{d.label}</span>
                 </div>
@@ -51,7 +51,7 @@ function ContributionsChart() {
                     <td>{r.date}</td>
                     <td>{r.name}</td>
                     <td>{r.body}</td>
-                    <td style={{ textAlign: 'right', fontWeight: 600 }}>{fjd(r.amount).replace(/^FJD\s*/, '')}</td>
+                    <td style={{ textAlign: 'right', fontWeight: 600 }}>{fjd(r.amount)}</td>
                   </tr>
                 ))}
           </tbody>

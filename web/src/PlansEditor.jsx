@@ -46,7 +46,7 @@ export default function PlansEditor() {
   return (
     <div className="plansedit">
       <div className="plansedit-head">
-        <span>Name</span><span>Data (MB)</span><span>Validity</span><span>Price (FJD)</span><span>Active</span><span />
+        <span>Name</span><span>Data (MB)</span><span>Validity</span><span>Price</span><span>Active</span><span />
       </div>
       {rows.map((r, i) => (
         <div className={'plansedit-row' + (r._dirty ? ' dirty' : '')} key={r.id || 'new' + i}>
@@ -67,7 +67,7 @@ export default function PlansEditor() {
       ))}
       <div className="plansedit-foot">
         <button className="btn secondary" onClick={addRow}>+ Add plan</button>
-        <span className="plansedit-hint">Tip: 1 GB = 1024 MB. Price is in FJD dollars.</span>
+        <span className="plansedit-hint">Tip: 1 GB = 1024 MB. Price is in dollars.</span>
         {msg && <span className="status">{msg}</span>}
       </div>
     </div>

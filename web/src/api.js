@@ -30,7 +30,8 @@ export async function send(method, path, body) {
   return r.json()
 }
 
-export const fjd = c => 'FJD ' + (Number(c) / 100).toLocaleString(undefined, { minimumFractionDigits: 0 })
+// currency is implied (FJD) — format as a bare number with thousands separators
+export const fjd = c => (Number(c) / 100).toLocaleString(undefined, { minimumFractionDigits: 0 })
 
 export function useData(path) {
   const [data, setData] = useState(null)
