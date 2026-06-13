@@ -467,6 +467,23 @@ app.get("/api/fundraising", async (req, res) => {
   res.json(rows.map(r => ({ ...r, goal_cents: n(r.goal_cents), raised: n(r.raised) })));
 });
 
+// Contributions (money in) grouped by the donor's lineage ancestor at a chosen
+// level — Mataqali / Tokatoka / Vuvale. Walks contributor_vuvale_id up the tree.
+app.get("/api/contributions", async (req, res) => {
+  const level = ['mataqali', 'tokatoka', 'vuvale'].includes(req.query.level) ? req.query.level : 'mataqali';
+  const rows = await q(`with recursive up as (
+      select le.id le_id, le.amount_cents, sn.id node_id, sn.level::text lvl, sn.label, sn.parent_id
+      from ledger_entries le join scope_nodes sn on sn.id=le.contributor_vuvale_id
+      where le.direction='in'
+      union all
+      select up.le_id, up.amount_cents, p.id, p.level::text, p.label, p.parent_id
+      from up join scope_nodes p on p.id=up.parent_id
+    )
+    select label, sum(amount_cents)::bigint total
+    from up where lvl=$1 group by node_id, label order by total desc`, [level]);
+  res.json(rows.map(r => ({ label: r.label, total: n(r.total) })));
+});
+
 app.get("/api/financials", async (req, res) => {
   // all body pots in the village's world (village + its soqosoqo + mataqali), tagged with level
   // so the Funds tab can be filtered by Yasana/Tikina/Koro/Soqosoqo/Mataqali like the other tabs.

@@ -341,6 +341,19 @@ table.tight tbody tr:last-child td{border-bottom:0}
 .finfilter-sub .fchip.active{background:var(--deep,var(--ocean));border-color:var(--deep,var(--ocean))}
 .body-cell{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 
+/* Fundraising: cards | contributions chart split */
+.fund-cols{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr)}
+.fund-cols>.col{min-width:0}   /* let the chart scroll instead of stretching its column */
+@media(max-width:900px){.fund-cols{grid-template-columns:1fr}}
+.fundcards{display:flex;flex-direction:column;gap:14px}
+.fundchart{position:sticky;top:14px}
+.fundchart .finfilter{margin:8px 0 12px}
+.barchart{display:flex;align-items:flex-end;gap:10px;height:260px;overflow-x:auto;padding:4px 2px 0;border-bottom:2px solid var(--line)}
+.barcol{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:5px;min-width:48px;flex:0 0 auto;height:100%}
+.barcol .barval{font-size:11px;font-weight:700;color:var(--ink);white-space:nowrap}
+.chartbar{width:30px;border-radius:6px 6px 0 0;background:var(--bar-prog,var(--ocean));transition:height .2s}
+.barcol .barlbl{font-size:10.5px;color:var(--muted);text-align:center;line-height:1.15;max-width:64px}
+
 /* Minutes: single-line table with sort + filter headers */
 .minutes-table th,.minutes-table td{white-space:nowrap}
 .minutes-table .title-cell{max-width:300px;overflow:hidden;text-overflow:ellipsis}
