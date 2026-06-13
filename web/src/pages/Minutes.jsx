@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useData } from '../api'
 import { LevelBadge, useLevels } from '../levels'
+import { BodyFilterBar, useBodyFilter, matchBody } from '../bodyfilter'
 import { EditableText } from '../copy'
 
 const PILL = { Approved: 'approved', Rejected: 'declined', Deferred: 'voting', Withdrawn: 'pending', Noted: 'itltb' }
@@ -40,6 +41,7 @@ const COLS = [['d', 'Date'], ['level', 'Level'], ['label', 'Body'], ['title', 'T
 export default function Minutes() {
   const { data } = useData('/minutes')
   const { map: levelMap } = useLevels()
+  const { filter, setFilter, bodiesByLevel } = useBodyFilter()
   const [sel, setSel] = useState(null)
   const [actionFor, setActionFor] = useState(null)
   const [sort, setSort] = useState({ key: 'd', dir: -1 })
@@ -51,6 +53,7 @@ export default function Minutes() {
 
   const colText = (r, k) => (k === 'level' ? (levelMap[r.level]?.label || r.level) : (r[k] || ''))
   const rows = data
+    .filter(r => matchBody(filter, r))
     .filter(r => COLS.every(([k]) => !filters[k].trim() || colText(r, k).toLowerCase().includes(filters[k].trim().toLowerCase())))
     .sort((a, b) => colText(a, sort.key).localeCompare(colText(b, sort.key)) * sort.dir)
   const toggleSort = k => setSort(s => ({ key: k, dir: s.key === k ? -s.dir : 1 }))
@@ -61,6 +64,8 @@ export default function Minutes() {
         <h1>Meeting Minutes</h1>
         <EditableText id="minutes.sub" className="sub">Classified by level. Select a meeting to view its resolutions.</EditableText>
       </div>
+
+      <BodyFilterBar filter={filter} setFilter={setFilter} bodiesByLevel={bodiesByLevel} />
 
       <div className="cols">
         <div className="col">

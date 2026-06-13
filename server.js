@@ -460,10 +460,10 @@ app.get("/api/projects", async (req, res) => {
 });
 
 app.get("/api/fundraising", async (req, res) => {
-  const rows = await q(`select p.name, sn.label owner, po.goal_cents,
+  const rows = await q(`select p.name, sn.label owner, sn.level, sn.id body_id, po.goal_cents,
       coalesce(sum(le.amount_cents) filter (where le.direction='in'),0)::bigint raised
     from projects p join pots po on po.id=p.pot_id join scope_nodes sn on sn.id=p.owner_body_node_id
-    left join ledger_entries le on le.pot_id=p.pot_id group by p.id, sn.label, po.goal_cents order by raised desc`);
+    left join ledger_entries le on le.pot_id=p.pot_id group by p.id, sn.label, sn.level, sn.id, po.goal_cents order by raised desc`);
   res.json(rows.map(r => ({ ...r, goal_cents: n(r.goal_cents), raised: n(r.raised) })));
 });
 
@@ -481,11 +481,11 @@ app.get("/api/financials", async (req, res) => {
 });
 
 app.get("/api/minutes", async (req, res) => {
-  const rows = await q(`select m.id, m.title, to_char(m.meeting_date,'YYYY-MM-DD') d, sn.level, sn.label,
+  const rows = await q(`select m.id, m.title, to_char(m.meeting_date,'YYYY-MM-DD') d, sn.level, sn.label, sn.id body_id,
       coalesce(json_agg(json_build_object('ref', r.ref_label, 'summary', r.summary, 'status', r.status) order by r.ref_label)
                filter (where r.id is not null), '[]') resolutions
     from minutes m join scope_nodes sn on sn.id=m.classification_node_id
-    left join resolutions r on r.minutes_id=m.id group by m.id, sn.level, sn.label order by m.meeting_date desc`);
+    left join resolutions r on r.minutes_id=m.id group by m.id, sn.level, sn.label, sn.id order by m.meeting_date desc`);
   res.json(rows);
 });
 
