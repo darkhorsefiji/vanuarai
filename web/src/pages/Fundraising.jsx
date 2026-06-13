@@ -24,7 +24,8 @@ function ContributionsChart() {
       {!data ? <p className="loading">Loading…</p>
         : data.length === 0 ? <p className="meta">No contributions recorded at this level.</p>
           : (
-            <div className="barchart">
+            // stagger labels (one low, one high, repeat) once bars get congested
+            <div className={'barchart' + (data.length > 6 ? ' stagger' : '')}>
               {data.map(d => (
                 <div className="barcol" key={d.label} title={`${d.label} — ${fjd(d.total)}`}>
                   <span className="barval">{fjd(d.total)}</span>
