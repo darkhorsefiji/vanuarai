@@ -205,16 +205,25 @@ app.get("/api/land-allocations", async (req, res) => {
 
 // Financials tabs: transactions, asset register, investments.
 app.get("/api/fin-transactions", async (req, res) => {
-  res.json(await q(`select t.id, to_char(t.tx_date,'YYYY-MM-DD') tx_date, t.description, t.fund, t.type, t.method, t.amount_cents
-    from fin_transactions t join villages v on v.id=t.village_id where v.name=$1 order by t.tx_date desc`, [VILLAGE]));
+  res.json(await q(`select t.id, to_char(t.tx_date,'YYYY-MM-DD') tx_date, t.description, t.fund, t.type, t.method, t.amount_cents,
+      sn.level, sn.label body
+    from fin_transactions t join villages v on v.id=t.village_id
+    left join scope_nodes sn on sn.id=t.classification_node_id
+    where v.name=$1 order by t.tx_date desc`, [VILLAGE]));
 });
 app.get("/api/assets", async (req, res) => {
-  res.json(await q(`select a.id, a.name, a.category, to_char(a.acquired,'YYYY-MM-DD') acquired, a.value_cents, a.condition, a.custodian
-    from village_assets a join villages v on v.id=a.village_id where v.name=$1 order by a.sort_order`, [VILLAGE]));
+  res.json(await q(`select a.id, a.name, a.category, to_char(a.acquired,'YYYY-MM-DD') acquired, a.value_cents, a.condition, a.custodian,
+      sn.level, sn.label body
+    from village_assets a join villages v on v.id=a.village_id
+    left join scope_nodes sn on sn.id=a.classification_node_id
+    where v.name=$1 order by a.sort_order`, [VILLAGE]));
 });
 app.get("/api/investments", async (req, res) => {
-  res.json(await q(`select i.id, i.name, i.type, i.amount_cents, i.current_value_cents, i.return_pct, i.notes
-    from village_investments i join villages v on v.id=i.village_id where v.name=$1 order by i.sort_order`, [VILLAGE]));
+  res.json(await q(`select i.id, i.name, i.type, i.amount_cents, i.current_value_cents, i.return_pct, i.notes,
+      sn.level, sn.label body
+    from village_investments i join villages v on v.id=i.village_id
+    left join scope_nodes sn on sn.id=i.classification_node_id
+    where v.name=$1 order by i.sort_order`, [VILLAGE]));
 });
 
 // Kacikacivaki (announcements): channel 'koro' = official, 'lewe' = community.
@@ -459,13 +468,16 @@ app.get("/api/fundraising", async (req, res) => {
 });
 
 app.get("/api/financials", async (req, res) => {
-  const rows = await q(`select po.purpose,
+  // all body pots in the village's world (village + its soqosoqo + mataqali), tagged with level
+  // so the Funds tab can be filtered by Yasana/Tikina/Koro/Soqosoqo/Mataqali like the other tabs.
+  const rows = await q(`select po.purpose, sn.level, sn.label body,
       coalesce(sum(le.amount_cents) filter (where le.direction='in'),0)::bigint tin,
       coalesce(sum(le.amount_cents) filter (where le.direction='out'),0)::bigint tout
-    from pots po left join ledger_entries le on le.pot_id=po.id
-    where po.owner_body_node_id=(select village_node_id from villages where name=$1)
-    group by po.id, po.purpose order by po.purpose`, [VILLAGE]);
-  res.json(rows.map(r => ({ purpose: r.purpose, tin: n(r.tin), tout: n(r.tout) })));
+    from pots po
+    join scope_nodes sn on sn.id=po.owner_body_node_id
+    left join ledger_entries le on le.pot_id=po.id
+    group by po.id, po.purpose, sn.level, sn.label order by po.purpose`);
+  res.json(rows.map(r => ({ purpose: r.purpose, level: r.level, body: r.body, tin: n(r.tin), tout: n(r.tout) })));
 });
 
 app.get("/api/minutes", async (req, res) => {

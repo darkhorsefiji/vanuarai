@@ -130,6 +130,7 @@ CREATE TABLE fin_transactions (
   type         text,                 -- 'In' | 'Out'
   method       text,                 -- M-PAiSA | MyCash | Cash | Bank | Card
   amount_cents int DEFAULT 0,
+  classification_node_id uuid REFERENCES scope_nodes(id),  -- owning body (level filter)
   created_at   timestamptz DEFAULT now()
 );
 CREATE TABLE village_assets (
@@ -141,6 +142,7 @@ CREATE TABLE village_assets (
   value_cents  int DEFAULT 0,
   condition    text,
   custodian    text,
+  classification_node_id uuid REFERENCES scope_nodes(id),  -- owning body (level filter)
   sort_order   int DEFAULT 0
 );
 -- Trade: seller produce listings (members post), buyer directory, key contacts.
@@ -201,6 +203,7 @@ CREATE TABLE village_investments (
   current_value_cents int DEFAULT 0,
   return_pct          numeric(5,1),
   notes               text,
+  classification_node_id uuid REFERENCES scope_nodes(id),  -- owning body (level filter)
   sort_order          int DEFAULT 0
 );
 ALTER TABLE scope_nodes ADD CONSTRAINT scope_nodes_village_fk
