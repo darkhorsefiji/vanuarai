@@ -7,23 +7,40 @@ const TABS = ['Funds', 'Transactions', 'Asset Register', 'Investments']
 // filterable body levels, in the order requested: Yasana, Tikina, Koro, Soqosoqo, Mataqali
 const FILTER_LEVELS = ['provincial_council', 'district', 'village', 'soqosoqo', 'mataqali']
 
-function FilterBar({ level, setLevel }) {
+function FilterBar({ filter, setFilter, bodiesByLevel }) {
   const { map } = useLevels()
+  const setLevel = lv => setFilter({ level: lv, body: 'all' })
+  const bodies = filter.level !== 'all' ? (bodiesByLevel[filter.level] || []) : []
+  const showBodies = bodies.length > 1   // only drill down where a level has multiple bodies (Soqosoqo, Mataqali)
   return (
-    <div className="finfilter">
-      <span className="finfilter-lbl">Filter by body</span>
-      <button className={'fchip' + (level === 'all' ? ' active' : '')} onClick={() => setLevel('all')}>All</button>
-      {FILTER_LEVELS.map(lv => (
-        <button key={lv} className={'fchip' + (level === lv ? ' active' : '')} onClick={() => setLevel(lv)}>
-          {map[lv]?.label || lv}
-        </button>
-      ))}
-    </div>
+    <>
+      <div className="finfilter">
+        <span className="finfilter-lbl">Filter by body</span>
+        <button className={'fchip' + (filter.level === 'all' ? ' active' : '')} onClick={() => setLevel('all')}>All</button>
+        {FILTER_LEVELS.map(lv => (
+          <button key={lv} className={'fchip' + (filter.level === lv ? ' active' : '')} onClick={() => setLevel(lv)}>
+            {map[lv]?.label || lv}
+          </button>
+        ))}
+      </div>
+      {showBodies && (
+        <div className="finfilter finfilter-sub">
+          <span className="finfilter-lbl">{map[filter.level]?.label || filter.level}</span>
+          <button className={'fchip' + (filter.body === 'all' ? ' active' : '')} onClick={() => setFilter({ ...filter, body: 'all' })}>All</button>
+          {bodies.map(b => (
+            <button key={b.id} className={'fchip' + (filter.body === b.id ? ' active' : '')} onClick={() => setFilter({ ...filter, body: b.id })}>{b.label}</button>
+          ))}
+        </div>
+      )}
+    </>
   )
 }
 
-// shared body cell + filter helper
-const matchLevel = (level, r) => level === 'all' || r.level === level
+// shared body cell + filter helper. A specific body wins; otherwise match by level.
+const matchLevel = (filter, r) => {
+  if (filter.body && filter.body !== 'all') return r.body_id === filter.body
+  return filter.level === 'all' || r.level === filter.level
+}
 function BodyCell({ r }) {
   return r.level ? <span className="body-cell"><LevelBadge level={r.level} /> {r.body}</span> : <span className="meta">—</span>
 }
@@ -33,31 +50,37 @@ function noneRow(cols) {
 
 export default function Financials() {
   const [tab, setTab] = useState('Funds')
-  const [level, setLevel] = useState('all')
+  const [filter, setFilter] = useState({ level: 'all', body: 'all' })
+  const { data: nodes } = useData('/hierarchy')
+  const bodiesByLevel = {}
+  if (nodes) {
+    for (const nd of nodes) (bodiesByLevel[nd.level] = bodiesByLevel[nd.level] || []).push({ id: nd.id, label: nd.label })
+    for (const k of Object.keys(bodiesByLevel)) bodiesByLevel[k].sort((a, b) => a.label.localeCompare(b.label))
+  }
   return (
     <>
       <div className="pagetop">
         <h1>Village Financials</h1>
         <EditableText id="financials.sub" className="sub">Member-tier view of the village's funds, transactions, assets and investments.</EditableText>
       </div>
-      <FilterBar level={level} setLevel={setLevel} />
+      <FilterBar filter={filter} setFilter={setFilter} bodiesByLevel={bodiesByLevel} />
       <div className="tabs">
         {TABS.map(t => (
           <button key={t} className={'tab' + (tab === t ? ' active' : '')} onClick={() => setTab(t)}>{t}</button>
         ))}
       </div>
-      {tab === 'Funds' && <Funds level={level} />}
-      {tab === 'Transactions' && <Transactions level={level} />}
-      {tab === 'Asset Register' && <Assets level={level} />}
-      {tab === 'Investments' && <Investments level={level} />}
+      {tab === 'Funds' && <Funds filter={filter} />}
+      {tab === 'Transactions' && <Transactions filter={filter} />}
+      {tab === 'Asset Register' && <Assets filter={filter} />}
+      {tab === 'Investments' && <Investments filter={filter} />}
     </>
   )
 }
 
-function Funds({ level }) {
+function Funds({ filter }) {
   const { data } = useData('/financials')
   if (!data) return <p className="loading">Loading…</p>
-  const rows = data.filter(r => matchLevel(level, r))
+  const rows = data.filter(r => matchLevel(filter, r))
   const tin = rows.reduce((s, r) => s + r.tin, 0)
   const tout = rows.reduce((s, r) => s + r.tout, 0)
   return (
@@ -81,10 +104,10 @@ function Funds({ level }) {
   )
 }
 
-function Transactions({ level }) {
+function Transactions({ filter }) {
   const { data } = useData('/fin-transactions')
   if (!data) return <p className="loading">Loading…</p>
-  const rows = data.filter(t => matchLevel(level, t))
+  const rows = data.filter(t => matchLevel(filter, t))
   const tin = rows.filter(t => t.type === 'In').reduce((s, t) => s + t.amount_cents, 0)
   const tout = rows.filter(t => t.type === 'Out').reduce((s, t) => s + t.amount_cents, 0)
   return (
@@ -116,10 +139,10 @@ function Transactions({ level }) {
   )
 }
 
-function Assets({ level }) {
+function Assets({ filter }) {
   const { data } = useData('/assets')
   if (!data) return <p className="loading">Loading…</p>
-  const rows = data.filter(a => matchLevel(level, a))
+  const rows = data.filter(a => matchLevel(filter, a))
   const total = rows.reduce((s, a) => s + a.value_cents, 0)
   return (
     <>
@@ -149,10 +172,10 @@ function Assets({ level }) {
   )
 }
 
-function Investments({ level }) {
+function Investments({ filter }) {
   const { data } = useData('/investments')
   if (!data) return <p className="loading">Loading…</p>
-  const rows = data.filter(i => matchLevel(level, i))
+  const rows = data.filter(i => matchLevel(filter, i))
   const invested = rows.reduce((s, i) => s + i.amount_cents, 0)
   const current = rows.reduce((s, i) => s + i.current_value_cents, 0)
   const gain = current - invested

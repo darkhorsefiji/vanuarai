@@ -335,6 +335,10 @@ table.tight tbody tr:last-child td{border-bottom:0}
   font-family:var(--font);font-size:12.5px;font-weight:600;color:var(--ink)}
 .fchip:hover{border-color:var(--ocean);color:var(--ocean)}
 .fchip.active{background:var(--ocean);border-color:var(--ocean);color:#fff}
+/* second tier: specific bodies within a multi-body level (Soqosoqo, Mataqali) */
+.finfilter-sub{margin:-6px 0 14px 14px;padding-left:12px;border-left:2px solid var(--line)}
+.finfilter-sub .fchip{font-size:12px;padding:4px 11px}
+.finfilter-sub .fchip.active{background:var(--deep,var(--ocean));border-color:var(--deep,var(--ocean))}
 .body-cell{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 
 /* Minutes: single-line table with sort + filter headers */
