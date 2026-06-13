@@ -360,6 +360,8 @@ table.tight tbody tr:last-child td{border-bottom:0}
    so labels overflow/overlap instead of widening each column */
 .barchart.stagger .barcol{flex:0 0 30px;min-width:30px}
 .barchart.stagger .chartbar{width:20px}
+/* per-bar values would collide at this density — show on hover (title) instead */
+.barchart.stagger .barval{display:none}
 .barchart.stagger .barlbl{white-space:nowrap;max-width:none;overflow:visible}
 .barchart.stagger .barcol:nth-child(even) .barlbl{transform:translateY(18px)}
 
