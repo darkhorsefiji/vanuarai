@@ -10,12 +10,12 @@ const CHART_LEVELS = ['mataqali', 'tokatoka', 'vuvale']
 function ContributionsChart() {
   const [lvl, setLvl] = useState('mataqali')
   const { data } = useData('/contributions?level=' + lvl)
+  const { data: detail } = useData('/contributions-detail?level=' + lvl)
   const { map } = useLevels()
   const max = data && data.length ? Math.max(...data.map(d => d.total)) : 1
   return (
     <div className="fundchart card">
       <h3 style={{ marginTop: 0 }}>Contributions</h3>
-      <p className="sub">Donations grouped by contributor lineage.</p>
       <div className="finfilter">
         {CHART_LEVELS.map(l => (
           <button key={l} className={'fchip' + (lvl === l ? ' active' : '')} onClick={() => setLvl(l)}>{map[l]?.label || l}</button>
@@ -36,6 +36,25 @@ function ContributionsChart() {
               ))}
             </div>
           )}
+
+      <h4 className="contrib-h">Who contributed</h4>
+      <div className="contrib-detail">
+        <table className="tight">
+          <thead><tr><th>Date</th><th>Name</th><th>{map[lvl]?.label || lvl}</th><th style={{ textAlign: 'right' }}>Amount</th></tr></thead>
+          <tbody>
+            {!detail ? <tr><td colSpan={4} className="loading">Loading…</td></tr>
+              : detail.length === 0 ? <tr><td colSpan={4} className="meta">No contributions recorded.</td></tr>
+                : detail.map((r, i) => (
+                  <tr key={i}>
+                    <td>{r.date}</td>
+                    <td>{r.name}</td>
+                    <td>{r.body}</td>
+                    <td style={{ textAlign: 'right', fontWeight: 600 }}>{fjd(r.amount)}</td>
+                  </tr>
+                ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }

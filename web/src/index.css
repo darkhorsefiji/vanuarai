@@ -348,6 +348,11 @@ table.tight tbody tr:last-child td{border-bottom:0}
 .fundcards{display:flex;flex-direction:column;gap:14px}
 .fundchart{position:sticky;top:14px}
 .fundchart .finfilter{margin:8px 0 12px}
+.contrib-h{margin:16px 0 6px;font-size:13px;color:var(--head-color,var(--ink))}
+.contrib-detail{max-height:200px;overflow-y:auto}
+.contrib-detail table{width:100%}
+.contrib-detail th{position:sticky;top:0;background:#fff}
+.contrib-detail td,.contrib-detail th{font-size:12px;white-space:nowrap}
 /* compact: bar area sized to ~two cards; values sit inside the top of each bar */
 .barchart{display:flex;align-items:flex-end;gap:10px;height:195px;overflow-x:auto;padding:4px 2px 0;border-bottom:2px solid var(--line)}
 .barcol{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:5px;min-width:60px;flex:0 0 auto;height:100%}

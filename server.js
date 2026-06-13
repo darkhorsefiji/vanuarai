@@ -484,6 +484,23 @@ app.get("/api/contributions", async (req, res) => {
   res.json(rows.map(r => ({ label: r.label, total: n(r.total) })));
 });
 
+// Individual contributions with the donor's ancestor body at the chosen level.
+app.get("/api/contributions-detail", async (req, res) => {
+  const level = ['mataqali', 'tokatoka', 'vuvale'].includes(req.query.level) ? req.query.level : 'mataqali';
+  const rows = await q(`with recursive up as (
+      select le.id le_id, le.amount_cents, le.contributor_name, le.created_at,
+             sn.level::text lvl, sn.label, sn.parent_id
+      from ledger_entries le join scope_nodes sn on sn.id=le.contributor_vuvale_id
+      where le.direction='in'
+      union all
+      select up.le_id, up.amount_cents, up.contributor_name, up.created_at, p.level::text, p.label, p.parent_id
+      from up join scope_nodes p on p.id=up.parent_id
+    )
+    select to_char(created_at,'YYYY-MM-DD') date, contributor_name name, label body, amount_cents amount
+    from up where lvl=$1 order by created_at desc, amount_cents desc`, [level]);
+  res.json(rows);
+});
+
 app.get("/api/financials", async (req, res) => {
   // all body pots in the village's world (village + its soqosoqo + mataqali), tagged with level
   // so the Funds tab can be filtered by Yasana/Tikina/Koro/Soqosoqo/Mataqali like the other tabs.
