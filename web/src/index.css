@@ -346,6 +346,13 @@ table.tight tbody tr:last-child td{border-bottom:0}
 .cols.fund-cols>.col{min-width:0}   /* let the chart scroll instead of stretching its column */
 @media(max-width:900px){.cols.fund-cols{grid-template-columns:1fr}}
 .fundcards{display:flex;flex-direction:column;gap:14px}
+.fundcard{cursor:pointer;transition:box-shadow .15s,border-color .15s}
+.fundcard:hover{box-shadow:0 2px 10px rgba(12,70,81,.12)}
+.fundcard.sel{outline:2px solid var(--ocean);outline-offset:-1px}
+.contrib-scope{margin:0 0 8px;font-size:12.5px;color:var(--muted)}
+.contrib-scope b{color:var(--head-color,var(--ink))}
+.linkbtn{background:none;border:0;color:var(--ocean);font-weight:700;cursor:pointer;font-size:12px;font-family:var(--font);padding:0 0 0 4px}
+.linkbtn:hover{text-decoration:underline}
 .fundchart{position:sticky;top:14px}
 .fundchart .finfilter{margin:8px 0 12px}
 .contrib-total{margin-left:auto;background:var(--ocean);color:#fff;border-radius:999px;

@@ -460,44 +460,57 @@ app.get("/api/projects", async (req, res) => {
 });
 
 app.get("/api/fundraising", async (req, res) => {
-  const rows = await q(`select p.name, sn.label owner, sn.level, sn.id body_id, po.goal_cents,
+  const rows = await q(`select p.id, p.name, sn.label owner, sn.level, sn.id body_id, po.goal_cents,
       coalesce(sum(le.amount_cents) filter (where le.direction='in'),0)::bigint raised
     from projects p join pots po on po.id=p.pot_id join scope_nodes sn on sn.id=p.owner_body_node_id
     left join ledger_entries le on le.pot_id=p.pot_id group by p.id, sn.label, sn.level, sn.id, po.goal_cents order by raised desc`);
   res.json(rows.map(r => ({ ...r, goal_cents: n(r.goal_cents), raised: n(r.raised) })));
 });
 
+// optional scope to a set of fundraising projects (their pots). A present-but-empty
+// `projects` param means "no matching efforts" → no contributions (not "all").
+function projectScope(req, params) {
+  if (req.query.projects === undefined) return '';
+  const ids = String(req.query.projects).split(',').filter(Boolean);
+  params.push(ids);
+  return `and le.pot_id in (select pot_id from projects where id = any($${params.length}::uuid[]))`;
+}
+
 // Contributions (money in) grouped by the donor's lineage ancestor at a chosen
 // level — Mataqali / Tokatoka / Vuvale. Walks contributor_vuvale_id up the tree.
 app.get("/api/contributions", async (req, res) => {
   const level = ['mataqali', 'tokatoka', 'vuvale'].includes(req.query.level) ? req.query.level : 'mataqali';
+  const params = [level];
+  const scope = projectScope(req, params);
   const rows = await q(`with recursive up as (
       select le.id le_id, le.amount_cents, sn.id node_id, sn.level::text lvl, sn.label, sn.parent_id
       from ledger_entries le join scope_nodes sn on sn.id=le.contributor_vuvale_id
-      where le.direction='in'
+      where le.direction='in' ${scope}
       union all
       select up.le_id, up.amount_cents, p.id, p.level::text, p.label, p.parent_id
       from up join scope_nodes p on p.id=up.parent_id
     )
     select label, sum(amount_cents)::bigint total
-    from up where lvl=$1 group by node_id, label order by total desc`, [level]);
+    from up where lvl=$1 group by node_id, label order by total desc`, params);
   res.json(rows.map(r => ({ label: r.label, total: n(r.total) })));
 });
 
 // Individual contributions with the donor's ancestor body at the chosen level.
 app.get("/api/contributions-detail", async (req, res) => {
   const level = ['mataqali', 'tokatoka', 'vuvale'].includes(req.query.level) ? req.query.level : 'mataqali';
+  const params = [level];
+  const scope = projectScope(req, params);
   const rows = await q(`with recursive up as (
       select le.id le_id, le.amount_cents, le.contributor_name, le.created_at,
              sn.level::text lvl, sn.label, sn.parent_id
       from ledger_entries le join scope_nodes sn on sn.id=le.contributor_vuvale_id
-      where le.direction='in'
+      where le.direction='in' ${scope}
       union all
       select up.le_id, up.amount_cents, up.contributor_name, up.created_at, p.level::text, p.label, p.parent_id
       from up join scope_nodes p on p.id=up.parent_id
     )
     select to_char(created_at,'YYYY-MM-DD') date, contributor_name name, label body, amount_cents amount
-    from up where lvl=$1 order by created_at desc, amount_cents desc`, [level]);
+    from up where lvl=$1 order by created_at desc, amount_cents desc`, params);
   res.json(rows);
 });
 
