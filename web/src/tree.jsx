@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { get } from './api'
+import { get, send } from './api'
 import { LevelBadge, LevelEn } from './levels'
 
 export const CHILD_NAME = {
@@ -66,19 +66,20 @@ export function useNodes() {
 
   const addNode = async (parent, childName) => {
     const label = window.prompt(`New ${childName} name:`); if (!label) return
-    const r = await fetch('/api/nodes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ parent_id: parent.id, label }) })
-    setMsg(r.ok ? 'Added ✓' : 'Add failed'); load()
+    try { await send('POST', '/nodes', { parent_id: parent.id, label }); setMsg('Added ✓') }
+    catch (e) { setMsg(e.message || 'Add failed') }
+    load()
   }
   const renameNode = async (nd) => {
     const label = window.prompt('Rename to:', nd.label); if (!label || label === nd.label) return
-    const r = await fetch('/api/nodes/' + nd.id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ label }) })
-    setMsg(r.ok ? 'Renamed ✓' : 'Rename failed'); load()
+    try { await send('PATCH', '/nodes/' + nd.id, { label }); setMsg('Renamed ✓') }
+    catch (e) { setMsg(e.message || 'Rename failed') }
+    load()
   }
   const delNode = async (nd, onDeleted) => {
     if (!window.confirm(`Delete "${nd.label}"?`)) return
-    const r = await fetch('/api/nodes/' + nd.id, { method: 'DELETE' }); const j = await r.json().catch(() => ({}))
-    setMsg(r.ok ? 'Deleted ✓' : (j.error || 'Delete failed'))
-    if (r.ok && onDeleted) onDeleted(nd)
+    try { await send('DELETE', '/nodes/' + nd.id); setMsg('Deleted ✓'); if (onDeleted) onDeleted(nd) }
+    catch (e) { setMsg(e.message || 'Delete failed') }
     load()
   }
   return { nodes, msg, setMsg, load, addNode, renameNode, delNode }

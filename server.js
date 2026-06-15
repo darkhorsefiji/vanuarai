@@ -239,6 +239,17 @@ async function noticeActor(req) {
 }
 const isOfficial = a => !!a && (a.isAppAdmin || a.role === "official");
 
+// village_admin tier: app admin OR holds an active village_admin body office.
+// Mirrors the frontend isVillageAdmin so node editing is enforced, not just hidden.
+async function isVillageAdminReq(req) {
+  if (!req.user) return false;
+  const [u] = await q(`select is_app_admin from users where id=$1`, [req.user.uid]);
+  if (!u) return false;
+  if (u.is_app_admin) return true;
+  const off = await q(`select 1 from body_offices where user_id=$1 and office='village_admin' and active=true limit 1`, [req.user.uid]);
+  return off.length > 0;
+}
+
 app.get("/api/notices", async (req, res) => {
   res.json(await q(`select n.id, n.channel, n.author, n.author_role, n.body, n.created_by,
       to_char(n.posted_at at time zone 'Pacific/Fiji','YYYY-MM-DD HH24:MI') posted_at,
@@ -359,8 +370,9 @@ app.patch("/api/level-styles", async (req, res) => {
   }
 });
 
-// ---- Hierarchy node CRUD (Admin) ----
+// ---- Hierarchy node CRUD (village_admin only) ----
 app.post("/api/nodes", async (req, res) => {
+  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
   const { parent_id, label } = req.body || {};
   if (!parent_id || !label) return res.status(400).json({ error: "parent_id and label required" });
   try {
@@ -377,6 +389,7 @@ app.post("/api/nodes", async (req, res) => {
 });
 
 app.patch("/api/nodes/:id", async (req, res) => {
+  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
   const { label } = req.body || {};
   if (!label) return res.status(400).json({ error: "label required" });
   try {
@@ -386,6 +399,7 @@ app.patch("/api/nodes/:id", async (req, res) => {
 });
 
 app.delete("/api/nodes/:id", async (req, res) => {
+  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
   const id = req.params.id;
   if ((await q(`select 1 from scope_nodes where parent_id=$1 limit 1`, [id])).length)
     return res.status(400).json({ error: "has child nodes — remove them first" });
