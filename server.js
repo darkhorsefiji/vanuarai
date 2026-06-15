@@ -204,12 +204,28 @@ app.get("/api/land-allocations", async (req, res) => {
 });
 
 // Financials tabs: transactions, asset register, investments.
+const OFFICE_LABEL = { head: "Head (Turaga)", vunivola: "Secretary (Vunivola)", dauniyau: "Treasurer (Dau ni yau)", liuliu: "Leader (Liuliu)", village_admin: "Village Admin" };
+const ENTITY_LABEL = { traditional: "Vanua", government: "Government", soqosoqo: "Soqosoqo" };
 app.get("/api/fin-transactions", async (req, res) => {
-  res.json(await q(`select t.id, to_char(t.tx_date,'YYYY-MM-DD') tx_date, t.description, t.fund, t.type, t.method, t.amount_cents,
-      sn.level, sn.label body, sn.id body_id
+  const rows = await q(`select t.id, to_char(t.tx_date,'YYYY-MM-DD') tx_date, t.description, t.fund, t.type, t.method, t.amount_cents,
+      sn.level, sn.label body, sn.id body_id,
+      iu.display_name i_name, io.office i_office, isn.axis i_axis, isn.label i_body, to_char(t.initiated_at,'YYYY-MM-DD HH24:MI') i_at,
+      au.display_name a_name, ao.office a_office, asn.axis a_axis, asn.label a_body, to_char(t.approved_at,'YYYY-MM-DD HH24:MI') a_at
     from fin_transactions t join villages v on v.id=t.village_id
     left join scope_nodes sn on sn.id=t.classification_node_id
-    where v.name=$1 and t.archived_at is null order by t.tx_date desc`, [VILLAGE]));
+    left join body_offices io on io.id=t.initiator_office_id
+    left join users iu on iu.id=io.user_id
+    left join scope_nodes isn on isn.id=io.body_node_id
+    left join body_offices ao on ao.id=t.approver_office_id
+    left join users au on au.id=ao.user_id
+    left join scope_nodes asn on asn.id=ao.body_node_id
+    where v.name=$1 and t.archived_at is null order by t.tx_date desc`, [VILLAGE]);
+  res.json(rows.map(r => ({
+    id: r.id, tx_date: r.tx_date, description: r.description, fund: r.fund, type: r.type, method: r.method,
+    amount_cents: r.amount_cents, level: r.level, body: r.body, body_id: r.body_id,
+    initiator: r.i_name ? { name: r.i_name, role: OFFICE_LABEL[r.i_office] || r.i_office, entity: ENTITY_LABEL[r.i_axis] || r.i_axis, body: r.i_body, at: r.i_at } : null,
+    approver: r.a_name ? { name: r.a_name, role: OFFICE_LABEL[r.a_office] || r.a_office, entity: ENTITY_LABEL[r.a_axis] || r.a_axis, body: r.a_body, at: r.a_at } : null,
+  })));
 });
 app.get("/api/assets", async (req, res) => {
   res.json(await q(`select a.id, a.name, a.category, to_char(a.acquired,'YYYY-MM-DD') acquired, a.value_cents, a.condition, a.custodian,

@@ -14,6 +14,30 @@ function noneRow(cols) {
   return <tr><td colSpan={cols} className="meta">No records for this body.</td></tr>
 }
 
+// Hover popover: who initiated vs who approved a transaction (maker-checker).
+function WhoBlock({ kind, who }) {
+  return (
+    <div className={'who-block ' + kind}>
+      <div className="who-h">{kind === 'init' ? '✎ Initiated by' : '✓ Approved by'}</div>
+      <div className="who-name">{who.name}</div>
+      <div className="who-meta">{who.role} · <span className="who-entity">{who.entity}</span></div>
+      <div className="who-when">{who.at || '—'}</div>
+    </div>
+  )
+}
+function WhoPopover({ tx }) {
+  if (!tx.initiator && !tx.approver) return <span className="meta">—</span>
+  return (
+    <span className="txwho" tabIndex={0}>
+      <span className="txwho-ic" aria-label="Who initiated / approved">ⓘ</span>
+      <span className="txwho-pop">
+        {tx.initiator && <WhoBlock kind="init" who={tx.initiator} />}
+        {tx.approver && <WhoBlock kind="appr" who={tx.approver} />}
+      </span>
+    </span>
+  )
+}
+
 // Void (archive) a record — hidden everywhere but kept in the DB for records.
 function ArchiveBtn({ path, label, onDone }) {
   async function go() {
@@ -94,7 +118,7 @@ function Transactions({ filter, canEdit, refresh, onArchive }) {
         <div className="tot"><b>{fjd(tin - tout)}</b>Net</div>
       </div>
       <table className="tight">
-        <thead><tr><th>Date</th><th>Description</th><th>Body</th><th>Fund</th><th>Method</th><th>Type</th><th style={{ textAlign: 'right' }}>Amount</th>{canEdit && <th></th>}</tr></thead>
+        <thead><tr><th>Date</th><th>Description</th><th>Body</th><th>Fund</th><th>Method</th><th>Type</th><th style={{ textAlign: 'right' }}>Amount</th><th style={{ textAlign: 'center' }}>Audit</th>{canEdit && <th></th>}</tr></thead>
         <tbody>
           {rows.map(t => (
             <tr key={t.id}>
@@ -105,10 +129,11 @@ function Transactions({ filter, canEdit, refresh, onArchive }) {
               <td>{t.method}</td>
               <td><span className={'lchip ' + (t.type === 'In' ? 'approved' : 'declined')}>{t.type}</span></td>
               <td style={{ textAlign: 'right', fontWeight: 600 }}>{t.type === 'Out' ? '−' : '+'}{fjd(t.amount_cents)}</td>
+              <td style={{ textAlign: 'center' }}><WhoPopover tx={t} /></td>
               {canEdit && <td><ArchiveBtn path={'/fin-transactions/' + t.id} label="transaction" onDone={onArchive} /></td>}
             </tr>
           ))}
-          {rows.length === 0 && noneRow(canEdit ? 8 : 7)}
+          {rows.length === 0 && noneRow(canEdit ? 9 : 8)}
         </tbody>
       </table>
     </>
