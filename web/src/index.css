@@ -317,6 +317,12 @@ table.tight tbody tr:last-child td{border-bottom:0}
 .txwho-pop{display:none;position:absolute;right:0;top:130%;z-index:60;width:236px;text-align:left;
   background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 6px 22px rgba(12,70,81,.18);padding:9px}
 .txwho:hover .txwho-pop,.txwho:focus .txwho-pop{display:block}
+.txwho.up .txwho-pop{top:auto;bottom:130%}   /* flip above when no room below */
+.tx-actions{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+td.nowrap{white-space:nowrap}
+/* transactions: one line per row at any width — nowrap cells, ellipsis the description */
+.txtable td,.txtable th{white-space:nowrap}
+.desc-cell{display:inline-block;max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle}
 .who-block{padding:6px 9px;border-left:3px solid;border-radius:5px}
 .who-block+.who-block{margin-top:7px}
 .who-block.init{border-color:#2f7a52;background:#f1f8f3}

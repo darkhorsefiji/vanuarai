@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useData, fjd, send } from '../api'
 import { LevelBadge } from '../levels'
 import { BodyFilterBar, useBodyFilter, matchBody } from '../bodyfilter'
@@ -27,9 +27,13 @@ function WhoBlock({ kind, who }) {
   )
 }
 function WhoPopover({ tx }) {
+  const ref = useRef(null)
+  const [up, setUp] = useState(false)
   if (!tx.initiator && !tx.approver) return <span className="meta">—</span>
+  // flip the popover above the icon when there isn't room below the viewport
+  const place = () => { const r = ref.current?.getBoundingClientRect(); if (r) setUp(window.innerHeight - r.bottom < 240) }
   return (
-    <span className="txwho" tabIndex={0}>
+    <span ref={ref} className={'txwho' + (up ? ' up' : '')} tabIndex={0} onMouseEnter={place} onFocus={place}>
       <span className="txwho-ic" aria-label="Who initiated / approved">ⓘ</span>
       <span className="txwho-pop">
         {tx.initiator && <WhoBlock kind="init" who={tx.initiator} />}
@@ -118,23 +122,22 @@ function Transactions({ filter, canEdit, refresh, onArchive }) {
         <div className="tot"><b>{fjd(tout)}</b>Total out</div>
         <div className="tot"><b>{fjd(tin - tout)}</b>Net</div>
       </div>
-      <table className="tight">
-        <thead><tr><th>Date</th><th>Description</th><th>Body</th><th>Fund</th><th>Method</th><th>Type</th><th style={{ textAlign: 'right' }}>Amount</th><th style={{ textAlign: 'center' }}>Audit</th>{canEdit && <th></th>}</tr></thead>
+      <table className="tight txtable">
+        <thead><tr><th>Date</th><th>Description</th><th>Body</th><th>Fund</th><th>Method</th><th>Type</th><th style={{ textAlign: 'right' }}>Amount</th><th style={{ textAlign: 'center' }}>Audit</th></tr></thead>
         <tbody>
           {rows.map(t => (
             <tr key={t.id}>
-              <td>{t.tx_date}</td>
-              <td>{t.description}</td>
+              <td className="nowrap">{t.tx_date}</td>
+              <td><span className="desc-cell" title={t.description}>{t.description}</span></td>
               <td><BodyCell r={t} /></td>
               <td>{t.fund}</td>
               <td>{t.method}</td>
               <td><span className={'lchip ' + (t.type === 'In' ? 'approved' : 'declined')}>{t.type}</span></td>
               <td style={{ textAlign: 'right', fontWeight: 600 }}>{t.type === 'Out' ? '−' : '+'}{fjd(t.amount_cents)}</td>
-              <td style={{ textAlign: 'center' }}><WhoPopover tx={t} /></td>
-              {canEdit && <td><ArchiveBtn path={'/fin-transactions/' + t.id} label="transaction" onDone={onArchive} /></td>}
+              <td><span className="tx-actions"><WhoPopover tx={t} />{canEdit && <ArchiveBtn path={'/fin-transactions/' + t.id} label="transaction" onDone={onArchive} />}</span></td>
             </tr>
           ))}
-          {rows.length === 0 && noneRow(canEdit ? 9 : 8)}
+          {rows.length === 0 && noneRow(8)}
         </tbody>
       </table>
     </>
