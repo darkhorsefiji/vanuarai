@@ -102,6 +102,30 @@ const ORDER_KEY = 'vr_theme_order'
 const loadOrder = () => { try { return JSON.parse(localStorage.getItem(ORDER_KEY)) || {} } catch { return {} } }
 const saveOrder = o => localStorage.setItem(ORDER_KEY, JSON.stringify(o))
 
+// DEV-only: clear the demo activity data (type-to-confirm guard).
+function ResetDemoData() {
+  const [confirm, setConfirm] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [result, setResult] = useState(null)
+  async function reset() {
+    if (confirm !== 'RESET') return
+    if (!window.confirm('Clear ALL demo activity (money, efforts, notices, trade, minutes, lands)?\n\nThe village, hierarchy, people and users are KEPT. This cannot be undone.')) return
+    setBusy(true); setResult(null)
+    try { const r = await send('POST', '/dev/reset'); setResult(r); setConfirm('') }
+    catch (e) { setResult({ error: e.message }) }
+    finally { setBusy(false) }
+  }
+  return (
+    <div className="resetbox">
+      <input placeholder="type RESET to enable" value={confirm} onChange={e => setConfirm(e.target.value)} />
+      <button className="btn resetbtn" disabled={busy || confirm !== 'RESET'} onClick={reset}>{busy ? 'Clearing…' : 'Reset demo data'}</button>
+      {result && (result.error
+        ? <span className="status">⚠ {result.error}</span>
+        : <span className="status">Cleared {result.clearedRows} rows ✓ — reload to see empty pages.</span>)}
+    </div>
+  )
+}
+
 export default function Dev() {
   const [ov, setOv] = useState(loadOverrides())
   const [fontText, setFontText] = useState({})
@@ -193,6 +217,10 @@ export default function Dev() {
           <h3>Resolution actions</h3>
           <p className="sub">The actions offered when an Approved/Rejected resolution’s <b>Action</b> button is pressed (Minutes page). Saved to the database.</p>
           <ActionTypesEditor />
+
+          <h3>Reset demo data</h3>
+          <p className="sub">Clears the demo <b>activity</b> — contributions, transactions, assets, investments, fundraising efforts, notices, trade listings, minutes and land records. <b>Keeps</b> the village, full hierarchy, people, users, plans and styling. DEV only; <b>cannot be undone</b>.</p>
+          <ResetDemoData />
         </>
       )}
 

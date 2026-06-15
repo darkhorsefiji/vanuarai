@@ -239,6 +239,13 @@ async function noticeActor(req) {
 }
 const isOfficial = a => !!a && (a.isAppAdmin || a.role === "official");
 
+// app_admin (DEV) only — the top tier.
+async function isAppAdminReq(req) {
+  if (!req.user) return false;
+  const [u] = await q(`select is_app_admin from users where id=$1`, [req.user.uid]);
+  return !!(u && u.is_app_admin);
+}
+
 // village_admin tier: app admin OR holds an active village_admin body office.
 // Mirrors the frontend isVillageAdmin so node editing is enforced, not just hidden.
 async function isVillageAdminReq(req) {
@@ -442,6 +449,36 @@ app.delete("/api/assets/:id", (req, res) => archiveRow(req, res, "village_assets
 app.delete("/api/investments/:id", (req, res) => archiveRow(req, res, "village_investments"));
 app.delete("/api/contributions/:id", (req, res) => archiveRow(req, res, "ledger_entries"));
 app.delete("/api/fundraising/:id", (req, res) => archiveRow(req, res, "projects"));
+
+// ---- DEV reset: clear the demo "activity" data, keep the village structure ----
+// Wipes money/efforts/notices/trade/minutes/lands/approvals. Keeps villages,
+// scope_nodes (hierarchy), users/memberships/offices, persons, plans, styling,
+// gov contacts and config. app_admin (DEV) only. Empty external tables that
+// reference resolutions (audit_log, land_use_applications) get cascaded too.
+const RESET_TABLES = [
+  "ledger_entries", "pots", "projects", "project_photos",
+  "fin_transactions", "village_assets", "village_investments",
+  "notices", "trade_listings", "trade_buyers", "trade_contacts",
+  "minutes", "resolutions", "land_requests", "land_allocations", "approvals",
+];
+app.post("/api/dev/reset", async (req, res) => {
+  if (!(await isAppAdminReq(req))) return res.status(403).json({ error: "app admin (DEV) access required" });
+  const client = await pool.connect();
+  try {
+    const counts = {};
+    for (const t of RESET_TABLES) counts[t] = (await client.query(`select count(*)::int c from "${t}"`)).rows[0].c;
+    await client.query("BEGIN");
+    await client.query(`TRUNCATE ${RESET_TABLES.join(", ")} RESTART IDENTITY CASCADE`);
+    await client.query("COMMIT");
+    const clearedRows = Object.values(counts).reduce((s, n) => s + n, 0);
+    res.json({ ok: true, clearedRows, tables: counts });
+  } catch (e) {
+    await client.query("ROLLBACK");
+    res.status(500).json({ error: e.message });
+  } finally {
+    client.release();
+  }
+});
 
 // ---- Vuvale persons CRUD (Admin) ----
 app.get("/api/vuvale/:id/persons", async (req, res) => {

@@ -311,6 +311,13 @@ table.tight tbody tr:last-child td{border-bottom:0}
 
 .owner-chip{margin-left:7px;vertical-align:middle}
 
+/* Dev: reset demo data */
+.resetbox{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 22px}
+.resetbox input{border:1px solid var(--line);border-radius:8px;padding:8px 11px;font-family:var(--font);font-size:13px;width:190px}
+.resetbtn{background:#b3361f;border-color:#b3361f;color:#fff}
+.resetbtn:hover:not(:disabled){background:#9a2d18}
+.resetbtn:disabled{opacity:.5;cursor:not-allowed}
+
 /* Dev: hierarchy level names */
 .lvlnames{display:flex;flex-direction:column;gap:7px;margin:6px 0 22px;max-width:700px}
 .lvlnames-head,.lvlnames-row{display:grid;grid-template-columns:130px 48px 1fr 1fr 110px;gap:10px;align-items:center}
