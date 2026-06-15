@@ -18,7 +18,7 @@ function noneRow(cols) {
 function WhoBlock({ kind, who }) {
   return (
     <div className={'who-block ' + kind}>
-      <div className="who-h">{kind === 'init' ? '✎ Initiated by' : '✓ Approved by'}</div>
+      <div className="who-h">{kind === 'init' ? '✎ Initiated by' : kind === 'appr' ? '✓ Approved by' : '🧾 Recorded by'}</div>
       <div className="who-name">{who.name}</div>
       <div className="who-meta">{who.role}</div>
       <div className="who-sub"><span className="who-entity">{who.entity}</span>{who.body ? ' · ' + who.body : ''}</div>
@@ -46,8 +46,12 @@ function WhoPopover({ tx }) {
     <span ref={ref} className="txwho" tabIndex={0} onMouseEnter={place} onFocus={place}>
       <span className="txwho-ic" aria-label="Who initiated / approved">ⓘ</span>
       <span className="txwho-pop" style={style}>
-        {tx.initiator && <WhoBlock kind="init" who={tx.initiator} />}
-        {tx.approver && <WhoBlock kind="appr" who={tx.approver} />}
+        {tx.type === 'In'
+          ? (tx.initiator && <WhoBlock kind="recorded" who={tx.initiator} />)
+          : <>
+              {tx.initiator && <WhoBlock kind="init" who={tx.initiator} />}
+              {tx.approver && <WhoBlock kind="appr" who={tx.approver} />}
+            </>}
       </span>
     </span>
   )

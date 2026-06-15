@@ -330,6 +330,8 @@ td.nowrap{white-space:nowrap}
 .who-block+.who-block{margin-top:7px}
 .who-block.init{border-color:#2f7a52;background:#f1f8f3}
 .who-block.appr{border-color:var(--ocean);background:#eef5f7}
+.who-block.recorded{border-color:#2f7a52;background:#f1f8f3}
+.who-block.recorded .who-h{color:#2f7a52}
 .who-h{font-size:9.5px;text-transform:uppercase;letter-spacing:.4px;font-weight:800}
 .who-block.init .who-h{color:#2f7a52}
 .who-block.appr .who-h{color:var(--ocean)}
