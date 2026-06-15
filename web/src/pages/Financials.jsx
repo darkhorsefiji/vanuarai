@@ -68,7 +68,7 @@ function Funds({ filter, refresh }) {
       </div>
       <table>
         <tbody>
-          <tr><th>Fund / pot</th><th>Body</th><th>Inflows</th><th>Outflows</th><th>Balance</th></tr>
+          <tr><th>Fund</th><th>Body</th><th>Inflows</th><th>Outflows</th><th>Balance</th></tr>
           {rows.map(r => (
             <tr key={r.purpose}><td>{r.purpose}</td><td><BodyCell r={r} /></td><td>{fjd(r.tin)}</td><td>{fjd(r.tout)}</td><td>{fjd(r.tin - r.tout)}</td></tr>
           ))}
