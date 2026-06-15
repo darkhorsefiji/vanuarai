@@ -8,7 +8,7 @@ import { EditableText } from '../copy'
 const TABS = ['Funds', 'Transactions', 'Asset Register', 'Investments']
 
 function BodyCell({ r }) {
-  return r.level ? <span className="body-cell"><LevelBadge level={r.level} /> {r.body}</span> : <span className="meta">—</span>
+  return r.level ? <span className="body-cell"><LevelBadge level={r.level} /> <span className="body-name" title={r.body}>{r.body}</span></span> : <span className="meta">—</span>
 }
 function noneRow(cols) {
   return <tr><td colSpan={cols} className="meta">No records for this body.</td></tr>
@@ -62,7 +62,7 @@ export default function Financials() {
   const bump = () => setRefresh(r => r + 1)
   const shared = { filter, canEdit, refresh, onArchive: bump }
   return (
-    <>
+    <div className="page-financials">
       <div className="pagetop">
         <h1>Village Financials</h1>
         <EditableText id="financials.sub" className="sub">Member-tier view of the village's funds, transactions, assets and investments.</EditableText>
@@ -77,7 +77,7 @@ export default function Financials() {
       {tab === 'Transactions' && <Transactions {...shared} />}
       {tab === 'Asset Register' && <Assets {...shared} />}
       {tab === 'Investments' && <Investments {...shared} />}
-    </>
+    </div>
   )
 }
 

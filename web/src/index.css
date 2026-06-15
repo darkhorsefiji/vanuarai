@@ -323,6 +323,9 @@ td.nowrap{white-space:nowrap}
 /* transactions: one line per row at any width — nowrap cells, ellipsis the description */
 .txtable td,.txtable th{white-space:nowrap}
 .desc-cell{display:inline-block;max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle}
+/* Financials uses the full available width (no 1100px cap) so the wide tables
+   don't force a horizontal scroll — especially with the sidebar collapsed. */
+.layout > main:has(.page-financials){max-width:none}
 .who-block{padding:6px 9px;border-left:3px solid;border-radius:5px}
 .who-block+.who-block{margin-top:7px}
 .who-block.init{border-color:#2f7a52;background:#f1f8f3}
