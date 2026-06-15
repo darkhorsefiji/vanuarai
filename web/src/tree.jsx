@@ -79,7 +79,11 @@ export function useNodes() {
   const delNode = async (nd, onDeleted) => {
     if (!window.confirm(`Delete "${nd.label}"?`)) return
     try { await send('DELETE', '/nodes/' + nd.id); setMsg('Deleted ✓'); if (onDeleted) onDeleted(nd) }
-    catch (e) { setMsg(e.message || 'Delete failed') }
+    catch (e) {
+      const m = e.message || 'Delete failed'
+      setMsg('⚠ ' + m)
+      window.alert(m)   // surface the reason — a buried status line was easy to miss
+    }
     load()
   }
   return { nodes, msg, setMsg, load, addNode, renameNode, delNode }

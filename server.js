@@ -402,7 +402,17 @@ app.delete("/api/nodes/:id", async (req, res) => {
   if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
   const id = req.params.id;
   if ((await q(`select 1 from scope_nodes where parent_id=$1 limit 1`, [id])).length)
-    return res.status(400).json({ error: "has child nodes — remove them first" });
+    return res.status(400).json({ error: "Has child nodes — remove them first." });
+  // referenced by members or recorded contributions? block with a specific reason
+  // (persons are removed with the node, but memberships and ledger entries must not be).
+  const [{ members }] = await q(`select count(*)::int members from memberships where vuvale_node_id=$1`, [id]);
+  const [{ contribs }] = await q(`select count(*)::int contribs from ledger_entries where contributor_vuvale_id=$1`, [id]);
+  if (members > 0 || contribs > 0) {
+    const bits = [];
+    if (members > 0) bits.push(`${members} member${members === 1 ? "" : "s"}`);
+    if (contribs > 0) bits.push(`${contribs} contribution${contribs === 1 ? "" : "s"}`);
+    return res.status(409).json({ error: `Can't delete — ${bits.join(" and ")} still linked to this node. Reassign or remove those first.` });
+  }
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
