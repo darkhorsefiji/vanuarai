@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { useData, fjd } from '../api'
+import { useData, fjd, send } from '../api'
 import { LevelBadge } from '../levels'
 import { BodyFilterBar, useBodyFilter, matchBody } from '../bodyfilter'
+import { useAuth, isVillageAdmin } from '../auth'
 import { EditableText } from '../copy'
 
 const TABS = ['Funds', 'Transactions', 'Asset Register', 'Investments']
@@ -13,9 +14,24 @@ function noneRow(cols) {
   return <tr><td colSpan={cols} className="meta">No records for this body.</td></tr>
 }
 
+// Void (archive) a record — hidden everywhere but kept in the DB for records.
+function ArchiveBtn({ path, label, onDone }) {
+  async function go() {
+    if (!window.confirm(`Void this ${label}? It will be hidden from all views but kept for records.`)) return
+    try { await send('DELETE', path); onDone() }
+    catch (e) { window.alert(e.message || 'Could not archive') }
+  }
+  return <button className="mini danger" title="Void (archive)" onClick={go}>🗑</button>
+}
+
 export default function Financials() {
+  const { user } = useAuth()
+  const canEdit = isVillageAdmin(user)
   const [tab, setTab] = useState('Funds')
   const { filter, setFilter, bodiesByLevel } = useBodyFilter()
+  const [refresh, setRefresh] = useState(0)
+  const bump = () => setRefresh(r => r + 1)
+  const shared = { filter, canEdit, refresh, onArchive: bump }
   return (
     <>
       <div className="pagetop">
@@ -28,16 +44,16 @@ export default function Financials() {
           <button key={t} className={'tab' + (tab === t ? ' active' : '')} onClick={() => setTab(t)}>{t}</button>
         ))}
       </div>
-      {tab === 'Funds' && <Funds filter={filter} />}
-      {tab === 'Transactions' && <Transactions filter={filter} />}
-      {tab === 'Asset Register' && <Assets filter={filter} />}
-      {tab === 'Investments' && <Investments filter={filter} />}
+      {tab === 'Funds' && <Funds filter={filter} refresh={refresh} />}
+      {tab === 'Transactions' && <Transactions {...shared} />}
+      {tab === 'Asset Register' && <Assets {...shared} />}
+      {tab === 'Investments' && <Investments {...shared} />}
     </>
   )
 }
 
-function Funds({ filter }) {
-  const { data } = useData('/financials')
+function Funds({ filter, refresh }) {
+  const { data } = useData('/financials?_r=' + refresh)
   if (!data) return <p className="loading">Loading…</p>
   const rows = data.filter(r => matchBody(filter, r))
   const tin = rows.reduce((s, r) => s + r.tin, 0)
@@ -63,8 +79,8 @@ function Funds({ filter }) {
   )
 }
 
-function Transactions({ filter }) {
-  const { data } = useData('/fin-transactions')
+function Transactions({ filter, canEdit, refresh, onArchive }) {
+  const { data } = useData('/fin-transactions?_r=' + refresh)
   if (!data) return <p className="loading">Loading…</p>
   const rows = data.filter(t => matchBody(filter, t))
   const tin = rows.filter(t => t.type === 'In').reduce((s, t) => s + t.amount_cents, 0)
@@ -78,7 +94,7 @@ function Transactions({ filter }) {
         <div className="tot"><b>{fjd(tin - tout)}</b>Net</div>
       </div>
       <table className="tight">
-        <thead><tr><th>Date</th><th>Description</th><th>Body</th><th>Fund</th><th>Method</th><th>Type</th><th style={{ textAlign: 'right' }}>Amount</th></tr></thead>
+        <thead><tr><th>Date</th><th>Description</th><th>Body</th><th>Fund</th><th>Method</th><th>Type</th><th style={{ textAlign: 'right' }}>Amount</th>{canEdit && <th></th>}</tr></thead>
         <tbody>
           {rows.map(t => (
             <tr key={t.id}>
@@ -89,17 +105,18 @@ function Transactions({ filter }) {
               <td>{t.method}</td>
               <td><span className={'lchip ' + (t.type === 'In' ? 'approved' : 'declined')}>{t.type}</span></td>
               <td style={{ textAlign: 'right', fontWeight: 600 }}>{t.type === 'Out' ? '−' : '+'}{fjd(t.amount_cents)}</td>
+              {canEdit && <td><ArchiveBtn path={'/fin-transactions/' + t.id} label="transaction" onDone={onArchive} /></td>}
             </tr>
           ))}
-          {rows.length === 0 && noneRow(7)}
+          {rows.length === 0 && noneRow(canEdit ? 8 : 7)}
         </tbody>
       </table>
     </>
   )
 }
 
-function Assets({ filter }) {
-  const { data } = useData('/assets')
+function Assets({ filter, canEdit, refresh, onArchive }) {
+  const { data } = useData('/assets?_r=' + refresh)
   if (!data) return <p className="loading">Loading…</p>
   const rows = data.filter(a => matchBody(filter, a))
   const total = rows.reduce((s, a) => s + a.value_cents, 0)
@@ -111,7 +128,7 @@ function Assets({ filter }) {
         <div className="tot"><b>{fjd(total)}</b>Total book value</div>
       </div>
       <table className="tight">
-        <thead><tr><th>Asset</th><th>Body</th><th>Category</th><th>Acquired</th><th>Condition</th><th>Custodian</th><th style={{ textAlign: 'right' }}>Value</th></tr></thead>
+        <thead><tr><th>Asset</th><th>Body</th><th>Category</th><th>Acquired</th><th>Condition</th><th>Custodian</th><th style={{ textAlign: 'right' }}>Value</th>{canEdit && <th></th>}</tr></thead>
         <tbody>
           {rows.map(a => (
             <tr key={a.id}>
@@ -122,17 +139,18 @@ function Assets({ filter }) {
               <td>{a.condition}</td>
               <td>{a.custodian}</td>
               <td style={{ textAlign: 'right', fontWeight: 600 }}>{fjd(a.value_cents)}</td>
+              {canEdit && <td><ArchiveBtn path={'/assets/' + a.id} label="asset" onDone={onArchive} /></td>}
             </tr>
           ))}
-          {rows.length === 0 && noneRow(7)}
+          {rows.length === 0 && noneRow(canEdit ? 8 : 7)}
         </tbody>
       </table>
     </>
   )
 }
 
-function Investments({ filter }) {
-  const { data } = useData('/investments')
+function Investments({ filter, canEdit, refresh, onArchive }) {
+  const { data } = useData('/investments?_r=' + refresh)
   if (!data) return <p className="loading">Loading…</p>
   const rows = data.filter(i => matchBody(filter, i))
   const invested = rows.reduce((s, i) => s + i.amount_cents, 0)
@@ -147,7 +165,7 @@ function Investments({ filter }) {
         <div className="tot"><b>{gain >= 0 ? '+' : ''}{fjd(gain)}</b>Unrealised gain</div>
       </div>
       <table className="tight">
-        <thead><tr><th>Investment</th><th>Body</th><th>Type</th><th style={{ textAlign: 'right' }}>Invested</th><th style={{ textAlign: 'right' }}>Current</th><th style={{ textAlign: 'right' }}>Return</th><th>Notes</th></tr></thead>
+        <thead><tr><th>Investment</th><th>Body</th><th>Type</th><th style={{ textAlign: 'right' }}>Invested</th><th style={{ textAlign: 'right' }}>Current</th><th style={{ textAlign: 'right' }}>Return</th><th>Notes</th>{canEdit && <th></th>}</tr></thead>
         <tbody>
           {rows.map(i => {
             const g = i.current_value_cents - i.amount_cents
@@ -162,10 +180,11 @@ function Investments({ filter }) {
                   {i.return_pct != null ? i.return_pct + '%' : (g >= 0 ? '+' : '') + fjd(g)}
                 </td>
                 <td>{i.notes}</td>
+                {canEdit && <td><ArchiveBtn path={'/investments/' + i.id} label="investment" onDone={onArchive} /></td>}
               </tr>
             )
           })}
-          {rows.length === 0 && noneRow(7)}
+          {rows.length === 0 && noneRow(canEdit ? 8 : 7)}
         </tbody>
       </table>
     </>

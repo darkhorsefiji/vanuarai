@@ -346,6 +346,8 @@ table.tight tbody tr:last-child td{border-bottom:0}
 .cols.fund-cols>.col{min-width:0}   /* let the chart scroll instead of stretching its column */
 @media(max-width:900px){.cols.fund-cols{grid-template-columns:1fr}}
 .fundcards{display:flex;flex-direction:column;gap:14px}
+.fundcard-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.fundcard-top h3{margin:0}
 .fundcard{cursor:pointer;transition:box-shadow .15s,border-color .15s}
 .fundcard:hover{box-shadow:0 2px 10px rgba(12,70,81,.12)}
 .fundcard.sel{outline:2px solid var(--ocean);outline-offset:-1px}

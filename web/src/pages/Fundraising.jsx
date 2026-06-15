@@ -1,18 +1,24 @@
 import { useState } from 'react'
-import { useData, fjd } from '../api'
+import { useData, fjd, send } from '../api'
 import { useLevels } from '../levels'
 import { BodyFilterBar, useBodyFilter, matchBody } from '../bodyfilter'
+import { useAuth, isVillageAdmin } from '../auth'
 import { EditableText } from '../copy'
 
 // lineage levels the contributions chart can be grouped by
 const CHART_LEVELS = ['mataqali', 'tokatoka', 'vuvale']
 
-function ContributionsChart({ projectIds, selName, onClearSel }) {
+function ContributionsChart({ projectIds, selName, onClearSel, canEdit, refresh, onArchive }) {
   const [lvl, setLvl] = useState('mataqali')
-  const scopeQ = projectIds != null ? '&projects=' + projectIds.join(',') : ''
+  const scopeQ = (projectIds != null ? '&projects=' + projectIds.join(',') : '') + '&_r=' + refresh
   const { data } = useData('/contributions?level=' + lvl + scopeQ)
   const { data: detail } = useData('/contributions-detail?level=' + lvl + scopeQ)
   const { map } = useLevels()
+  async function voidContribution(id) {
+    if (!window.confirm('Void this contribution? It will be hidden but kept for records.')) return
+    try { await send('DELETE', '/contributions/' + id); onArchive() }
+    catch (e) { window.alert(e.message || 'Could not archive') }
+  }
   const max = data && data.length ? Math.max(...data.map(d => d.total)) : 1
   const total = data ? data.reduce((s, d) => s + d.total, 0) : 0
   return (
@@ -44,16 +50,17 @@ function ContributionsChart({ projectIds, selName, onClearSel }) {
       <h4 className="contrib-h">Contributors</h4>
       <div className="contrib-detail">
         <table className="tight">
-          <thead><tr><th>Date</th><th>Name</th><th>{map[lvl]?.label || lvl}</th><th style={{ textAlign: 'right' }}>Amount</th></tr></thead>
+          <thead><tr><th>Date</th><th>Name</th><th>{map[lvl]?.label || lvl}</th><th style={{ textAlign: 'right' }}>Amount</th>{canEdit && <th></th>}</tr></thead>
           <tbody>
-            {!detail ? <tr><td colSpan={4} className="loading">Loading…</td></tr>
-              : detail.length === 0 ? <tr><td colSpan={4} className="meta">No contributions recorded.</td></tr>
+            {!detail ? <tr><td colSpan={canEdit ? 5 : 4} className="loading">Loading…</td></tr>
+              : detail.length === 0 ? <tr><td colSpan={canEdit ? 5 : 4} className="meta">No contributions recorded.</td></tr>
                 : detail.map((r, i) => (
-                  <tr key={i}>
+                  <tr key={r.id || i}>
                     <td>{r.date}</td>
                     <td>{r.name}</td>
                     <td>{r.body}</td>
                     <td style={{ textAlign: 'right', fontWeight: 600 }}>{fjd(r.amount)}</td>
+                    {canEdit && <td><button className="mini danger" title="Void (archive)" onClick={() => voidContribution(r.id)}>🗑</button></td>}
                   </tr>
                 ))}
           </tbody>
@@ -64,12 +71,22 @@ function ContributionsChart({ projectIds, selName, onClearSel }) {
 }
 
 export default function Fundraising() {
-  const { data } = useData('/fundraising')
+  const { user } = useAuth()
+  const canEdit = isVillageAdmin(user)
+  const [refresh, setRefresh] = useState(0)
+  const { data } = useData('/fundraising?_r=' + refresh)
   const { filter, setFilter: setFilterRaw, bodiesByLevel } = useBodyFilter()
   const [selProject, setSelProject] = useState(null)
   const [msg, setMsg] = useState('')
   // changing the body filter clears any card selection
   const setFilter = f => { setSelProject(null); setFilterRaw(f) }
+  const bump = () => setRefresh(r => r + 1)
+  async function archiveEffort(e, r) {
+    e.stopPropagation()
+    if (!window.confirm(`Void the “${r.name}” effort? It and its contributions will be hidden but kept for records.`)) return
+    try { await send('DELETE', '/fundraising/' + r.id); setSelProject(null); bump() }
+    catch (err) { window.alert(err.message || 'Could not archive') }
+  }
   if (!data) return <p className="loading">Loading…</p>
   const rows = data.filter(r => matchBody(filter, r))
   const totRaised = rows.reduce((s, r) => s + r.raised, 0)
@@ -102,7 +119,10 @@ export default function Fundraising() {
                 <div className={'card fundcard' + (selProject === r.id ? ' sel' : '')} key={r.id}
                   onClick={() => setSelProject(selProject === r.id ? null : r.id)}
                   title="Click to show this effort's contributions">
-                  <h3>{r.name}</h3>
+                  <div className="fundcard-top">
+                    <h3>{r.name}</h3>
+                    {canEdit && <button className="mini danger" title="Void (archive) this effort" onClick={e => archiveEffort(e, r)}>🗑</button>}
+                  </div>
                   <div className="meta">{r.owner}</div>
                   <div className="bar"><i style={{ width: pct + '%' }} /></div>
                   <div className="meta">{fjd(r.raised)} of {fjd(r.goal_cents)} goal</div>
@@ -116,7 +136,8 @@ export default function Fundraising() {
           </div>
         </div>
         <aside className="col">
-          <ContributionsChart projectIds={projectIds} selName={selName} onClearSel={() => setSelProject(null)} />
+          <ContributionsChart projectIds={projectIds} selName={selName} onClearSel={() => setSelProject(null)}
+            canEdit={canEdit} refresh={refresh} onArchive={bump} />
         </aside>
       </div>
     </>

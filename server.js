@@ -156,7 +156,7 @@ app.patch("/api/profile", async (req, res) => {
 });
 
 app.get("/api/hierarchy", async (req, res) => {
-  const rows = await q(`select id,label,parent_id,level,axis from scope_nodes`);
+  const rows = await q(`select id,label,parent_id,level,axis from scope_nodes where archived_at is null`);
   res.json(rows);
 });
 
@@ -209,21 +209,21 @@ app.get("/api/fin-transactions", async (req, res) => {
       sn.level, sn.label body, sn.id body_id
     from fin_transactions t join villages v on v.id=t.village_id
     left join scope_nodes sn on sn.id=t.classification_node_id
-    where v.name=$1 order by t.tx_date desc`, [VILLAGE]));
+    where v.name=$1 and t.archived_at is null order by t.tx_date desc`, [VILLAGE]));
 });
 app.get("/api/assets", async (req, res) => {
   res.json(await q(`select a.id, a.name, a.category, to_char(a.acquired,'YYYY-MM-DD') acquired, a.value_cents, a.condition, a.custodian,
       sn.level, sn.label body, sn.id body_id
     from village_assets a join villages v on v.id=a.village_id
     left join scope_nodes sn on sn.id=a.classification_node_id
-    where v.name=$1 order by a.sort_order`, [VILLAGE]));
+    where v.name=$1 and a.archived_at is null order by a.sort_order`, [VILLAGE]));
 });
 app.get("/api/investments", async (req, res) => {
   res.json(await q(`select i.id, i.name, i.type, i.amount_cents, i.current_value_cents, i.return_pct, i.notes,
       sn.level, sn.label body, sn.id body_id
     from village_investments i join villages v on v.id=i.village_id
     left join scope_nodes sn on sn.id=i.classification_node_id
-    where v.name=$1 order by i.sort_order`, [VILLAGE]));
+    where v.name=$1 and i.archived_at is null order by i.sort_order`, [VILLAGE]));
 });
 
 // Kacikacivaki (announcements): channel 'koro' = official, 'lewe' = community.
@@ -398,35 +398,50 @@ app.patch("/api/nodes/:id", async (req, res) => {
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
+// Archive (retire) a node and its whole subtree, cascade-archiving every linked
+// fundraising/financial record. Soft: rows are kept (audit), hidden from all views.
+// Memberships are left intact — members of a retired household stay members and
+// can be reassigned separately.
 app.delete("/api/nodes/:id", async (req, res) => {
   if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
   const id = req.params.id;
-  if ((await q(`select 1 from scope_nodes where parent_id=$1 limit 1`, [id])).length)
-    return res.status(400).json({ error: "Has child nodes — remove them first." });
-  // referenced by members or recorded contributions? block with a specific reason
-  // (persons are removed with the node, but memberships and ledger entries must not be).
-  const [{ members }] = await q(`select count(*)::int members from memberships where vuvale_node_id=$1`, [id]);
-  const [{ contribs }] = await q(`select count(*)::int contribs from ledger_entries where contributor_vuvale_id=$1`, [id]);
-  if (members > 0 || contribs > 0) {
-    const bits = [];
-    if (members > 0) bits.push(`${members} member${members === 1 ? "" : "s"}`);
-    if (contribs > 0) bits.push(`${contribs} contribution${contribs === 1 ? "" : "s"}`);
-    return res.status(409).json({ error: `Can't delete — ${bits.join(" and ")} still linked to this node. Reassign or remove those first.` });
-  }
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    await client.query(`delete from persons where vuvale_node_id=$1`, [id]);
-    await client.query(`delete from scope_nodes where id=$1`, [id]);
+    const sub = await client.query(`with recursive d as (
+        select id from scope_nodes where id=$1
+        union all select sn.id from scope_nodes sn join d on sn.parent_id=d.id
+      ) select id from d`, [id]);
+    const ids = sub.rows.map(r => r.id);
+    const A = `set archived_at=now() where`;
+    await client.query(`update scope_nodes ${A} id = any($1::uuid[]) and archived_at is null`, [ids]);
+    await client.query(`update projects ${A} owner_body_node_id = any($1::uuid[]) and archived_at is null`, [ids]);
+    await client.query(`update ledger_entries ${A} (contributor_vuvale_id = any($1::uuid[])
+        or pot_id in (select id from pots where owner_body_node_id = any($1::uuid[]))) and archived_at is null`, [ids]);
+    await client.query(`update fin_transactions ${A} classification_node_id = any($1::uuid[]) and archived_at is null`, [ids]);
+    await client.query(`update village_assets ${A} classification_node_id = any($1::uuid[]) and archived_at is null`, [ids]);
+    await client.query(`update village_investments ${A} classification_node_id = any($1::uuid[]) and archived_at is null`, [ids]);
     await client.query("COMMIT");
-    res.json({ ok: true });
+    res.json({ ok: true, archivedNodes: ids.length });
   } catch (e) {
     await client.query("ROLLBACK");
-    res.status(409).json({ error: "cannot delete — still referenced by members or records" });
+    res.status(400).json({ error: e.message });
   } finally {
     client.release();
   }
 });
+
+// ---- Archive (void) individual financial & fundraising records (village_admin) ----
+async function archiveRow(req, res, table) {
+  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  try { await q(`update ${table} set archived_at=now() where id=$1`, [req.params.id]); res.json({ ok: true }); }
+  catch (e) { res.status(400).json({ error: e.message }); }
+}
+app.delete("/api/fin-transactions/:id", (req, res) => archiveRow(req, res, "fin_transactions"));
+app.delete("/api/assets/:id", (req, res) => archiveRow(req, res, "village_assets"));
+app.delete("/api/investments/:id", (req, res) => archiveRow(req, res, "village_investments"));
+app.delete("/api/contributions/:id", (req, res) => archiveRow(req, res, "ledger_entries"));
+app.delete("/api/fundraising/:id", (req, res) => archiveRow(req, res, "projects"));
 
 // ---- Vuvale persons CRUD (Admin) ----
 app.get("/api/vuvale/:id/persons", async (req, res) => {
@@ -469,9 +484,10 @@ app.get("/api/projects", async (req, res) => {
   const rows = await q(`select p.id, p.name, p.budget_cents, p.physical_progress prog, p.status, sn.label owner,
       to_char(p.start_date,'YYYY-MM-DD') start_date, to_char(p.end_date,'YYYY-MM-DD') end_date,
       coalesce(sum(le.amount_cents) filter (where le.direction='in'),0)::bigint raised,
-      coalesce(sum(le.amount_cents) filter (where le.direction='out'),0)::bigint spent
+      coalesce(sum(le.amount_cents) filter (where le.direction='out' and le.archived_at is null),0)::bigint spent
     from projects p join scope_nodes sn on sn.id=p.owner_body_node_id
-    left join ledger_entries le on le.pot_id=p.pot_id group by p.id, sn.label order by p.name`);
+    left join ledger_entries le on le.pot_id=p.pot_id and le.archived_at is null
+    where p.archived_at is null group by p.id, sn.label order by p.name`);
   const photos = await q(`select project_id, image_ref, caption from project_photos order by id`);
   const byProj = {};
   for (const ph of photos) (byProj[ph.project_id] = byProj[ph.project_id] || []).push({ src: ph.image_ref, caption: ph.caption });
@@ -487,7 +503,8 @@ app.get("/api/fundraising", async (req, res) => {
   const rows = await q(`select p.id, p.name, sn.label owner, sn.level, sn.id body_id, po.goal_cents,
       coalesce(sum(le.amount_cents) filter (where le.direction='in'),0)::bigint raised
     from projects p join pots po on po.id=p.pot_id join scope_nodes sn on sn.id=p.owner_body_node_id
-    left join ledger_entries le on le.pot_id=p.pot_id group by p.id, sn.label, sn.level, sn.id, po.goal_cents order by raised desc`);
+    left join ledger_entries le on le.pot_id=p.pot_id and le.archived_at is null
+    where p.archived_at is null group by p.id, sn.label, sn.level, sn.id, po.goal_cents order by raised desc`);
   res.json(rows.map(r => ({ ...r, goal_cents: n(r.goal_cents), raised: n(r.raised) })));
 });
 
@@ -500,6 +517,9 @@ function projectScope(req, params) {
   return `and le.pot_id in (select pot_id from projects where id = any($${params.length}::uuid[]))`;
 }
 
+// exclude voided contributions and contributions to an archived effort
+const ACTIVE_LEDGER = `and le.archived_at is null and not exists (select 1 from projects pr where pr.pot_id=le.pot_id and pr.archived_at is not null)`;
+
 // Contributions (money in) grouped by the donor's lineage ancestor at a chosen
 // level — Mataqali / Tokatoka / Vuvale. Walks contributor_vuvale_id up the tree.
 app.get("/api/contributions", async (req, res) => {
@@ -509,7 +529,7 @@ app.get("/api/contributions", async (req, res) => {
   const rows = await q(`with recursive up as (
       select le.id le_id, le.amount_cents, sn.id node_id, sn.level::text lvl, sn.label, sn.parent_id
       from ledger_entries le join scope_nodes sn on sn.id=le.contributor_vuvale_id
-      where le.direction='in' ${scope}
+      where le.direction='in' ${ACTIVE_LEDGER} ${scope}
       union all
       select up.le_id, up.amount_cents, p.id, p.level::text, p.label, p.parent_id
       from up join scope_nodes p on p.id=up.parent_id
@@ -528,12 +548,12 @@ app.get("/api/contributions-detail", async (req, res) => {
       select le.id le_id, le.amount_cents, le.contributor_name, le.created_at,
              sn.level::text lvl, sn.label, sn.parent_id
       from ledger_entries le join scope_nodes sn on sn.id=le.contributor_vuvale_id
-      where le.direction='in' ${scope}
+      where le.direction='in' ${ACTIVE_LEDGER} ${scope}
       union all
       select up.le_id, up.amount_cents, up.contributor_name, up.created_at, p.level::text, p.label, p.parent_id
       from up join scope_nodes p on p.id=up.parent_id
     )
-    select to_char(created_at,'YYYY-MM-DD') date, contributor_name name, label body, amount_cents amount
+    select le_id id, to_char(created_at,'YYYY-MM-DD') date, contributor_name name, label body, amount_cents amount
     from up where lvl=$1 order by created_at desc, amount_cents desc`, params);
   res.json(rows);
 });
@@ -546,7 +566,9 @@ app.get("/api/financials", async (req, res) => {
       coalesce(sum(le.amount_cents) filter (where le.direction='out'),0)::bigint tout
     from pots po
     join scope_nodes sn on sn.id=po.owner_body_node_id
-    left join ledger_entries le on le.pot_id=po.id
+    left join ledger_entries le on le.pot_id=po.id and le.archived_at is null
+    where sn.archived_at is null
+      and not exists (select 1 from projects pr where pr.pot_id=po.id and pr.archived_at is not null)
     group by po.id, po.purpose, sn.level, sn.label, sn.id order by po.purpose`);
   res.json(rows.map(r => ({ purpose: r.purpose, level: r.level, body: r.body, body_id: r.body_id, tin: n(r.tin), tout: n(r.tout) })));
 });

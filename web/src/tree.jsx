@@ -49,7 +49,7 @@ export function TreeNode({ n, kids, depth, sel, onSelect, edit, onAdd, onRename,
         <span className="rowacts">
           <button className="mini" onClick={() => onRename(n)} title="Rename">✎</button>
           {child && <button className="mini" onClick={() => onAdd(n, child)}>+ {child}</button>}
-          <button className="mini danger" onClick={() => onDel(n)} title="Delete">🗑</button>
+          <button className="mini danger" onClick={() => onDel(n)} title="Archive (retire)">🗑</button>
         </span>
       )}
       {has && isOpen && <ul className="tree">{kids[n.id].map(c => <TreeNode key={c.id} n={c} kids={kids} depth={depth + 1} sel={sel} onSelect={onSelect} edit={edit} onAdd={onAdd} onRename={onRename} onDel={onDel} forceOpen={forceOpen} pathSet={pathSet} openDepth={openDepth} />)}</ul>}
@@ -77,8 +77,8 @@ export function useNodes() {
     load()
   }
   const delNode = async (nd, onDeleted) => {
-    if (!window.confirm(`Delete "${nd.label}"?`)) return
-    try { await send('DELETE', '/nodes/' + nd.id); setMsg('Deleted ✓'); if (onDeleted) onDeleted(nd) }
+    if (!window.confirm(`Archive "${nd.label}" and everything under and linked to it (efforts, contributions, transactions)?\n\nIt will be hidden from all views but kept for records. Members are not removed.`)) return
+    try { await send('DELETE', '/nodes/' + nd.id); setMsg('Archived ✓'); if (onDeleted) onDeleted(nd) }
     catch (e) {
       const m = e.message || 'Delete failed'
       setMsg('⚠ ' + m)
