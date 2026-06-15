@@ -21,7 +21,7 @@ function WhoBlock({ kind, who }) {
       <div className="who-h">{kind === 'init' ? '✎ Initiated by' : '✓ Approved by'}</div>
       <div className="who-name">{who.name}</div>
       <div className="who-meta">{who.role}</div>
-      <div className="who-sub">{who.body ? who.body + ' · ' : ''}<span className="who-entity">{who.entity}</span></div>
+      <div className="who-sub"><span className="who-entity">{who.entity}</span>{who.body ? ' · ' + who.body : ''}</div>
       <div className="who-when">{who.at || '—'}</div>
     </div>
   )
