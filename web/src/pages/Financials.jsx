@@ -28,14 +28,24 @@ function WhoBlock({ kind, who }) {
 }
 function WhoPopover({ tx }) {
   const ref = useRef(null)
-  const [up, setUp] = useState(false)
+  const [pos, setPos] = useState(null)
   if (!tx.initiator && !tx.approver) return <span className="meta">—</span>
-  // flip the popover above the icon when there isn't room below the viewport
-  const place = () => { const r = ref.current?.getBoundingClientRect(); if (r) setUp(window.innerHeight - r.bottom < 240) }
+  // position:fixed so the popover escapes the table's overflow:hidden clipping;
+  // align its right edge to the icon, and flip above when there's no room below.
+  const W = 240, gap = 8
+  const place = () => {
+    const r = ref.current?.getBoundingClientRect(); if (!r) return
+    const left = Math.max(8, Math.min(r.right - W, window.innerWidth - W - 8))
+    if (window.innerHeight - r.bottom < 240) setPos({ left, bottom: window.innerHeight - r.top + gap })
+    else setPos({ left, top: r.bottom + gap })
+  }
+  const style = pos
+    ? { position: 'fixed', left: pos.left + 'px', right: 'auto', ...(pos.top != null ? { top: pos.top + 'px' } : { bottom: pos.bottom + 'px' }) }
+    : undefined
   return (
-    <span ref={ref} className={'txwho' + (up ? ' up' : '')} tabIndex={0} onMouseEnter={place} onFocus={place}>
+    <span ref={ref} className="txwho" tabIndex={0} onMouseEnter={place} onFocus={place}>
       <span className="txwho-ic" aria-label="Who initiated / approved">ⓘ</span>
-      <span className="txwho-pop">
+      <span className="txwho-pop" style={style}>
         {tx.initiator && <WhoBlock kind="init" who={tx.initiator} />}
         {tx.approver && <WhoBlock kind="appr" who={tx.approver} />}
       </span>

@@ -314,10 +314,10 @@ table.tight tbody tr:last-child td{border-bottom:0}
 /* Financials: maker-checker (who initiated / approved) hover popover */
 .txwho{position:relative;display:inline-flex;cursor:help;outline:none}
 .txwho-ic{color:var(--ocean);font-size:15px;font-weight:700}
-.txwho-pop{display:none;position:absolute;right:0;top:130%;z-index:60;width:236px;text-align:left;
+/* position:fixed (coords set in JS) so it escapes the table's overflow:hidden clipping */
+.txwho-pop{display:none;position:fixed;z-index:9800;width:240px;text-align:left;
   background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 6px 22px rgba(12,70,81,.18);padding:9px}
 .txwho:hover .txwho-pop,.txwho:focus .txwho-pop{display:block}
-.txwho.up .txwho-pop{top:auto;bottom:130%}   /* flip above when no room below */
 .tx-actions{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 td.nowrap{white-space:nowrap}
 /* transactions: one line per row at any width — nowrap cells, ellipsis the description */
