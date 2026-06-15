@@ -68,9 +68,9 @@ function Funds({ filter, refresh }) {
       </div>
       <table>
         <tbody>
-          <tr><th>Fund</th><th>Body</th><th>Inflows</th><th>Outflows</th><th>Balance</th></tr>
+          <tr><th>Fund</th><th>Body</th><th style={{ textAlign: 'right' }}>Inflows</th><th style={{ textAlign: 'right' }}>Outflows</th><th style={{ textAlign: 'right' }}>Balance</th></tr>
           {rows.map(r => (
-            <tr key={r.purpose}><td>{r.purpose}</td><td><BodyCell r={r} /></td><td>{fjd(r.tin)}</td><td>{fjd(r.tout)}</td><td>{fjd(r.tin - r.tout)}</td></tr>
+            <tr key={r.purpose}><td>{r.purpose}</td><td><BodyCell r={r} /></td><td style={{ textAlign: 'right' }}>{fjd(r.tin)}</td><td style={{ textAlign: 'right' }}>{fjd(r.tout)}</td><td style={{ textAlign: 'right' }}>{fjd(r.tin - r.tout)}</td></tr>
           ))}
           {rows.length === 0 && noneRow(5)}
         </tbody>
