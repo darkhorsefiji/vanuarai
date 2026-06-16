@@ -343,10 +343,10 @@ td.nowrap{white-space:nowrap}
 .who-entity{display:inline-block;background:var(--line);border-radius:999px;padding:0 7px;font-weight:700;font-size:10.5px}
 .who-when{font-size:11px;color:var(--muted);margin-top:2px}
 
-/* Village Admin: entity officers — each card has Liuliu | Dau ni yau | Vunivola columns */
-.officer-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(460px,1fr));gap:14px;margin:8px 0 8px}
+/* Village Admin: entity officers — single column; each card has Liuliu | Dau ni yau | Vunivola */
+.officer-grid{display:grid;grid-template-columns:1fr;gap:14px;margin:8px 0 8px}
 .officer-card{padding:14px 16px}
-.officer-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.officer-head{display:flex;align-items:center;justify-content:flex-start;gap:10px;margin-bottom:10px}
 .officer-head b{font-size:14.5px;color:var(--head-color,var(--ink))}
 .officer-positions{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .officer-pos{display:flex;flex-direction:column;gap:4px;min-width:0}

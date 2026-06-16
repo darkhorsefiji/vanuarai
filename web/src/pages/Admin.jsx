@@ -44,7 +44,7 @@ export default function Admin() {
           <div className="officer-grid">
             {data.bodies.filter(b => matchBody(filter, { level: b.level, body_id: b.id })).map(b => (
               <div className="card officer-card" key={b.id}>
-                <div className="officer-head"><b>{b.label}</b><span className="lchip itltb">{b.entity}</span></div>
+                <div className="officer-head"><span className="lchip itltb">{b.entity}</span><b>{b.label}</b></div>
                 <div className="officer-positions">
                   {POSITIONS.map(([k, label]) => (
                     <label className="officer-pos" key={k}>
@@ -65,15 +65,15 @@ export default function Admin() {
           <h3 style={{ marginTop: 26 }}>Officer change log</h3>
           <p className="sub">Every assignment, current and past, with its term and status.</p>
           <table className="tight">
-            <thead><tr><th>Entity</th><th>Type</th><th>Position</th><th>Officer</th><th>Start</th><th>End</th><th>Status</th></tr></thead>
+            <thead><tr><th>Type</th><th>Entity</th><th>Position</th><th>Officer</th><th>Start</th><th>End</th><th>Status</th></tr></thead>
             <tbody>
               {!log ? <tr><td colSpan={7} className="loading">Loading…</td></tr>
                 : (() => { const fl = log.filter(r => matchBody(filter, { level: r.level, body_id: r.body_id })); return fl.length === 0
                   ? <tr><td colSpan={7} className="meta">No assignments for this filter.</td></tr>
                   : fl.map((r, i) => (
                     <tr key={i}>
-                      <td>{r.entity}</td>
                       <td>{r.axis}</td>
+                      <td>{r.entity}</td>
                       <td>{r.office}</td>
                       <td>{r.name}</td>
                       <td>{r.start_date || '—'}</td>
