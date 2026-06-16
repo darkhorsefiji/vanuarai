@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useData, send } from '../api'
+import { LevelBadge } from '../levels'
 import { BodyFilterBar, useBodyFilter, matchBody } from '../bodyfilter'
 import { EditableText } from '../copy'
 
@@ -44,7 +45,7 @@ export default function Admin() {
           <div className="officer-grid">
             {data.bodies.filter(b => matchBody(filter, { level: b.level, body_id: b.id })).map(b => (
               <div className="card officer-card" key={b.id}>
-                <div className="officer-head"><span className="lchip itltb">{b.entity}</span><b>{b.label}</b></div>
+                <div className="officer-head"><LevelBadge level={b.level} /><b>{b.label}</b></div>
                 <div className="officer-positions">
                   {POSITIONS.map(([k, label]) => (
                     <label className="officer-pos" key={k}>
@@ -72,7 +73,7 @@ export default function Admin() {
                   ? <tr><td colSpan={7} className="meta">No assignments for this filter.</td></tr>
                   : fl.map((r, i) => (
                     <tr key={i}>
-                      <td>{r.axis}</td>
+                      <td><LevelBadge level={r.level} /></td>
                       <td>{r.entity}</td>
                       <td>{r.office}</td>
                       <td>{r.name}</td>
