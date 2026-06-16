@@ -18,7 +18,7 @@ function noneRow(cols) {
 function WhoBlock({ kind, who }) {
   return (
     <div className={'who-block ' + kind}>
-      <div className="who-h">{kind === 'init' ? '✎ Initiated by' : kind === 'appr' ? '✓ Approved by' : '🧾 Recorded by'}</div>
+      <div className="who-h">{kind === 'init' ? '✎ Initiated by' : kind === 'appr' ? '✓ Approved by' : kind === 'donor' ? '↘ Received from' : '🧾 Recorded by'}</div>
       <div className="who-name">{who.name}</div>
       <div className="who-meta">{who.role}</div>
       <div className="who-sub"><span className="who-entity">{who.entity}</span>{who.body ? ' · ' + who.body : ''}</div>
@@ -29,7 +29,7 @@ function WhoBlock({ kind, who }) {
 function WhoPopover({ tx }) {
   const ref = useRef(null)
   const [pos, setPos] = useState(null)
-  if (!tx.initiator && !tx.approver) return <span className="meta">—</span>
+  if (!tx.initiator && !tx.approver && !tx.donor) return <span className="meta">—</span>
   // position:fixed so the popover escapes the table's overflow:hidden clipping;
   // align its right edge to the icon, and flip above when there's no room below.
   const W = 240, gap = 8
@@ -47,7 +47,10 @@ function WhoPopover({ tx }) {
       <span className="txwho-ic" aria-label="Who initiated / approved">ⓘ</span>
       <span className="txwho-pop" style={style}>
         {tx.type === 'In'
-          ? (tx.initiator && <WhoBlock kind="recorded" who={tx.initiator} />)
+          ? <>
+              {tx.donor && <WhoBlock kind="donor" who={tx.donor} />}
+              {tx.initiator && <WhoBlock kind="recorded" who={tx.initiator} />}
+            </>
           : <>
               {tx.initiator && <WhoBlock kind="init" who={tx.initiator} />}
               {tx.approver && <WhoBlock kind="appr" who={tx.approver} />}

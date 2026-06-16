@@ -209,6 +209,7 @@ const ENTITY_LABEL = { traditional: "Vanua", government: "Government", soqosoqo:
 app.get("/api/fin-transactions", async (req, res) => {
   const rows = await q(`select t.id, to_char(t.tx_date,'YYYY-MM-DD') tx_date, t.description, t.fund, t.type, t.method, t.amount_cents,
       sn.level, sn.label body, sn.id body_id,
+      t.donor_name, t.donor_role, t.donor_entity, t.donor_body,
       iu.display_name i_name, io.office i_office, isn.axis i_axis, isn.label i_body, to_char(t.initiated_at,'YYYY-MM-DD HH24:MI') i_at,
       au.display_name a_name, ao.office a_office, asn.axis a_axis, asn.label a_body, to_char(t.approved_at,'YYYY-MM-DD HH24:MI') a_at
     from fin_transactions t join villages v on v.id=t.village_id
@@ -223,6 +224,7 @@ app.get("/api/fin-transactions", async (req, res) => {
   res.json(rows.map(r => ({
     id: r.id, tx_date: r.tx_date, description: r.description, fund: r.fund, type: r.type, method: r.method,
     amount_cents: r.amount_cents, level: r.level, body: r.body, body_id: r.body_id,
+    donor: r.donor_name ? { name: r.donor_name, role: r.donor_role, entity: r.donor_entity, body: r.donor_body, at: r.tx_date } : null,
     initiator: r.i_name ? { name: r.i_name, role: OFFICE_LABEL[r.i_office] || r.i_office, entity: ENTITY_LABEL[r.i_axis] || r.i_axis, body: r.i_body, at: r.i_at } : null,
     approver: r.a_name ? { name: r.a_name, role: OFFICE_LABEL[r.a_office] || r.a_office, entity: ENTITY_LABEL[r.a_axis] || r.a_axis, body: r.a_body, at: r.a_at } : null,
   })));
