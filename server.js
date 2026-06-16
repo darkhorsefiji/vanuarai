@@ -526,12 +526,13 @@ app.post("/api/officers/assign", async (req, res) => {
 // Change log of officer assignments (current + past) with start/end + status.
 app.get("/api/officer-log", async (req, res) => {
   if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
-  const rows = await q(`select sn.label entity, sn.axis, bo.office, u.display_name name,
+  const rows = await q(`select sn.label entity, sn.axis, sn.level, sn.id body_id, bo.office, u.display_name name,
       to_char(bo.started_at,'YYYY-MM-DD') start_date, to_char(bo.ended_at,'YYYY-MM-DD') end_date, (bo.ended_at is null) active
     from body_offices bo join scope_nodes sn on sn.id=bo.body_node_id join users u on u.id=bo.user_id
     where bo.office::text = any($1) order by bo.started_at desc nulls last, sn.label`, [MANAGED_OFFICES]);
   res.json(rows.map(r => ({
-    entity: r.entity, axis: ENTITY_LABEL2[r.axis] || r.axis, office: OFFICE_TITLE[r.office] || r.office,
+    entity: r.entity, axis: ENTITY_LABEL2[r.axis] || r.axis, level: r.level, body_id: r.body_id,
+    office: OFFICE_TITLE[r.office] || r.office,
     name: r.name, start_date: r.start_date, end_date: r.end_date, status: r.active ? "Active" : "Inactive",
   })));
 });
