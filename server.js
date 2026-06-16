@@ -466,6 +466,74 @@ app.delete("/api/investments/:id", (req, res) => archiveRow(req, res, "village_i
 app.delete("/api/contributions/:id", (req, res) => archiveRow(req, res, "ledger_entries"));
 app.delete("/api/fundraising/:id", (req, res) => archiveRow(req, res, "projects"));
 
+// ---- Entity officers (Liuliu / Vunivola / Dauniyau) + assignment history ----
+const MANAGED_OFFICES = ["liuliu", "vunivola", "dauniyau"];
+const ENTITY_LABEL2 = { traditional: "Vanua", government: "Government", soqosoqo: "Soqosoqo" };
+const OFFICE_TITLE = { liuliu: "Liuliu", vunivola: "Vunivola", dauniyau: "Dauniyau" };
+
+// Bodies with their current officers, plus the candidate pools.
+app.get("/api/officers", async (req, res) => {
+  const bodies = await q(`select id, label, axis, level from scope_nodes where is_body=true and archived_at is null order by axis, label`);
+  const cur = await q(`select bo.body_node_id, bo.office, u.id user_id, u.display_name name
+    from body_offices bo join users u on u.id=bo.user_id
+    where bo.office::text = any($1) and bo.ended_at is null`, [MANAGED_OFFICES]);
+  const allMembers = await q(`select distinct u.id user_id, u.display_name name
+    from users u join memberships m on m.user_id=u.id join villages v on v.id=m.village_id
+    where v.name=$1 and m.status='approved' order by u.display_name`, [VILLAGE]);
+  const roster = await q(`with recursive up as (
+      select m.user_id, sn.id nid, sn.parent_id, sn.level::text lvl from memberships m
+        join scope_nodes sn on sn.id=m.vuvale_node_id where m.vuvale_node_id is not null and m.status='approved'
+      union all select up.user_id, p.id, p.parent_id, p.level::text from up join scope_nodes p on p.id=up.parent_id)
+    select distinct up.nid mataqali_id, u.id user_id, u.display_name name
+    from up join users u on u.id=up.user_id where up.lvl='mataqali' order by u.display_name`);
+  const officersByBody = {};
+  for (const o of cur) (officersByBody[o.body_node_id] ||= {})[o.office] = { user_id: o.user_id, name: o.name };
+  const rosterByBody = {};
+  for (const r of roster) (rosterByBody[r.mataqali_id] ||= []).push({ user_id: r.user_id, name: r.name });
+  res.json({
+    bodies: bodies.map(b => ({
+      id: b.id, label: b.label, axis: b.axis, entity: ENTITY_LABEL2[b.axis] || b.axis, level: b.level,
+      officers: { liuliu: officersByBody[b.id]?.liuliu || null, vunivola: officersByBody[b.id]?.vunivola || null, dauniyau: officersByBody[b.id]?.dauniyau || null },
+    })),
+    allMembers: allMembers.map(m => ({ user_id: m.user_id, name: m.name })),
+    rosterByBody,
+  });
+});
+
+// Assign (or vacate) a position — ends the incumbent's term and starts a new one.
+app.post("/api/officers/assign", async (req, res) => {
+  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  const b = req.body || {};
+  const office = MANAGED_OFFICES.includes(b.office) ? b.office : null;
+  if (!b.body_node_id || !office) return res.status(400).json({ error: "body_node_id and a valid office (liuliu/vunivola/dauniyau) required" });
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query(`update body_offices set ended_at=now(), active=false
+      where body_node_id=$1 and office=$2 and ended_at is null`, [b.body_node_id, office]);
+    if (b.user_id) {
+      await client.query(`insert into body_offices(body_node_id, office, user_id, started_at, active)
+        values($1,$2,$3,now(),true)`, [b.body_node_id, office, b.user_id]);
+    }
+    await client.query("COMMIT");
+    res.json({ ok: true });
+  } catch (e) { await client.query("ROLLBACK"); res.status(400).json({ error: e.message }); }
+  finally { client.release(); }
+});
+
+// Change log of officer assignments (current + past) with start/end + status.
+app.get("/api/officer-log", async (req, res) => {
+  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  const rows = await q(`select sn.label entity, sn.axis, bo.office, u.display_name name,
+      to_char(bo.started_at,'YYYY-MM-DD') start_date, to_char(bo.ended_at,'YYYY-MM-DD') end_date, (bo.ended_at is null) active
+    from body_offices bo join scope_nodes sn on sn.id=bo.body_node_id join users u on u.id=bo.user_id
+    where bo.office::text = any($1) order by bo.started_at desc nulls last, sn.label`, [MANAGED_OFFICES]);
+  res.json(rows.map(r => ({
+    entity: r.entity, axis: ENTITY_LABEL2[r.axis] || r.axis, office: OFFICE_TITLE[r.office] || r.office,
+    name: r.name, start_date: r.start_date, end_date: r.end_date, status: r.active ? "Active" : "Inactive",
+  })));
+});
+
 // ---- DEV reset: clear the demo "activity" data, keep the village structure ----
 // Wipes money/efforts/notices/trade/minutes/lands/approvals. Keeps villages,
 // scope_nodes (hierarchy), users/memberships/offices, persons, plans, styling,
