@@ -170,7 +170,7 @@ export default function Dev() {
     <>
       <div className="pagetop">
         <h1>Developer settings</h1>
-        <p className="sub">Live theme editor — changes apply instantly across VanuaRai and persist in this browser. Drag the ⠿ handle to reorder cards within a section. Use “Reset” to return to the built-in defaults &amp; order.</p>
+        <p className="sub">Live theme editor — changes apply instantly across RAIVANUA and persist in this browser. Drag the ⠿ handle to reorder cards within a section. Use “Reset” to return to the built-in defaults &amp; order.</p>
       </div>
       <div className="savebar">
         <button className="btn secondary" onClick={reset}>Reset to defaults</button>

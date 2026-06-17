@@ -15,7 +15,7 @@ export default function Internet() {
   return (
     <>
       <div className="hero">
-        <EditableText as="div" id="hero.tagline" className="tagline">Digital Village WiFi</EditableText>
+        <EditableText as="div" id="hero.tagline" className="tagline">Digital Village Enabler</EditableText>
         <EditableText as="h1" id="hero.title">Welcome to Bagasau</EditableText>
         <div className="heroline">
           <EditableText as="p" id="hero.body" className="heroline-body">Buy an internet plan to get online — then explore your village’s records: family, land, projects, fundraising and more.</EditableText>

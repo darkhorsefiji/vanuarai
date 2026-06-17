@@ -95,8 +95,8 @@ export default function App() {
         <div className="app">
           <header className="top">
             {logoOk
-              ? <img className="brandlogo" src="/logo.png" alt="VanuaRai — Digital Village WiFi" onError={() => setLogoOk(false)} />
-              : <span className="brand">🌺 VanuaRai</span>}
+              ? <img className="brandlogo" src="/logo.png" alt="RAIVANUA — Digital Village Enabler" onError={() => setLogoOk(false)} />
+              : <span className="brand">🌺 RAIVANUA</span>}
             <span className="badge">Village: Bagasau</span>
             <nav>
               {TOP_NAV.map(([to, label]) => (
