@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useData, send } from '../api'
+import { useData, send, getToken } from '../api'
 import { LevelBadge } from '../levels'
 import { BodyFilterBar, useBodyFilter, matchBody } from '../bodyfilter'
 import { EditableText } from '../copy'
@@ -13,7 +13,29 @@ export default function Admin() {
   const { data: log } = useData('/officer-log?_r=' + refresh)
   const { filter, setFilter, bodiesByLevel } = useBodyFilter()
   const [msg, setMsg] = useState('')
+  const [impMsg, setImpMsg] = useState('')
   const bump = () => setRefresh(r => r + 1)
+
+  async function downloadTemplate() {
+    setImpMsg('Preparing…')
+    try {
+      const r = await fetch('/api/hierarchy-template', { headers: { Authorization: 'Bearer ' + getToken() } })
+      if (!r.ok) throw new Error('Download failed')
+      const url = URL.createObjectURL(await r.blob())
+      const a = document.createElement('a'); a.href = url; a.download = 'vanuarai-families.xlsx'; a.click(); URL.revokeObjectURL(url)
+      setImpMsg('Downloaded ✓ — edit it, then upload.')
+    } catch (e) { setImpMsg('⚠ ' + e.message) }
+  }
+  async function uploadFile(file) {
+    setImpMsg('Importing…')
+    try {
+      const buf = await file.arrayBuffer()
+      const r = await fetch('/api/hierarchy-import', { method: 'POST', headers: { Authorization: 'Bearer ' + getToken(), 'Content-Type': 'application/octet-stream' }, body: buf })
+      const j = await r.json(); if (!r.ok) throw new Error(j.error || 'Import failed')
+      setImpMsg(`Imported ✓ — ${j.nodesCreated} new node(s), ${j.membersAdded} member(s) added, ${j.membersUpdated} updated.`)
+      bump()
+    } catch (e) { setImpMsg('⚠ ' + e.message) }
+  }
 
   async function assign(body_node_id, office, user_id) {
     setMsg('')
@@ -34,6 +56,18 @@ export default function Admin() {
       <div className="pagetop">
         <h1>Village Admin</h1>
         <EditableText id="admin.sub" className="sub" html>{'Assign and track the officers — <b>Liuliu</b>, <b>Vunivola</b> and <b>Dau ni yau</b> — for each entity.'}</EditableText>
+      </div>
+
+      <div className="card impbox">
+        <h3 style={{ marginTop: 0 }}>Families &amp; members — bulk download / import</h3>
+        <p className="sub">Download the spreadsheet (pre-filled with the current hierarchy), edit it, and upload to add or update families and members. Column headings are locked; uploaded rows override matching records.</p>
+        <div className="impbtns">
+          <button className="btn secondary" onClick={downloadTemplate}>⬇ Download template</button>
+          <label className="btn impupload">⬆ Upload filled template
+            <input type="file" accept=".xlsx" onChange={e => { const f = e.target.files[0]; if (f) uploadFile(f); e.target.value = '' }} />
+          </label>
+        </div>
+        {impMsg && <p className="status">{impMsg}</p>}
       </div>
 
       {!data ? <p className="loading">Loading…</p> : (

@@ -6,6 +6,7 @@ const express = require("express");
 const { Pool } = require("pg");
 const { OAuth2Client } = require("google-auth-library");
 const jwt = require("jsonwebtoken");
+const ExcelJS = require("exceljs");
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
 const app = express();
@@ -536,6 +537,96 @@ app.get("/api/officer-log", async (req, res) => {
     name: r.name, start_date: r.start_date, end_date: r.end_date, status: r.active ? "Active" : "Inactive",
   })));
 });
+
+// ---- Families & members: templated bulk download / import (village_admin) ----
+const TPL_COLS = ["Yavusa", "Mataqali", "Tokatoka", "Family (Vuvale)", "Member", "Gender", "Status", "Household owner"];
+
+// Download an .xlsx pre-filled with the current traditional hierarchy + people.
+// Header row is locked and column insert/delete is disabled; data cells stay editable.
+app.get("/api/hierarchy-template", async (req, res) => {
+  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  const vuvales = await q(`select v.id vid, v.label vuvale, t.label tokatoka, m.label mataqali, y.label yavusa
+    from scope_nodes v
+    join scope_nodes t on t.id=v.parent_id
+    join scope_nodes m on m.id=t.parent_id
+    join scope_nodes y on y.id=m.parent_id
+    where v.level='vuvale' and v.axis='traditional' and v.archived_at is null
+    order by y.label, m.label, t.label, v.label`);
+  const persons = await q(`select vuvale_node_id, full_name, gender, is_deceased, is_owner from persons order by full_name`);
+  const byVuvale = {};
+  for (const p of persons) (byVuvale[p.vuvale_node_id] ||= []).push(p);
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet("Families");
+  ws.columns = TPL_COLS.map((h, i) => ({ header: h, width: i < 4 ? 18 : i === 4 ? 24 : 14 }));
+  for (const v of vuvales) {
+    const ppl = byVuvale[v.vid] || [];
+    if (!ppl.length) ws.addRow([v.yavusa, v.mataqali, v.tokatoka, v.vuvale, "", "", "", ""]);
+    else for (const p of ppl) ws.addRow([v.yavusa, v.mataqali, v.tokatoka, v.vuvale, p.full_name, p.gender || "", p.is_deceased ? "Deceased" : "Living", p.is_owner ? "Yes" : ""]);
+  }
+  const hr = ws.getRow(1);
+  hr.font = { bold: true, color: { argb: "FFFFFFFF" } };
+  hr.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF0C4651" } };
+  hr.eachCell(c => { c.protection = { locked: true }; });
+  const lastRow = ws.rowCount + 300; // spare editable rows for new families
+  for (let r = 2; r <= lastRow; r++) for (let c = 1; c <= TPL_COLS.length; c++) ws.getCell(r, c).protection = { locked: false };
+  ws.views = [{ state: "frozen", ySplit: 1 }];
+  await ws.protect("", { selectLockedCells: true, selectUnlockedCells: true, formatCells: false, insertColumns: false, deleteColumns: false, insertRows: true, deleteRows: true, sort: true, autoFilter: true });
+  res.set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+  res.set("Content-Disposition", 'attachment; filename="vanuarai-families.xlsx"');
+  await wb.xlsx.write(res);
+  res.end();
+});
+
+// Import an uploaded .xlsx: upsert nodes along each row's lineage and the member.
+app.post("/api/hierarchy-import",
+  express.raw({ type: ["application/octet-stream", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"], limit: "10mb" }),
+  async (req, res) => {
+    if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+    if (!req.body || !req.body.length) return res.status(400).json({ error: "no file uploaded" });
+    const client = await pool.connect();
+    try {
+      const wb = new ExcelJS.Workbook();
+      await wb.xlsx.load(req.body);
+      const ws = wb.getWorksheet("Families") || wb.worksheets[0];
+      if (!ws) return res.status(400).json({ error: "no sheet found in the file" });
+      const [v] = await q(`select id from villages where name=$1`, [VILLAGE]);
+      const [apex] = await q(`select id from scope_nodes where level='vanua' and axis='traditional' limit 1`);
+      if (!apex) return res.status(400).json({ error: "Vanua apex node missing" });
+      let nodesCreated = 0, membersAdded = 0, membersUpdated = 0, rowsRead = 0;
+      await client.query("BEGIN");
+      const ensureNode = async (label, level, parentId) => {
+        label = String(label || "").trim(); if (!label) return null;
+        const ex = (await client.query(`select id from scope_nodes where label=$1 and level=$2::scope_level and parent_id=$3 and archived_at is null`, [label, level, parentId])).rows[0];
+        if (ex) return ex.id;
+        const r = await client.query(`insert into scope_nodes(axis, level, label, parent_id, village_id, is_body) values('traditional',$1::scope_level,$2,$3,$4,$5) returning id`, [level, label, parentId, v.id, level === "mataqali"]);
+        nodesCreated++;
+        return r.rows[0].id;
+      };
+      const rows = [];
+      ws.eachRow({ includeEmpty: false }, (row, num) => { if (num > 1) rows.push(row); });
+      for (const row of rows) {
+        const cell = i => String(row.getCell(i).value ?? "").trim();
+        const yav = cell(1), mat = cell(2), tok = cell(3), vuv = cell(4), member = cell(5), gender = cell(6), status = cell(7), owner = cell(8);
+        if (!yav || !mat || !tok || !vuv) continue;
+        rowsRead++;
+        const yId = await ensureNode(yav, "yavusa", apex.id);
+        const mId = await ensureNode(mat, "mataqali", yId);
+        const tId = await ensureNode(tok, "tokatoka", mId);
+        const vId = await ensureNode(vuv, "vuvale", tId);
+        if (member) {
+          const g = /^m/i.test(gender) ? "Male" : /^f/i.test(gender) ? "Female" : null;
+          const dec = /^d/i.test(status);
+          const own = /^(y|t|1|owner)/i.test(owner);
+          const ex = (await client.query(`select id from persons where vuvale_node_id=$1 and lower(full_name)=lower($2)`, [vId, member])).rows[0];
+          if (ex) { await client.query(`update persons set gender=$1, is_deceased=$2, is_owner=$3 where id=$4`, [g, dec, own, ex.id]); membersUpdated++; }
+          else { await client.query(`insert into persons(vuvale_node_id, full_name, gender, is_deceased, is_owner) values($1,$2,$3,$4,$5)`, [vId, member, g, dec, own]); membersAdded++; }
+        }
+      }
+      await client.query("COMMIT");
+      res.json({ ok: true, rowsRead, nodesCreated, membersAdded, membersUpdated });
+    } catch (e) { await client.query("ROLLBACK"); res.status(400).json({ error: e.message }); }
+    finally { client.release(); }
+  });
 
 // ---- DEV reset: clear the demo "activity" data, keep the village structure ----
 // Wipes money/efforts/notices/trade/minutes/lands/approvals. Keeps villages,
