@@ -539,7 +539,7 @@ app.get("/api/officer-log", async (req, res) => {
 });
 
 // ---- Families & members: templated bulk download / import (village_admin) ----
-const TPL_COLS = ["Yavusa", "Mataqali", "Tokatoka", "Family (Vuvale)", "Member", "Gender", "Status", "Household owner"];
+const TPL_COLS = ["Yavusa", "Mataqali", "Tokatoka", "Family (Vuvale)", "Member", "Gender", "Age", "Status", "Household owner"];
 
 // Download an .xlsx pre-filled with the current traditional hierarchy + people.
 // Header row is locked and column insert/delete is disabled; data cells stay editable.
@@ -552,7 +552,9 @@ app.get("/api/hierarchy-template", async (req, res) => {
     join scope_nodes y on y.id=m.parent_id
     where v.level='vuvale' and v.axis='traditional' and v.archived_at is null
     order by y.label, m.label, t.label, v.label`);
-  const persons = await q(`select vuvale_node_id, full_name, gender, is_deceased, is_owner from persons order by full_name`);
+  const persons = await q(`select vuvale_node_id, full_name, gender, is_deceased, is_owner,
+      case when date_of_birth is null then null else extract(year from age(date_of_birth))::int end age
+    from persons order by full_name`);
   const byVuvale = {};
   for (const p of persons) (byVuvale[p.vuvale_node_id] ||= []).push(p);
   const wb = new ExcelJS.Workbook();
@@ -560,8 +562,8 @@ app.get("/api/hierarchy-template", async (req, res) => {
   ws.columns = TPL_COLS.map((h, i) => ({ header: h, width: i < 4 ? 18 : i === 4 ? 24 : 14 }));
   for (const v of vuvales) {
     const ppl = byVuvale[v.vid] || [];
-    if (!ppl.length) ws.addRow([v.yavusa, v.mataqali, v.tokatoka, v.vuvale, "", "", "", ""]);
-    else for (const p of ppl) ws.addRow([v.yavusa, v.mataqali, v.tokatoka, v.vuvale, p.full_name, p.gender || "", p.is_deceased ? "Deceased" : "Living", p.is_owner ? "Yes" : ""]);
+    if (!ppl.length) ws.addRow([v.yavusa, v.mataqali, v.tokatoka, v.vuvale, "", "", "", "", ""]);
+    else for (const p of ppl) ws.addRow([v.yavusa, v.mataqali, v.tokatoka, v.vuvale, p.full_name, p.gender || "", p.age ?? "", p.is_deceased ? "Deceased" : "Living", p.is_owner ? "Yes" : ""]);
   }
   const hr = ws.getRow(1);
   hr.font = { bold: true, color: { argb: "FFFFFFFF" } };
@@ -606,7 +608,7 @@ app.post("/api/hierarchy-import",
       ws.eachRow({ includeEmpty: false }, (row, num) => { if (num > 1) rows.push(row); });
       for (const row of rows) {
         const cell = i => String(row.getCell(i).value ?? "").trim();
-        const yav = cell(1), mat = cell(2), tok = cell(3), vuv = cell(4), member = cell(5), gender = cell(6), status = cell(7), owner = cell(8);
+        const yav = cell(1), mat = cell(2), tok = cell(3), vuv = cell(4), member = cell(5), gender = cell(6), age = cell(7), status = cell(8), owner = cell(9);
         if (!yav || !mat || !tok || !vuv) continue;
         rowsRead++;
         const yId = await ensureNode(yav, "yavusa", apex.id);
@@ -617,9 +619,13 @@ app.post("/api/hierarchy-import",
           const g = /^m/i.test(gender) ? "Male" : /^f/i.test(gender) ? "Female" : null;
           const dec = /^d/i.test(status);
           const own = /^(y|t|1|owner)/i.test(owner);
+          // Age -> approximate date of birth (kept as the source of truth); blank leaves it unchanged
+          let dob = null;
+          const ageNum = parseInt(age, 10);
+          if (Number.isFinite(ageNum) && ageNum > 0 && ageNum < 130) { const d = new Date(); d.setFullYear(d.getFullYear() - ageNum); dob = d.toISOString().slice(0, 10); }
           const ex = (await client.query(`select id from persons where vuvale_node_id=$1 and lower(full_name)=lower($2)`, [vId, member])).rows[0];
-          if (ex) { await client.query(`update persons set gender=$1, is_deceased=$2, is_owner=$3 where id=$4`, [g, dec, own, ex.id]); membersUpdated++; }
-          else { await client.query(`insert into persons(vuvale_node_id, full_name, gender, is_deceased, is_owner) values($1,$2,$3,$4,$5)`, [vId, member, g, dec, own]); membersAdded++; }
+          if (ex) { await client.query(`update persons set gender=$1, is_deceased=$2, is_owner=$3, date_of_birth=coalesce($4, date_of_birth) where id=$5`, [g, dec, own, dob, ex.id]); membersUpdated++; }
+          else { await client.query(`insert into persons(vuvale_node_id, full_name, gender, is_deceased, is_owner, date_of_birth) values($1,$2,$3,$4,$5,$6)`, [vId, member, g, dec, own, dob]); membersAdded++; }
         }
       }
       await client.query("COMMIT");
