@@ -407,6 +407,28 @@ td.nowrap{white-space:nowrap}
 .vsc-actions{margin:0;padding-left:18px}
 .vsc-actions li{font-size:13px;line-height:1.5;margin:0 0 6px}
 @media(max-width:640px){.vsc-step{grid-template-columns:1fr}}
+
+/* Government view — TAB Platform alignment (Meda Matata Mada → TAB framework) */
+.tab-legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin:0 0 14px}
+.tab-legend span{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);font-weight:600}
+.tab-legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.tab-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.tab-card{padding:14px 16px;border-top:4px solid var(--accent)}
+.tab-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.tab-num{font-size:11px;text-transform:uppercase;letter-spacing:.6px;font-weight:800;color:var(--accent)}
+.tab-thrust-chip{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;border-radius:20px;padding:2px 9px}
+.tab-thrust-chip.inclusive{background:rgba(14,152,165,.12);color:var(--deep)}
+.tab-thrust-chip.transformational{background:rgba(239,111,86,.14);color:var(--clay)}
+.tab-card h4{margin:6px 0 8px;color:var(--head-color);font-size:15px;line-height:1.3}
+.tab-kpis{margin:0;padding:0;list-style:none}
+.tab-kpis li{font-size:13px;line-height:1.45;margin:0 0 7px;padding-left:18px;position:relative}
+.tab-dot{position:absolute;left:0;top:5px;width:9px;height:9px;border-radius:50%}
+.tab-gap{font-style:italic}
+.tab-thrusts{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.tab-thrust-card{padding:14px 16px}
+.tab-thrust-card h4{margin:0 0 8px;color:var(--head-color);font-size:15px}
+.tab-prio{margin:0;padding-left:18px}
+.tab-prio li{font-size:13px;line-height:1.5;margin:0 0 6px}
 @media(max-width:640px){.vsc-band{grid-template-columns:1fr}.vsc-kpis{columns:1}}
 
 /* Village Admin: bulk download / import */
