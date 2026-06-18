@@ -356,6 +356,58 @@ td.nowrap{white-space:nowrap}
 .sc-kpi-top{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;align-items:baseline}
 .sc-kpi-val{color:var(--muted);font-weight:700;white-space:nowrap}
 
+/* VScorecard — Meda Matata Mada strategic framework */
+.vsc-vision{display:flex;flex-wrap:wrap;gap:18px;align-items:center;justify-content:space-between;
+  background:linear-gradient(120deg,var(--deep),var(--ocean));color:#eafaf9;border:none;padding:22px 24px}
+.vsc-vision h2{color:#fff;margin:4px 0 0;font-size:23px;font-family:var(--head-font);font-weight:var(--head-weight)}
+.vsc-vision-main{flex:1 1 360px;min-width:280px}
+.vsc-eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:1px;font-weight:800;opacity:.8}
+.vsc-strategy{margin:12px 0 0;font-size:13.5px;line-height:1.55;opacity:.95;max-width:620px}
+.vsc-strategy b{color:var(--pop)}
+.vsc-pillars{display:flex;flex-direction:column;gap:8px;flex:0 0 auto}
+.vsc-pillar{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);border-radius:9px;
+  padding:7px 18px;font-weight:700;text-align:center;letter-spacing:.4px}
+
+.vsc-engines{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.vsc-engine{padding:16px 18px}
+.vsc-engine h4{margin:0 0 6px;color:var(--head-color);font-size:15.5px}
+.vsc-engine p{margin:0;font-size:13.5px;line-height:1.55;color:var(--ink)}
+
+.vsc-map{display:flex;gap:12px;align-items:stretch;margin-top:6px}
+.vsc-rail{flex:0 0 36px;border-radius:12px;background:linear-gradient(0deg,var(--sage),var(--clay));
+  display:flex;align-items:center;justify-content:center;position:relative}
+.vsc-rail::before{content:'↑';position:absolute;top:8px;color:#fff;font-size:20px;font-weight:800}
+.vsc-rail span{writing-mode:vertical-rl;transform:rotate(180deg);color:#fff;font-weight:800;
+  letter-spacing:2px;text-transform:uppercase;font-size:12px}
+.vsc-bands{flex:1;display:flex;flex-direction:column;gap:10px}
+.vsc-band{padding:14px 16px;border-left:5px solid var(--accent);display:grid;
+  grid-template-columns:minmax(220px,1fr) 2fr;gap:6px 26px;align-items:start}
+.vsc-band-head h4{margin:2px 0 4px;color:var(--head-color);font-size:16px}
+.vsc-tier{font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;font-weight:800;color:var(--accent)}
+.vsc-obj{margin:0;font-size:13px;color:var(--muted);line-height:1.5}
+.vsc-kpis{margin:0;padding:0;list-style:none;columns:2;column-gap:24px}
+.vsc-kpis li{font-size:13px;line-height:1.45;margin:0 0 5px;padding-left:14px;position:relative;break-inside:avoid}
+.vsc-kpis li::before{content:'';position:absolute;left:0;top:7px;width:6px;height:6px;border-radius:50%;background:var(--accent)}
+
+.vsc-tablewrap{padding:4px 0;overflow-x:auto}
+.vsc-table{width:100%;border-collapse:collapse;font-size:13.5px}
+.vsc-table th,.vsc-table td{padding:9px 14px;text-align:left;border-bottom:1px solid var(--line)}
+.vsc-table th{font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);font-weight:800}
+.vsc-table .num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.vsc-table .vsc-tgt{color:var(--sage);font-weight:700}
+.vsc-table tfoot td{border-top:2px solid var(--line);border-bottom:none;background:var(--sand)}
+
+.vsc-cascade{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;align-items:start}
+.vsc-step{padding:14px 16px;border-top:4px solid var(--accent)}
+.vsc-step-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.vsc-level{font-weight:800;color:var(--head-color);font-size:15px}
+.vsc-level em{font-style:normal;font-weight:600;color:var(--muted);font-size:12.5px}
+.vsc-up{color:var(--accent);font-size:18px;font-weight:800}
+.vsc-role{font-size:12.5px;color:var(--muted);margin:3px 0 9px;font-style:italic}
+.vsc-actions{margin:0;padding-left:18px}
+.vsc-actions li{font-size:13px;line-height:1.5;margin:0 0 6px}
+@media(max-width:640px){.vsc-band{grid-template-columns:1fr}.vsc-kpis{columns:1}}
+
 /* Village Admin: bulk download / import */
 .impbox{max-width:680px;margin-bottom:8px}
 .impbtns{display:flex;flex-wrap:wrap;gap:10px;align-items:center}

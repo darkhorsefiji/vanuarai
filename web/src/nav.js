@@ -4,6 +4,7 @@ export const SIDE_NAV = [
   ['/kacikacivaki', 'Kacikacivaki', 'kacikacivaki'],
   ['/vanua', 'Vanua', 'vanua'],
   ['/government', 'Government', 'government'],
+  ['/vscorecard', 'VScorecard', 'vscorecard'],
   ['/lands', 'Lands', 'lands'],
   ['/agreements', 'Agreements', 'agreements'],
   ['/projects', 'Projects', 'projects'],

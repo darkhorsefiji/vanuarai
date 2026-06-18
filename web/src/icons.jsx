@@ -140,6 +140,16 @@ const ARTEFACTS = {
       <path d="M19 4.7 Q21.4 5.9 20.8 9" />
     </>
   ),
+  // Target struck by an arrow — aim high, the 10%-in-10-years goal
+  vscorecard: (
+    <>
+      <circle cx="11" cy="13" r="7" />
+      <circle cx="11" cy="13" r="3.2" />
+      <circle cx="11" cy="13" r="0.6" fill="currentColor" stroke="none" />
+      <path d="M14 10 L20 4" />
+      <path d="M16.5 4 L20 4 L20 7.5" />
+    </>
+  ),
 }
 
 // ── Set B — "Symbols": bolder, geometric / conceptual motifs ──────────────────
@@ -249,6 +259,15 @@ const SYMBOLS = {
       <path d="M12 20 C7.6 20 4 16.4 4 12 C4 8.7 6.7 6 10 6 C12.2 6 14 7.8 14 10 C14 11.7 12.7 13 11 13 C9.9 13 9 12.1 9 11" />
     </>
   ),
+  // Target + arrow — aim and achieve
+  vscorecard: (
+    <>
+      <circle cx="11" cy="13" r="7" />
+      <circle cx="11" cy="13" r="3" />
+      <path d="M13.5 10.5 L20 4" />
+      <path d="M16 4 L20 4 L20 8" />
+    </>
+  ),
 }
 
 export const ICON_SETS = {
@@ -262,7 +281,7 @@ export const ICON_ITEMS = [
   ['profile', 'Profile'], ['kacikacivaki', 'Kacikacivaki'], ['vanua', 'Vanua'], ['government', 'Government'],
   ['lands', 'Lands'], ['agreements', 'Agreements'], ['projects', 'Projects'],
   ['trade', 'Trade'], ['fundraising', 'Fundraising'], ['financials', 'Financials'],
-  ['minutes', 'Minutes'], ['emergencies', 'Emergencies'],
+  ['minutes', 'Minutes'], ['emergencies', 'Emergencies'], ['vscorecard', 'VScorecard'],
 ]
 
 // ── Selection state (live-switchable, persisted) ──────────────────────────────
