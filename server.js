@@ -634,6 +634,27 @@ app.post("/api/hierarchy-import",
     finally { client.release(); }
   });
 
+// ---- Scorecard: BSC KPI targets, rolled UP the hierarchy to the chosen level ----
+const SCORECARD_LEVELS = { traditional: ["vanua", "yavusa", "mataqali", "tokatoka", "vuvale"], government: ["matanitu", "provincial_council", "district", "village"] };
+app.get("/api/scorecard", async (req, res) => {
+  const axis = ["traditional", "government", "soqosoqo"].includes(req.query.axis) ? req.query.axis : "traditional";
+  const levels = SCORECARD_LEVELS[axis] || [];
+  const level = levels.includes(req.query.level) ? req.query.level : levels[0];
+  // each target rolls up to its ancestor at the requested level (own targets count at their own level)
+  const rows = await q(`with recursive up as (
+      select t.perspective, t.name, t.unit, t.target_value tv, t.actual_value av,
+             sn.id node_id, sn.level::text lvl, sn.label, sn.parent_id
+      from scorecard_targets t join scope_nodes sn on sn.id=t.node_id
+      where t.archived_at is null and sn.axis=$1
+      union all
+      select up.perspective, up.name, up.unit, up.tv, up.av, p.id, p.level::text, p.label, p.parent_id
+      from up join scope_nodes p on p.id=up.parent_id)
+    select node_id, label, perspective, name, unit, sum(tv)::numeric tgt, sum(av)::numeric act
+    from up where lvl=$2 group by node_id, label, perspective, name, unit
+    order by label, perspective, name`, [axis, level]);
+  res.json({ axis, level, levels, rows: rows.map(r => ({ node_id: r.node_id, node_label: r.label, perspective: r.perspective, name: r.name, unit: r.unit, target: n(r.tgt), actual: n(r.act) })) });
+});
+
 // ---- DEV reset: clear the demo "activity" data, keep the village structure ----
 // Wipes money/efforts/notices/trade/minutes/lands/approvals. Keeps villages,
 // scope_nodes (hierarchy), users/memberships/offices, persons, plans, styling,
