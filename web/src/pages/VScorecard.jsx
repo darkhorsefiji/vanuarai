@@ -216,30 +216,23 @@ export default function VScorecard() {
         </table>
       </div>
 
-      {/* Cascade of action plans — single column, apex at top, foundation at the
-          base, so the trickle-up flow is visible as a rising pyramid. */}
-      <h3>Action plans · the trickle-up cascade</h3>
-      <p className="sub">Read from the base up: each level’s results trickle up into the one above it — accountability rises to the Turaga ni Yavusa, then the Vanua.</p>
+      {/* Action plans — equal-sized boxes, each prefixed by its hierarchy level
+          on the left. Ordered foundation-first (Vuvale → Vanua). */}
+      <h3>Action plans by level</h3>
+      <p className="sub">What each level of the Vanua does to deliver the strategy — the family at the base, accountability rising to the Turaga ni Yavusa and the Vanua.</p>
       <div className="vsc-cascade">
-        {CASCADE.map((c, i) => {
+        {CASCADE.map(c => {
           const s = lv(c.level)
-          const idxFromTop = CASCADE.length - 1 - i      // 0 = apex (Vanua)
-          const isApex = i === CASCADE.length - 1
-          const isBase = i === 0
-          const width = 64 + idxFromTop * 9              // apex narrowest, base widest
           return (
-            <div className="vsc-layer" key={c.level} style={{ order: -i }}>
-              {!isApex && <span className="vsc-up" title="results trickle up to the level above">↑</span>}
-              <div className="card vsc-step" style={{ '--accent': s.color || 'var(--ocean)', maxWidth: width + '%' }}>
-                <div className="vsc-step-head">
-                  <span className="vsc-level">{s.label || c.level}{s.label_en ? <em> · {s.label_en}</em> : null}</span>
-                  <span className="vsc-tag">{isApex ? 'Apex' : isBase ? 'Foundation' : ''}</span>
-                </div>
-                <div className="vsc-role">{c.role}</div>
-                <ul className="vsc-actions">
-                  {c.actions.map(a => <li key={a}>{a}</li>)}
-                </ul>
+            <div className="card vsc-step" key={c.level} style={{ '--accent': s.color || 'var(--ocean)' }}>
+              <div className="vsc-step-name">
+                <span className="vsc-level">{s.label || c.level}</span>
+                {s.label_en ? <span className="vsc-level-en">{s.label_en}</span> : null}
+                <span className="vsc-role">{c.role}</span>
               </div>
+              <ul className="vsc-actions">
+                {c.actions.map(a => <li key={a}>{a}</li>)}
+              </ul>
             </div>
           )
         })}
