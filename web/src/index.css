@@ -347,10 +347,10 @@ td.nowrap{white-space:nowrap}
 .sc-heading{margin:30px 0 2px;font-size:21px;color:var(--head-color,var(--ink))}
 .scorecard{margin-top:8px}
 .scorecard .finfilter{margin:8px 0 12px}
-.sc-nodes{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.sc-nodes{display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));gap:14px}
 .sc-card{padding:14px 16px}
 .sc-node{margin:0 0 8px;font-size:14.5px;color:var(--head-color,var(--ink))}
-.sc-persp+.sc-persp{margin-top:12px}
+.sc-persps{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px 22px}
 .sc-persp-h{font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;font-weight:800;color:var(--ocean);margin-bottom:5px}
 .sc-kpi{margin:6px 0}
 .sc-kpi-top{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;align-items:baseline}

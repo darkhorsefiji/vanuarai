@@ -35,6 +35,7 @@ export default function Scorecard({ axis = 'traditional' }) {
             {nodes.map((nd, i) => (
               <div className="card sc-card" key={i}>
                 <h4 className="sc-node">{nd.label}</h4>
+                <div className="sc-persps">
                 {Object.entries(nd.persp).map(([persp, kpis]) => (
                   <div className="sc-persp" key={persp}>
                     <div className="sc-persp-h">{persp}</div>
@@ -52,6 +53,7 @@ export default function Scorecard({ axis = 'traditional' }) {
                     })}
                   </div>
                 ))}
+                </div>
               </div>
             ))}
           </div>
