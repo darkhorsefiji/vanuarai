@@ -216,22 +216,30 @@ export default function VScorecard() {
         </table>
       </div>
 
-      {/* Cascade of action plans */}
-      <h3>Action plans · cascaded Vuvale → Vanua</h3>
-      <p className="sub">Each level’s results roll up into the one above it — accountability rises with the Turaga ni Yavusa.</p>
+      {/* Cascade of action plans — single column, apex at top, foundation at the
+          base, so the trickle-up flow is visible as a rising pyramid. */}
+      <h3>Action plans · the trickle-up cascade</h3>
+      <p className="sub">Read from the base up: each level’s results trickle up into the one above it — accountability rises to the Turaga ni Yavusa, then the Vanua.</p>
       <div className="vsc-cascade">
         {CASCADE.map((c, i) => {
           const s = lv(c.level)
+          const idxFromTop = CASCADE.length - 1 - i      // 0 = apex (Vanua)
+          const isApex = i === CASCADE.length - 1
+          const isBase = i === 0
+          const width = 64 + idxFromTop * 9              // apex narrowest, base widest
           return (
-            <div className="card vsc-step" key={c.level} style={{ '--accent': s.color || 'var(--ocean)' }}>
-              <div className="vsc-step-head">
-                <span className="vsc-level">{s.label || c.level}{s.label_en ? <em> · {s.label_en}</em> : null}</span>
-                {i < CASCADE.length - 1 && <span className="vsc-up" title="rolls up to the next level">↑</span>}
+            <div className="vsc-layer" key={c.level} style={{ order: -i }}>
+              {!isApex && <span className="vsc-up" title="results trickle up to the level above">↑</span>}
+              <div className="card vsc-step" style={{ '--accent': s.color || 'var(--ocean)', maxWidth: width + '%' }}>
+                <div className="vsc-step-head">
+                  <span className="vsc-level">{s.label || c.level}{s.label_en ? <em> · {s.label_en}</em> : null}</span>
+                  <span className="vsc-tag">{isApex ? 'Apex' : isBase ? 'Foundation' : ''}</span>
+                </div>
+                <div className="vsc-role">{c.role}</div>
+                <ul className="vsc-actions">
+                  {c.actions.map(a => <li key={a}>{a}</li>)}
+                </ul>
               </div>
-              <div className="vsc-role">{c.role}</div>
-              <ul className="vsc-actions">
-                {c.actions.map(a => <li key={a}>{a}</li>)}
-              </ul>
             </div>
           )
         })}
