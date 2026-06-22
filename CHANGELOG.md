@@ -14,7 +14,8 @@ Newest first.
 
 | CHG | Date | Commit | Change |
 |-----|------|--------|--------|
-| CHG-0012 | 2026-06-19 | _this commit_ | Run the API under PM2 (auto-restart + survives sessions/reboots); `pool.on('error')` guard |
+| CHG-0013 | 2026-06-19 | _this commit_ | Government view: default the contact filter to "District Officer" |
+| CHG-0012 | 2026-06-19 | 4686cd0 | Run the API under PM2 (auto-restart + survives sessions/reboots); `pool.on('error')` guard |
 | CHG-0011 | 2026-06-19 | 2c2fb7a | Government view: add a dropdown to filter contact cards by title |
 | CHG-0010 | 2026-06-19 | 99ba470 | Add change-tracking: CHANGELOG.md + `chg-NNNN` git tags per change |
 | CHG-0009 | 2026-06-19 | a4f4022 | Fix: let main content fill the full width on every page |

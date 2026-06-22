@@ -15,7 +15,7 @@ export default function Government() {
   const [edit, setEdit] = useState(false)
   const [q, setQ] = useState('')
   const [contacts, setContacts] = useState(null)
-  const [cfilter, setCfilter] = useState('')   // contact-card filter by title
+  const [cfilter, setCfilter] = useState('District Officer')   // default contact-card filter by title
 
   const loadContacts = () => get('/gov-contacts').then(setContacts)
   useEffect(() => { loadContacts().catch(() => {}) }, [])
