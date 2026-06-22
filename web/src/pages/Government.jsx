@@ -15,6 +15,7 @@ export default function Government() {
   const [edit, setEdit] = useState(false)
   const [q, setQ] = useState('')
   const [contacts, setContacts] = useState(null)
+  const [cfilter, setCfilter] = useState('')   // contact-card filter by title
 
   const loadContacts = () => get('/gov-contacts').then(setContacts)
   useEffect(() => { loadContacts().catch(() => {}) }, [])
@@ -62,7 +63,15 @@ export default function Government() {
         <aside className="col">
           <h3 style={{ marginTop: 0 }}>Government contacts</h3>
           <p className="sub">Provincial &amp; divisional officers serving the village.</p>
-          {!contacts ? <p className="loading">Loading…</p> : contacts.map((c, i) => (
+          {contacts && contacts.length > 0 && (
+            <select className="contactfilter" value={cfilter} onChange={e => setCfilter(e.target.value)}>
+              <option value="">All contacts ({contacts.length})</option>
+              {[...new Set(contacts.map(c => c.title).filter(Boolean))].map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+          )}
+          {!contacts ? <p className="loading">Loading…</p> : contacts.every(c => cfilter && c.title !== cfilter)
+            ? <p className="meta">No contacts match this filter.</p>
+            : contacts.map((c, i) => (cfilter && c.title !== cfilter) ? null : (
             <div className="card govcontact" key={c.id}>
               <div className="gc-title">{c.title}</div>
               {edit ? (

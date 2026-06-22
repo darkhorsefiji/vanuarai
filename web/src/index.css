@@ -733,6 +733,8 @@ header.top > .authbox{z-index:40}
 .sticky{position:sticky;top:16px;align-self:start}
 .treesearch{width:100%;max-width:280px;border:1px solid var(--line);border-radius:30px;padding:8px 14px;font-family:var(--font);font-size:14px;margin-bottom:10px}
 .treesearch:focus{outline:none;border-color:var(--ocean);box-shadow:0 0 0 3px rgba(58,143,156,.15)}
+.contactfilter{width:100%;border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-family:var(--font);font-size:14px;color:var(--ink);background:var(--card);margin-bottom:12px;cursor:pointer}
+.contactfilter:focus{outline:none;border-color:var(--ocean);box-shadow:0 0 0 3px rgba(58,143,156,.15)}
 .nodelabel.onpath{font-weight:700;color:var(--ocean)}
 
 /* Dev theme editor */
