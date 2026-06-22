@@ -4,7 +4,11 @@
   "scripts": {
     "dev": "concurrently -k -n api,web -c green,cyan \"nodemon -L -w server.js -w .env server.js\" \"npm --prefix web run dev\"",
     "start": "node server.js",
-    "build": "npm --prefix web run build"
+    "build": "npm --prefix web run build",
+    "serve": "pm2 start ecosystem.config.js && pm2 save",
+    "serve:logs": "pm2 logs raivanua-api",
+    "serve:restart": "pm2 restart raivanua-api",
+    "serve:stop": "pm2 stop raivanua-api"
   },
   "dependencies": {
     "docx": "^9.7.1",

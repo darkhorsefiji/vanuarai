@@ -9,6 +9,10 @@ const jwt = require("jsonwebtoken");
 const ExcelJS = require("exceljs");
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+// Neon closes idle connections; an error on an idle pooled client is emitted on
+// the pool and would otherwise bubble to uncaughtException. Swallow + log so a
+// dropped idle connection never takes the process down (pool re-connects lazily).
+pool.on("error", (err) => console.error("pg pool error (idle client):", err && err.message ? err.message : err));
 const app = express();
 const VILLAGE = "Bagasau";
 const q = (sql, p = []) => pool.query(sql, p).then(r => r.rows);
