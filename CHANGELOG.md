@@ -14,7 +14,8 @@ Newest first.
 
 | CHG | Date | Commit | Change |
 |-----|------|--------|--------|
-| CHG-0015 | 2026-06-19 | _this commit_ | Add Conservation/Climate (Platform 4) KPIs to strategy.js — P4 now 4 KPIs, total 25 |
+| CHG-0016 | 2026-06-19 | _this commit_ | Roll-up engine A: `scorecard_kpis` registry (rollup rule + tier); registry-driven API (migration 037) |
+| CHG-0015 | 2026-06-19 | 2844042 | Add Conservation/Climate (Platform 4) KPIs to strategy.js — P4 now 4 KPIs, total 25 |
 | CHG-0014 | 2026-06-19 | cbf2ccc | Re-tag the 9 live scorecard items into the Meda Matata Mada perspectives (migration 036) |
 | CHG-0013 | 2026-06-19 | f0151cf | Government view: default the contact filter to "District Officer" |
 | CHG-0012 | 2026-06-19 | 4686cd0 | Run the API under PM2 (auto-restart + survives sessions/reboots); `pool.on('error')` guard |
