@@ -648,7 +648,7 @@ app.get("/api/scorecard", async (req, res) => {
   // KPI's rule — 'sum' (additive), 'avg' (mean of contributing nodes), or 'none'
   // (local; does not propagate past its own node). 'core'/'spinoff' is metadata.
   const rows = await q(`with recursive up as (
-      select t.kpi_id, k.rollup, k.tier, t.perspective, t.name, t.unit,
+      select t.kpi_id, k.rollup, k.tier, k.perspective, k.name, k.unit,
              t.target_value tv, t.actual_value av,
              sn.id node_id, sn.level::text lvl, sn.label, sn.parent_id
       from scorecard_targets t
@@ -666,6 +666,74 @@ app.get("/api/scorecard", async (req, res) => {
     from up where lvl=$2 group by node_id, label, perspective, name, unit, rollup, tier
     order by label, perspective, name`, [axis, level]);
   res.json({ axis, level, levels, rows: rows.map(r => ({ node_id: r.node_id, node_label: r.label, perspective: r.perspective, name: r.name, unit: r.unit, rollup: r.rollup, tier: r.tier, target: n(r.tgt), actual: n(r.act) })) });
+});
+
+// ---- Scorecard data entry: KPI catalogue + per-node measurements -------------
+// The catalogue (scorecard_kpis) is the list of measurable KPIs; measurements
+// (scorecard_targets) are a node's OWN target/actual for a KPI. Reads are open;
+// writes are village-admin only.
+app.get("/api/scorecard/kpis", async (req, res) => {
+  res.json(await q(`select id, perspective, name, unit, rollup, tier from scorecard_kpis
+    where archived_at is null order by perspective, name`));
+});
+
+app.post("/api/scorecard/kpis", async (req, res) => {
+  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  const b = req.body || {};
+  if (!b.perspective || !b.name) return res.status(400).json({ error: "perspective and name required" });
+  const rollup = ["sum", "avg", "none"].includes(b.rollup) ? b.rollup : "sum";
+  const tier = ["core", "spinoff"].includes(b.tier) ? b.tier : "core";
+  try {
+    const [row] = await q(`insert into scorecard_kpis (perspective, name, unit, rollup, tier)
+      values ($1,$2,$3,$4,$5)
+      on conflict (perspective, name) do update set unit=excluded.unit, rollup=excluded.rollup, tier=excluded.tier, archived_at=null
+      returning id`, [b.perspective, b.name, b.unit || null, rollup, tier]);
+    res.json({ ok: true, id: row.id });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+// A node's OWN measurements (not rolled up) — for the editor.
+app.get("/api/scorecard/node/:nodeId", async (req, res) => {
+  res.json(await q(`select t.id, t.kpi_id, k.perspective, k.name, k.unit, k.rollup, k.tier,
+      t.target_value target, t.actual_value actual
+    from scorecard_targets t join scorecard_kpis k on k.id=t.kpi_id
+    where t.node_id=$1 and t.archived_at is null order by k.perspective, k.name`, [req.params.nodeId]));
+});
+
+// Upsert a node's measurement for a KPI (one live row per node+kpi).
+app.post("/api/scorecard/targets", async (req, res) => {
+  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  const b = req.body || {};
+  if (!b.node_id || !b.kpi_id) return res.status(400).json({ error: "node_id and kpi_id required" });
+  try {
+    const existing = await q(`select id from scorecard_targets where node_id=$1 and kpi_id=$2 and archived_at is null`, [b.node_id, b.kpi_id]);
+    if (existing.length) {
+      await q(`update scorecard_targets set target_value=$1, actual_value=$2 where id=$3`, [n(b.target_value) || 0, n(b.actual_value) || 0, existing[0].id]);
+      return res.json({ ok: true, id: existing[0].id });
+    }
+    // perspective/name/unit are denormalised from the registry at write time
+    const [row] = await q(`insert into scorecard_targets (node_id, kpi_id, perspective, name, unit, target_value, actual_value, period)
+      select $1, k.id, k.perspective, k.name, k.unit, $3, $4, $5 from scorecard_kpis k where k.id=$2 returning id`,
+      [b.node_id, b.kpi_id, n(b.target_value) || 0, n(b.actual_value) || 0, b.period || "2026"]);
+    res.json({ ok: true, id: row.id });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+app.patch("/api/scorecard/targets/:id", async (req, res) => {
+  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  const b = req.body || {};
+  try {
+    await q(`update scorecard_targets set target_value=$1, actual_value=$2 where id=$3`, [n(b.target_value) || 0, n(b.actual_value) || 0, req.params.id]);
+    res.json({ ok: true });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+app.delete("/api/scorecard/targets/:id", async (req, res) => {
+  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  try {
+    await q(`update scorecard_targets set archived_at=now() where id=$1`, [req.params.id]);
+    res.json({ ok: true });
+  } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
 // ---- DEV reset: clear the demo "activity" data, keep the village structure ----
