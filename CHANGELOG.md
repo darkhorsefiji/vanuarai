@@ -14,7 +14,8 @@ Newest first.
 
 | CHG | Date | Commit | Change |
 |-----|------|--------|--------|
-| CHG-0017 | 2026-06-19 | _this commit_ | Roll-up engine B (API): scorecard KPI-catalogue + per-node measurement CRUD (village-admin gated) |
+| CHG-0018 | 2026-06-19 | _this commit_ | Roll-up engine C (UI): inline scorecard data-entry editor — edit a node's values, rolls up live |
+| CHG-0017 | 2026-06-19 | 99329da | Roll-up engine B (API): scorecard KPI-catalogue + per-node measurement CRUD (village-admin gated) |
 | CHG-0016 | 2026-06-19 | 85ccef9 | Roll-up engine A: `scorecard_kpis` registry (rollup rule + tier); registry-driven API (migration 037) |
 | CHG-0015 | 2026-06-19 | 2844042 | Add Conservation/Climate (Platform 4) KPIs to strategy.js — P4 now 4 KPIs, total 25 |
 | CHG-0014 | 2026-06-19 | cbf2ccc | Re-tag the 9 live scorecard items into the Meda Matata Mada perspectives (migration 036) |

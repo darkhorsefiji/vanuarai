@@ -355,6 +355,17 @@ td.nowrap{white-space:nowrap}
 .sc-kpi{margin:6px 0}
 .sc-kpi-top{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;align-items:baseline}
 .sc-kpi-val{color:var(--muted);font-weight:700;white-space:nowrap}
+.sc-editor{padding:14px 16px;margin-bottom:14px}
+.sc-ed-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:10px}
+.sc-ed-head select{padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:var(--font);font-size:13.5px;min-width:240px}
+.sc-ed-table{width:100%;border-collapse:collapse;font-size:13.5px}
+.sc-ed-table th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);font-weight:800;padding:4px 8px}
+.sc-ed-table td{padding:4px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+.sc-ed-table input[type=number]{width:90px;padding:6px 8px;border:1px solid var(--line);border-radius:7px;font-family:var(--font);font-size:13.5px}
+.sc-ed-table select{padding:6px 8px;border:1px solid var(--line);border-radius:7px;font-family:var(--font);font-size:13px;max-width:280px}
+.sc-ed-table .rowacts{display:flex;gap:6px;white-space:nowrap}
+.sc-ed-add td{border-bottom:none;padding-top:8px}
+.sc-ed-hint{margin:8px 0 0}
 
 /* VScorecard — Meda Matata Mada strategic framework */
 .vsc-vision{display:flex;flex-wrap:wrap;gap:18px;align-items:center;justify-content:space-between;
