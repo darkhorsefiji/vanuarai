@@ -14,7 +14,8 @@ Newest first.
 
 | CHG | Date | Commit | Change |
 |-----|------|--------|--------|
-| CHG-0013 | 2026-06-19 | _this commit_ | Government view: default the contact filter to "District Officer" |
+| CHG-0014 | 2026-06-19 | _this commit_ | Re-tag the 9 live scorecard items into the Meda Matata Mada perspectives (migration 036) |
+| CHG-0013 | 2026-06-19 | f0151cf | Government view: default the contact filter to "District Officer" |
 | CHG-0012 | 2026-06-19 | 4686cd0 | Run the API under PM2 (auto-restart + survives sessions/reboots); `pool.on('error')` guard |
 | CHG-0011 | 2026-06-19 | 2c2fb7a | Government view: add a dropdown to filter contact cards by title |
 | CHG-0010 | 2026-06-19 | 99ba470 | Add change-tracking: CHANGELOG.md + `chg-NNNN` git tags per change |
