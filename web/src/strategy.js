@@ -30,6 +30,7 @@ export const PERSPECTIVES = [
       { t: 'Volume supplied to the Co-operative / miller', p: 3 },
       { t: "Children's welfare outcomes (the Trust's mandate)", p: 2 },
       { t: 'Government collaboration outputs (Provincial Office, TAB)', p: 5 },
+      { t: 'Households with a disaster-preparedness plan', p: 4 },
       { t: 'Wellbeing & reduced-dependency index', p: 2 },
     ],
   },
@@ -40,6 +41,8 @@ export const PERSPECTIVES = [
     kpis: [
       { t: 'Households cultivating a target commodity', p: 3 },
       { t: 'Land area under target crops (ha)', p: 4 },
+      { t: 'Land under climate-resilient planting (ha)', p: 4 },
+      { t: 'Sustainable marine & forest harvest practices adopted', p: 4 },
       { t: 'Production volume per commodity', p: 3 },
       { t: 'Members trained (agronomy, food processing)', p: 3 },
       { t: "Conformance to the Trust's quality standards", p: 1 },
