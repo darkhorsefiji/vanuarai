@@ -2,8 +2,11 @@ import { useState, useEffect } from 'react'
 import { useData, get, send } from './api'
 import { useLevels } from './levels'
 import { useAuth, isVillageAdmin } from './auth'
+import { FRAMEWORK_KPIS } from './strategy'
 
 const LEVEL_ORDER = ['vanua', 'yavusa', 'mataqali', 'tokatoka', 'vuvale', 'matanitu', 'provincial_council', 'district', 'village', 'soqosoqo']
+const PERSP_TITLES = ['The Strengthened Family', 'Productive Capability', 'Vanua & Nation', 'Wealth Creation']
+const BLANK_KPI = { perspective: 'The Strengthened Family', name: '', unit: '', rollup: 'sum', tier: 'core' }
 
 // One editable measurement row (local draft of actual/target).
 function EditRow({ row, onSave, onDel }) {
@@ -43,6 +46,8 @@ export default function Scorecard({ axis = 'traditional' }) {
   const [addTgt, setAddTgt] = useState('')
   const [addAct, setAddAct] = useState('')
   const [msg, setMsg] = useState('')
+  const [catMode, setCatMode] = useState('data')   // 'data' | 'catalogue'
+  const [nk, setNk] = useState(BLANK_KPI)           // new-KPI form
 
   useEffect(() => {
     if (editing && nodeList.length === 0) {
@@ -71,6 +76,26 @@ export default function Scorecard({ axis = 'traditional' }) {
       .catch(e => setMsg('⚠ ' + e.message))
   }
 
+  const reloadKpis = () => get('/scorecard/kpis').then(setKpis).catch(() => {})
+  async function importFramework() {
+    setMsg('Importing…')
+    let ok = 0
+    for (const k of FRAMEWORK_KPIS) { try { await send('POST', '/scorecard/kpis', k); ok++ } catch { /* skip */ } }
+    await reloadKpis()
+    setMsg(`Imported ${ok} framework KPIs ✓`)
+  }
+  function createKpi() {
+    if (!nk.perspective || !nk.name.trim()) return
+    send('POST', '/scorecard/kpis', { ...nk, name: nk.name.trim() })
+      .then(reloadKpis).then(() => { setNk(BLANK_KPI); setMsg('KPI added ✓') })
+      .catch(e => setMsg('⚠ ' + e.message))
+  }
+  async function archiveKpi(k) {
+    if (!window.confirm(`Archive "${k.name}"? Its measurements stop rolling up.`)) return
+    try { await send('DELETE', '/scorecard/kpis/' + k.id); await reloadKpis(); bump(); setMsg('Archived ✓') }
+    catch (e) { setMsg('⚠ ' + e.message) }
+  }
+
   if (!data) return <p className="loading">Loading…</p>
   const lvl = level || data.level
   const fmt = (v, unit) => unit === 'FJD' ? '$' + Number(v).toLocaleString() : Number(v).toLocaleString()
@@ -97,35 +122,83 @@ export default function Scorecard({ axis = 'traditional' }) {
 
       {editing && (
         <div className="card sc-editor">
-          <div className="sc-ed-head">
-            <label>Node&nbsp;
-              <select value={pickNode} onChange={e => setPickNode(e.target.value)}>
-                <option value="">Select a node…</option>
-                {axisNodes.map(n => <option key={n.id} value={n.id}>{(map[n.level]?.label || n.level)} · {n.label}</option>)}
-              </select>
-            </label>
+          <div className="sc-ed-tabs">
+            <button className={'mini' + (catMode === 'data' ? '' : ' secondary')} onClick={() => setCatMode('data')}>Node data</button>
+            <button className={'mini' + (catMode === 'catalogue' ? '' : ' secondary')} onClick={() => setCatMode('catalogue')}>Catalogue ({kpis.length})</button>
             {msg && <span className="status">{msg}</span>}
           </div>
-          {pickNode && (own == null ? <p className="loading">Loading…</p> : (
-            <table className="sc-ed-table">
-              <tbody>
-                <tr><th>KPI</th><th>Actual</th><th>Target</th><th></th></tr>
-                {own.map(r => <EditRow key={r.id} row={r} onSave={saveRow} onDel={delRow} />)}
-                <tr className="sc-ed-add">
-                  <td>
-                    <select value={addKpi} onChange={e => setAddKpi(e.target.value)}>
-                      <option value="">+ Add a KPI…</option>
-                      {kpis.filter(k => !own.some(o => o.kpi_id === k.id)).map(k => <option key={k.id} value={k.id}>{k.perspective} · {k.name}</option>)}
-                    </select>
-                  </td>
-                  <td><input type="number" value={addAct} onChange={e => setAddAct(e.target.value)} placeholder="0" /></td>
-                  <td><input type="number" value={addTgt} onChange={e => setAddTgt(e.target.value)} placeholder="0" /></td>
-                  <td><button className="mini" onClick={addRow} disabled={!addKpi}>Add</button></td>
-                </tr>
-              </tbody>
-            </table>
-          ))}
-          <p className="meta sc-ed-hint">You're editing a node's own values — figures roll up the hierarchy automatically.</p>
+
+          {catMode === 'data' ? (
+            <>
+              <div className="sc-ed-head">
+                <label>Node&nbsp;
+                  <select value={pickNode} onChange={e => setPickNode(e.target.value)}>
+                    <option value="">Select a node…</option>
+                    {axisNodes.map(n => <option key={n.id} value={n.id}>{(map[n.level]?.label || n.level)} · {n.label}</option>)}
+                  </select>
+                </label>
+              </div>
+              {pickNode && (own == null ? <p className="loading">Loading…</p> : (
+                <table className="sc-ed-table">
+                  <tbody>
+                    <tr><th>KPI</th><th>Actual</th><th>Target</th><th></th></tr>
+                    {own.map(r => <EditRow key={r.id} row={r} onSave={saveRow} onDel={delRow} />)}
+                    <tr className="sc-ed-add">
+                      <td>
+                        <select value={addKpi} onChange={e => setAddKpi(e.target.value)}>
+                          <option value="">+ Add a KPI…</option>
+                          {kpis.filter(k => !own.some(o => o.kpi_id === k.id)).map(k => <option key={k.id} value={k.id}>{k.perspective} · {k.name}</option>)}
+                        </select>
+                      </td>
+                      <td><input type="number" value={addAct} onChange={e => setAddAct(e.target.value)} placeholder="0" /></td>
+                      <td><input type="number" value={addTgt} onChange={e => setAddTgt(e.target.value)} placeholder="0" /></td>
+                      <td><button className="mini" onClick={addRow} disabled={!addKpi}>Add</button></td>
+                    </tr>
+                  </tbody>
+                </table>
+              ))}
+              <p className="meta sc-ed-hint">You're editing a node's own values — figures roll up the hierarchy automatically.</p>
+            </>
+          ) : (
+            <div className="sc-catalogue">
+              <div className="sc-cat-actions">
+                <button className="btn secondary" onClick={importFramework}>⬇ Import framework KPIs ({FRAMEWORK_KPIS.length})</button>
+                <span className="meta">Seeds the Meda Matata Mada KPIs so they’re enterable. Re-running just updates them.</span>
+              </div>
+              <div className="sc-cat-create">
+                <select value={nk.perspective} onChange={e => setNk({ ...nk, perspective: e.target.value })}>
+                  {PERSP_TITLES.map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
+                <input value={nk.name} onChange={e => setNk({ ...nk, name: e.target.value })} placeholder="New KPI name" />
+                <input value={nk.unit} onChange={e => setNk({ ...nk, unit: e.target.value })} placeholder="unit" className="sc-cat-unit" />
+                <select value={nk.rollup} onChange={e => setNk({ ...nk, rollup: e.target.value })} title="roll-up rule">
+                  <option value="sum">sum</option><option value="avg">avg</option><option value="none">none</option>
+                </select>
+                <select value={nk.tier} onChange={e => setNk({ ...nk, tier: e.target.value })} title="tier">
+                  <option value="core">core</option><option value="spinoff">spinoff</option>
+                </select>
+                <button className="mini" onClick={createKpi} disabled={!nk.name.trim()}>Add KPI</button>
+              </div>
+              {kpis.length === 0
+                ? <p className="meta">No KPIs catalogued yet — import the framework above.</p>
+                : (
+                  <table className="sc-cat-table">
+                    <tbody>
+                      <tr><th>KPI</th><th>Unit</th><th>Roll-up</th><th>Tier</th><th></th></tr>
+                      {kpis.map(k => (
+                        <tr key={k.id}>
+                          <td>{k.name}<span className="meta"> · {k.perspective}</span></td>
+                          <td>{k.unit || '—'}</td>
+                          <td>{k.rollup}</td>
+                          <td>{k.tier}</td>
+                          <td><button className="mini danger" onClick={() => archiveKpi(k)} title="Archive">🗑</button></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+            </div>
+          )}
         </div>
       )}
 

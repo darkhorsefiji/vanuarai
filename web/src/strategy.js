@@ -14,11 +14,11 @@ export const PERSPECTIVES = [
     title: 'Wealth Creation',
     objective: 'Rising family income and a growing Gross Village Product (GVP).',
     kpis: [
-      { t: 'Gross Village Product (GVP) — headline indicator', p: 3 },
-      { t: 'Average family income', p: 3 },
-      { t: 'Co-operative revenue (FJD captured of the 42.7M target)', p: 3 },
-      { t: 'Reinvestment into the Trust / child-welfare fund', p: 5 },
-      { t: 'Member savings & co-operative shares', p: 3 },
+      { t: 'Gross Village Product (GVP) — headline indicator', p: 3, u: 'FJD' },
+      { t: 'Average family income', p: 3, u: 'FJD', r: 'avg' },
+      { t: 'Co-operative revenue (FJD captured of the 42.7M target)', p: 3, u: 'FJD' },
+      { t: 'Reinvestment into the Trust / child-welfare fund', p: 5, u: 'FJD' },
+      { t: 'Member savings & co-operative shares', p: 3, u: 'FJD' },
     ],
   },
   {
@@ -26,12 +26,12 @@ export const PERSPECTIVES = [
     title: 'Vanua & Nation',
     objective: 'Import substitution delivered; dependency replaced by abundance.',
     kpis: [
-      { t: 'Share of the 10%-in-10-years target captured', p: 3 },
-      { t: 'Volume supplied to the Co-operative / miller', p: 3 },
-      { t: "Children's welfare outcomes (the Trust's mandate)", p: 2 },
-      { t: 'Government collaboration outputs (Provincial Office, TAB)', p: 5 },
-      { t: 'Households with a disaster-preparedness plan', p: 4 },
-      { t: 'Wellbeing & reduced-dependency index', p: 2 },
+      { t: 'Share of the 10%-in-10-years target captured', p: 3, u: 'FJD' },
+      { t: 'Volume supplied to the Co-operative / miller', p: 3, u: 'kg' },
+      { t: "Children's welfare outcomes (the Trust's mandate)", p: 2, u: 'index', r: 'avg' },
+      { t: 'Government collaboration outputs (Provincial Office, TAB)', p: 5, u: 'count' },
+      { t: 'Households with a disaster-preparedness plan', p: 4, u: 'households' },
+      { t: 'Wellbeing & reduced-dependency index', p: 2, u: 'index', r: 'avg' },
     ],
   },
   {
@@ -39,13 +39,13 @@ export const PERSPECTIVES = [
     title: 'Productive Capability',
     objective: 'Every family and clan excels in its chosen focus commodities.',
     kpis: [
-      { t: 'Households cultivating a target commodity', p: 3 },
-      { t: 'Land area under target crops (ha)', p: 4 },
-      { t: 'Land under climate-resilient planting (ha)', p: 4 },
-      { t: 'Sustainable marine & forest harvest practices adopted', p: 4 },
-      { t: 'Production volume per commodity', p: 3 },
-      { t: 'Members trained (agronomy, food processing)', p: 3 },
-      { t: "Conformance to the Trust's quality standards", p: 1 },
+      { t: 'Households cultivating a target commodity', p: 3, u: 'households' },
+      { t: 'Land area under target crops (ha)', p: 4, u: 'ha' },
+      { t: 'Land under climate-resilient planting (ha)', p: 4, u: 'ha' },
+      { t: 'Sustainable marine & forest harvest practices adopted', p: 4, u: 'practices' },
+      { t: 'Production volume per commodity', p: 3, u: 'kg' },
+      { t: 'Members trained (agronomy, food processing)', p: 3, u: 'people' },
+      { t: "Conformance to the Trust's quality standards", p: 1, u: '%', r: 'avg' },
     ],
   },
   {
@@ -53,16 +53,22 @@ export const PERSPECTIVES = [
     title: 'The Strengthened Family',
     objective: 'A cohesive, child-centric family — the root of all growth.',
     kpis: [
-      { t: 'Parental obligations fulfilled', p: 1 },
-      { t: 'Academic achievement by child', p: 2 },
-      { t: 'Religious instruction by child (Lotu)', p: 2 },
-      { t: 'Agricultural achievement by child', p: 2 },
-      { t: 'Fishing achievement by child', p: 2 },
-      { t: 'Financial stewardship taught to child', p: 2 },
-      { t: 'Family cohesion — weekly soli & family devotion', p: 2 },
+      { t: 'Parental obligations fulfilled', p: 1, u: 'families' },
+      { t: 'Academic achievement by child', p: 2, u: 'children' },
+      { t: 'Religious instruction by child (Lotu)', p: 2, u: 'children' },
+      { t: 'Agricultural achievement by child', p: 2, u: 'children' },
+      { t: 'Fishing achievement by child', p: 2, u: 'children' },
+      { t: 'Financial stewardship taught to child', p: 2, u: 'children' },
+      { t: 'Family cohesion — weekly soli & family devotion', p: 2, u: 'people' },
     ],
   },
 ]
+
+// Flat list of the framework KPIs — used to seed the live catalogue (registry)
+// so all of them become enterable. perspective/name/unit/rollup/tier shape
+// matches POST /api/scorecard/kpis.
+export const FRAMEWORK_KPIS = PERSPECTIVES.flatMap(persp =>
+  persp.kpis.map(k => ({ perspective: persp.title, name: k.t, unit: k.u || null, rollup: k.r || 'sum', tier: 'core' })))
 
 // The five TAB Platforms (from the National Development Plan), each feeding one
 // of the two government strategic thrusts. Names per the TAB framework diagram.

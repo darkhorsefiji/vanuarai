@@ -692,6 +692,16 @@ app.post("/api/scorecard/kpis", async (req, res) => {
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
+// Archive a catalogue KPI (its measurements drop out of the roll-up, which
+// joins on k.archived_at is null).
+app.delete("/api/scorecard/kpis/:id", async (req, res) => {
+  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  try {
+    await q(`update scorecard_kpis set archived_at=now() where id=$1`, [req.params.id]);
+    res.json({ ok: true });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
 // A node's OWN measurements (not rolled up) — for the editor.
 app.get("/api/scorecard/node/:nodeId", async (req, res) => {
   res.json(await q(`select t.id, t.kpi_id, k.perspective, k.name, k.unit, k.rollup, k.tier,
