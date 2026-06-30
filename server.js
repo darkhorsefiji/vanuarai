@@ -648,7 +648,7 @@ app.get("/api/scorecard", async (req, res) => {
   // KPI's rule — 'sum' (additive), 'avg' (mean of contributing nodes), or 'none'
   // (local; does not propagate past its own node). 'core'/'spinoff' is metadata.
   const rows = await q(`with recursive up as (
-      select t.kpi_id, k.rollup, k.tier, k.perspective, k.name, k.unit,
+      select t.kpi_id, k.rollup, k.tier, k.perspective, k.name, k.unit, k.platform,
              t.target_value tv, t.actual_value av,
              sn.id node_id, sn.level::text lvl, sn.label, sn.parent_id
       from scorecard_targets t
@@ -656,16 +656,16 @@ app.get("/api/scorecard", async (req, res) => {
         join scorecard_kpis k on k.id=t.kpi_id
       where t.archived_at is null and k.archived_at is null and sn.axis=$1
       union all
-      select up.kpi_id, up.rollup, up.tier, up.perspective, up.name, up.unit, up.tv, up.av,
+      select up.kpi_id, up.rollup, up.tier, up.perspective, up.name, up.unit, up.platform, up.tv, up.av,
              p.id, p.level::text, p.label, p.parent_id
       from up join scope_nodes p on p.id=up.parent_id
       where up.rollup <> 'none')
-    select node_id, label, perspective, name, unit, rollup, tier,
+    select node_id, label, perspective, name, unit, rollup, tier, platform,
            case when rollup='avg' then avg(tv) else sum(tv) end::numeric tgt,
            case when rollup='avg' then avg(av) else sum(av) end::numeric act
-    from up where lvl=$2 group by node_id, label, perspective, name, unit, rollup, tier
+    from up where lvl=$2 group by node_id, label, perspective, name, unit, rollup, tier, platform
     order by label, perspective, name`, [axis, level]);
-  res.json({ axis, level, levels, rows: rows.map(r => ({ node_id: r.node_id, node_label: r.label, perspective: r.perspective, name: r.name, unit: r.unit, rollup: r.rollup, tier: r.tier, target: n(r.tgt), actual: n(r.act) })) });
+  res.json({ axis, level, levels, rows: rows.map(r => ({ node_id: r.node_id, node_label: r.label, perspective: r.perspective, name: r.name, unit: r.unit, rollup: r.rollup, tier: r.tier, platform: r.platform, target: n(r.tgt), actual: n(r.act) })) });
 });
 
 // ---- Scorecard data entry: KPI catalogue + per-node measurements -------------
@@ -673,7 +673,7 @@ app.get("/api/scorecard", async (req, res) => {
 // (scorecard_targets) are a node's OWN target/actual for a KPI. Reads are open;
 // writes are village-admin only.
 app.get("/api/scorecard/kpis", async (req, res) => {
-  res.json(await q(`select id, perspective, name, unit, rollup, tier from scorecard_kpis
+  res.json(await q(`select id, perspective, name, unit, rollup, tier, platform from scorecard_kpis
     where archived_at is null order by perspective, name`));
 });
 
@@ -683,11 +683,12 @@ app.post("/api/scorecard/kpis", async (req, res) => {
   if (!b.perspective || !b.name) return res.status(400).json({ error: "perspective and name required" });
   const rollup = ["sum", "avg", "none"].includes(b.rollup) ? b.rollup : "sum";
   const tier = ["core", "spinoff"].includes(b.tier) ? b.tier : "core";
+  const platform = [1, 2, 3, 4, 5].includes(Number(b.platform)) ? Number(b.platform) : null;
   try {
-    const [row] = await q(`insert into scorecard_kpis (perspective, name, unit, rollup, tier)
-      values ($1,$2,$3,$4,$5)
-      on conflict (perspective, name) do update set unit=excluded.unit, rollup=excluded.rollup, tier=excluded.tier, archived_at=null
-      returning id`, [b.perspective, b.name, b.unit || null, rollup, tier]);
+    const [row] = await q(`insert into scorecard_kpis (perspective, name, unit, rollup, tier, platform)
+      values ($1,$2,$3,$4,$5,$6)
+      on conflict (perspective, name) do update set unit=excluded.unit, rollup=excluded.rollup, tier=excluded.tier, platform=excluded.platform, archived_at=null
+      returning id`, [b.perspective, b.name, b.unit || null, rollup, tier, platform]);
     res.json({ ok: true, id: row.id });
   } catch (e) { res.status(400).json({ error: e.message }); }
 });

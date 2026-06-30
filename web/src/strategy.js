@@ -68,7 +68,7 @@ export const PERSPECTIVES = [
 // so all of them become enterable. perspective/name/unit/rollup/tier shape
 // matches POST /api/scorecard/kpis.
 export const FRAMEWORK_KPIS = PERSPECTIVES.flatMap(persp =>
-  persp.kpis.map(k => ({ perspective: persp.title, name: k.t, unit: k.u || null, rollup: k.r || 'sum', tier: 'core' })))
+  persp.kpis.map(k => ({ perspective: persp.title, name: k.t, unit: k.u || null, rollup: k.r || 'sum', tier: 'core', platform: k.p })))
 
 // The five TAB Platforms (from the National Development Plan), each feeding one
 // of the two government strategic thrusts. Names per the TAB framework diagram.
