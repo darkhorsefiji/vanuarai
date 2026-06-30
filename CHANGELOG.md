@@ -14,7 +14,8 @@ Newest first.
 
 | CHG | Date | Commit | Change |
 |-----|------|--------|--------|
-| CHG-0020 | 2026-06-19 | _this commit_ | Add TAB platform to KPI registry (migration 038) — foundation for the "By Platform" scorecard lens |
+| CHG-0021 | 2026-06-19 | _this commit_ | Scorecard: By Perspective/By TAB Platform lens toggle; entry gated to Mataqali/Tokatoka/Vuvale (upper levels view-only) |
+| CHG-0020 | 2026-06-19 | af995ee | Add TAB platform to KPI registry (migration 038) — foundation for the "By Platform" scorecard lens |
 | CHG-0019 | 2026-06-19 | d299dac | Open the catalogue: enrich framework KPIs w/ unit+rollup; catalogue manager (import 25 / add / archive) |
 | CHG-0018 | 2026-06-19 | 2c67b70 | Roll-up engine C (UI): inline scorecard data-entry editor — edit a node's values, rolls up live |
 | CHG-0017 | 2026-06-19 | 99329da | Roll-up engine B (API): scorecard KPI-catalogue + per-node measurement CRUD (village-admin gated) |

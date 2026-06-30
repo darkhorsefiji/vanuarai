@@ -355,6 +355,7 @@ td.nowrap{white-space:nowrap}
 .sc-kpi{margin:6px 0}
 .sc-kpi-top{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;align-items:baseline}
 .sc-kpi-val{color:var(--muted);font-weight:700;white-space:nowrap}
+.sc-lens{display:inline-flex;gap:6px;margin-left:18px;padding-left:18px;border-left:1px solid var(--line)}
 .sc-editor{padding:14px 16px;margin-bottom:14px}
 .sc-ed-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:10px}
 .sc-ed-head select{padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-family:var(--font);font-size:13.5px;min-width:240px}

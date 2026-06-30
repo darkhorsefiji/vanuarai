@@ -2,10 +2,14 @@ import { useState, useEffect } from 'react'
 import { useData, get, send } from './api'
 import { useLevels } from './levels'
 import { useAuth, isVillageAdmin } from './auth'
-import { FRAMEWORK_KPIS } from './strategy'
+import { FRAMEWORK_KPIS, PLATFORMS } from './strategy'
 
 const LEVEL_ORDER = ['vanua', 'yavusa', 'mataqali', 'tokatoka', 'vuvale', 'matanitu', 'provincial_council', 'district', 'village', 'soqosoqo']
 const PERSP_TITLES = ['The Strengthened Family', 'Productive Capability', 'Vanua & Nation', 'Wealth Creation']
+// Data is entered at the operational levels and only viewed (rolled up) above.
+const EDITABLE_LEVELS = ['mataqali', 'tokatoka', 'vuvale']
+const PLATFORM_NAME = Object.fromEntries(PLATFORMS.map(p => [p.n, p.name]))
+const platLabel = p => p ? `Platform ${p} · ${PLATFORM_NAME[p] || ''}`.trim() : 'Unmapped'
 const BLANK_KPI = { perspective: 'The Strengthened Family', name: '', unit: '', rollup: 'sum', tier: 'core' }
 
 // One editable measurement row (local draft of actual/target).
@@ -32,6 +36,7 @@ export default function Scorecard({ axis = 'traditional' }) {
   const { user } = useAuth()
   const canEdit = isVillageAdmin(user)
   const [level, setLevel] = useState('')
+  const [lens, setLens] = useState('perspective')   // 'perspective' | 'platform'
   const [refresh, setRefresh] = useState(0)
   const { data } = useData(`/scorecard?axis=${axis}${level ? '&level=' + level : ''}&_r=${refresh}`)
   const { map } = useLevels()
@@ -100,14 +105,19 @@ export default function Scorecard({ axis = 'traditional' }) {
   const lvl = level || data.level
   const fmt = (v, unit) => unit === 'FJD' ? '$' + Number(v).toLocaleString() : Number(v).toLocaleString()
 
-  // group rows -> node -> perspective
+  // group rows -> node -> {group} where the group is the current lens
+  const groupLabel = r => lens === 'platform' ? platLabel(r.platform) : r.perspective
+  const groupSort = lens === 'platform'
+    ? (a, b) => (a === 'Unmapped' ? 99 : Number(a.match(/\d+/)?.[0] || 99)) - (b === 'Unmapped' ? 99 : Number(b.match(/\d+/)?.[0] || 99))
+    : (a, b) => a.localeCompare(b)
   const byNode = {}
   for (const r of data.rows) {
     const node = (byNode[r.node_id] ||= { label: r.node_label, persp: {} })
-    ;(node.persp[r.perspective] ||= []).push(r)
+    ;(node.persp[groupLabel(r)] ||= []).push(r)
   }
   const nodes = Object.values(byNode)
-  const axisNodes = nodeList.filter(n => n.axis === axis)
+  // Editing happens at the operational levels only; upper levels are view-only.
+  const axisNodes = nodeList.filter(n => n.axis === axis && EDITABLE_LEVELS.includes(n.level))
     .sort((a, b) => (LEVEL_ORDER.indexOf(a.level) - LEVEL_ORDER.indexOf(b.level)) || a.label.localeCompare(b.label))
 
   return (
@@ -117,6 +127,10 @@ export default function Scorecard({ axis = 'traditional' }) {
         {data.levels.map(l => (
           <button key={l} className={'fchip' + (lvl === l ? ' active' : '')} onClick={() => setLevel(l)}>{map[l]?.label || l}</button>
         ))}
+        <span className="sc-lens">
+          <button className={'fchip' + (lens === 'perspective' ? ' active' : '')} onClick={() => setLens('perspective')}>By Perspective</button>
+          <button className={'fchip' + (lens === 'platform' ? ' active' : '')} onClick={() => setLens('platform')}>By TAB Platform</button>
+        </span>
         {canEdit && <button className={'btn ' + (editing ? '' : 'secondary')} style={{ marginLeft: 'auto' }} onClick={() => setEditing(e => !e)}>{editing ? 'Done' : '✎ Enter data'}</button>}
       </div>
 
@@ -157,7 +171,7 @@ export default function Scorecard({ axis = 'traditional' }) {
                   </tbody>
                 </table>
               ))}
-              <p className="meta sc-ed-hint">You're editing a node's own values — figures roll up the hierarchy automatically.</p>
+              <p className="meta sc-ed-hint">Data is entered at the Mataqali, Tokatoka &amp; Vuvale levels — figures roll up to the Yavusa and Vanua automatically (those upper levels are view-only).</p>
             </>
           ) : (
             <div className="sc-catalogue">
@@ -210,7 +224,7 @@ export default function Scorecard({ axis = 'traditional' }) {
               <div className="card sc-card" key={i}>
                 <h4 className="sc-node">{nd.label}</h4>
                 <div className="sc-persps">
-                {Object.entries(nd.persp).map(([persp, kpiRows]) => (
+                {Object.entries(nd.persp).sort((a, b) => groupSort(a[0], b[0])).map(([persp, kpiRows]) => (
                   <div className="sc-persp" key={persp}>
                     <div className="sc-persp-h">{persp}</div>
                     {kpiRows.map((k, j) => {
