@@ -3,7 +3,6 @@ import { get } from '../api'
 import { buildTree, filterNodes, TreeNode, useNodes } from '../tree'
 import { EditableText } from '../copy'
 import { useAuth, isVillageAdmin } from '../auth'
-import Scorecard from '../Scorecard'
 
 const BLANK = { full_name: '', gender: '', is_deceased: false, is_owner: false }
 
@@ -127,9 +126,6 @@ export default function Hierarchy() {
         </aside>
       </div>
 
-      <h2 className="sc-heading">Scorecard</h2>
-      <p className="sub">KPI targets by perspective, rolled up the Vanua. Pick a level to see targets at that tier.</p>
-      <Scorecard axis="traditional" />
     </>
   )
 }

@@ -1,11 +1,11 @@
 import { useLevels } from '../levels'
-import { PERSPECTIVES, COMMODITIES, TOT_IMP, TOT_TGT, CASCADE, fjm } from '../strategy'
+import { COMMODITIES, TOT_IMP, TOT_TGT, CASCADE, fjm } from '../strategy'
+import Scorecard from '../Scorecard'
 
-// VScorecard — "Meda Matata Mada": Cakaudrove's child-centric, trickle-up
-// Balanced Scorecard. Renders the shared strategy model (see strategy.js) by BSC
-// perspective; the Government view re-groups the same KPIs by TAB Platform.
-// A proposed framework for discussion — not yet wired to live data.
-
+// The single Scorecard view — "Meda Matata Mada", Cakaudrove's child-centric,
+// trickle-up Balanced Scorecard. The live, editable, rolled-up scorecard sits on
+// top (By Perspective / By TAB Platform lenses); the strategy framework below it
+// is the context. Strategy model lives in strategy.js.
 export default function VScorecard() {
   const { map } = useLevels()
   const lv = k => map[k] || {}
@@ -14,13 +14,16 @@ export default function VScorecard() {
     <>
       <div className="pagehead">
         <div>
-          <h1>VScorecard</h1>
-          <p className="sub">Meda Matata Mada — Cakaudrove’s child-centric, trickle-up Balanced Scorecard. A proposed framework for discussion.</p>
+          <h1>Scorecard</h1>
+          <p className="sub">Meda Matata Mada — Cakaudrove’s child-centric, trickle-up Balanced Scorecard. Enter data at the Mataqali, Tokatoka &amp; Vuvale; it rolls up to the Vanua.</p>
         </div>
       </div>
 
-      {/* Vision + strategy */}
-      <div className="card vsc-vision">
+      {/* The live, editable, rolled-up scorecard (lens toggle + per-node entry). */}
+      <Scorecard axis="traditional" />
+
+      {/* ── Strategy framework (the "why" behind the numbers) ───────────────── */}
+      <div className="card vsc-vision" style={{ marginTop: 26 }}>
         <div className="vsc-vision-main">
           <span className="vsc-eyebrow">Our objective</span>
           <h2>Peace and prosperity prevails across Cakaudrove.</h2>
@@ -45,27 +48,6 @@ export default function VScorecard() {
         <div className="card vsc-engine">
           <h4>The Trust</h4>
           <p>Supports <b>raising the child</b>. Holds the standards, norms, plans and dashboard — the monitoring &amp; evaluation platform — and records the welfare of our children.</p>
-        </div>
-      </div>
-
-      {/* Strategy map — read bottom-up */}
-      <h3>Strategy map · the trickle-up chain</h3>
-      <p className="sub">Read from the bottom up: a strong family drives productive capability, which delivers import substitution, which builds wealth.</p>
-      <div className="vsc-map">
-        <div className="vsc-rail"><span>Trickle&nbsp;Up</span></div>
-        <div className="vsc-bands">
-          {PERSPECTIVES.map(p => (
-            <div className="card vsc-band" key={p.key} style={{ '--accent': p.accent }}>
-              <div className="vsc-band-head">
-                <span className="vsc-tier">{p.tier}</span>
-                <h4>{p.title}</h4>
-                <p className="vsc-obj">{p.objective}</p>
-              </div>
-              <ul className="vsc-kpis">
-                {p.kpis.map(k => <li key={k.t}>{k.t}</li>)}
-              </ul>
-            </div>
-          ))}
         </div>
       </div>
 
@@ -94,8 +76,7 @@ export default function VScorecard() {
         </table>
       </div>
 
-      {/* Action plans — equal-sized boxes, each prefixed by its hierarchy level
-          on the left. Ordered foundation-first (Vuvale → Vanua). */}
+      {/* Action plans — equal-sized boxes, each prefixed by its hierarchy level. */}
       <h3>Action plans by level</h3>
       <p className="sub">What each level of the Vanua does to deliver the strategy — the family at the base, accountability rising to the Turaga ni Yavusa and the Vanua.</p>
       <div className="vsc-cascade">

@@ -3,10 +3,6 @@ import { buildTree, filterNodes, TreeNode, useNodes } from '../tree'
 import { EditableText } from '../copy'
 import { get, send } from '../api'
 import { useAuth, isVillageAdmin } from '../auth'
-import { PLATFORMS, THRUSTS, PERSPECTIVES, kpisForPlatform } from '../strategy'
-
-// Distinct accent per TAB Platform (1–5).
-const PCOLOR = ['var(--deep)', 'var(--sage)', 'var(--clay)', 'var(--logo-green)', 'var(--pop)']
 
 export default function Government() {
   const { user } = useAuth()
@@ -97,44 +93,6 @@ export default function Government() {
             </div>
           ))}
         </aside>
-      </div>
-
-      {/* National alignment — the Vanua's Meda Matata Mada KPIs mapped up to the
-          TAB Platforms, so the plan aggregates into the government framework. */}
-      <h2 className="sc-heading">National alignment · TAB Platforms</h2>
-      <p className="sub">Each <a href="/vscorecard">Meda Matata Mada</a> objective maps up to a TAB Platform, so the Vanua’s plan aggregates into the government framework through the Provincial Office. Same KPIs as the VScorecard — grouped here by Platform.</p>
-
-      <div className="tab-legend">
-        {PERSPECTIVES.map(p => <span key={p.key}><i style={{ background: p.accent }} />{p.title}</span>)}
-      </div>
-
-      <div className="tab-grid">
-        {PLATFORMS.map((pf, i) => {
-          const kpis = kpisForPlatform(pf.n)
-          return (
-            <div className="card tab-card" key={pf.n} style={{ '--accent': PCOLOR[i] }}>
-              <div className="tab-head">
-                <span className="tab-num">Platform {pf.n}</span>
-                <span className={'tab-thrust-chip ' + pf.thrust}>{pf.thrust === 'inclusive' ? 'Inclusive' : 'Transformational'}</span>
-              </div>
-              <h4>{pf.name}</h4>
-              {kpis.length
-                ? <ul className="tab-kpis">{kpis.map(k => <li key={k.t}><span className="tab-dot" style={{ background: k.accent }} title={k.perspective} />{k.t}</li>)}</ul>
-                : <p className="meta tab-gap">No Vanua KPIs map here yet.</p>}
-            </div>
-          )
-        })}
-      </div>
-
-      <h3>Government Strategic Priorities</h3>
-      <p className="sub">The national priorities each thrust delivers (per the TAB framework).</p>
-      <div className="tab-thrusts">
-        {THRUSTS.map(t => (
-          <div className="card tab-thrust-card" key={t.key}>
-            <h4>{t.name}</h4>
-            <ul className="tab-prio">{t.priorities.map(p => <li key={p}>{p}</li>)}</ul>
-          </div>
-        ))}
       </div>
     </>
   )
