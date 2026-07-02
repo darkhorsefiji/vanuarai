@@ -158,22 +158,23 @@ export function ActionRow({ action: a, childrenOf, govContacts, canEdit, onChang
   return (
     <>
       <div className={'of-action' + (nested ? ' nested' : '')}>
-        <button className="of-exp" onClick={() => setOpen(o => !o)}>{open ? '▾' : '▸'}</button>
-        {/* type on top, id beneath it — saves horizontal space */}
-        <span className="of-idcol">
-          <span className={'of-kind of-k-' + a.kind}>{KIND_LABEL[a.kind]}</span>
-          <span className="of-ref">{a.ref_code}</span>
-        </span>
-        <span className="of-titlecol">
-          <span className="of-title">{a.title}</span>
-          {(a.outcome_title || a.kpi_name) && (
-            <span className="of-link">↳ {a.outcome_title || '—'}{a.kpi_name ? <> · <b>{a.kpi_name}</b></> : null}</span>
-          )}
-          <span className="of-dues">
-            <span className="meta">Target due: <b>{dOnly(a.target_due_date) || '—'}</b></span>
-            <span className="meta">Actual due: <b>{dOnly(a.actual_due_date) || '—'}</b></span>
+        {/* click the id/title area to expand; type on top, id beneath it */}
+        <div className="of-head" onClick={() => setOpen(o => !o)} title={open ? 'Collapse' : 'Expand'}>
+          <span className="of-idcol">
+            <span className={'of-kind of-k-' + a.kind}>{KIND_LABEL[a.kind]}</span>
+            <span className="of-ref">{a.ref_code}</span>
           </span>
-        </span>
+          <span className="of-titlecol">
+            <span className="of-title">{a.title}</span>
+            {(a.outcome_title || a.kpi_name) && (
+              <span className="of-link">↳ {a.outcome_title || '—'}{a.kpi_name ? <> · <b>{a.kpi_name}</b></> : null}</span>
+            )}
+            <span className="of-dues">
+              <span className="meta">Target due: <b>{dOnly(a.target_due_date) || '—'}</b></span>
+              <span className="meta">Actual due: <b>{dOnly(a.actual_due_date) || '—'}</b></span>
+            </span>
+          </span>
+        </div>
         <RaciChips raci={a.raci} />
         <select className={'of-status of-s-' + a.status} value={a.status} onChange={e => setStatus(e.target.value)} disabled={!canEdit}>
           {STATUSES.map(s => <option key={s} value={s}>{human(s)}</option>)}
