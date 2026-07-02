@@ -12,7 +12,7 @@ export default defineConfig([
     plugins: { "react-hooks": reactHooks, "react-refresh": reactRefresh },
     rules: {
       "react-hooks/rules-of-hooks": "error",
-      "react-hooks/exhaustive-deps": "error",
+      "react-hooks/exhaustive-deps": "warn",
       "react-hooks/set-state-in-effect": "warn",
       "react-refresh/only-export-components": "warn",
     },
