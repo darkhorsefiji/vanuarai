@@ -747,6 +747,457 @@ app.delete("/api/scorecard/targets/:id", async (req, res) => {
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
+// =============================================================================
+// OUTCOME FRAMEWORK (CHG-0026) — results/M&E model over scope_nodes.
+// Outcome → Indicator → Variance → Action(task|intervention|project) → Challenge.
+// Reads are open; writes are village-admin (same gate as the scorecard).
+// See docs/outcome-framework-spec.md.
+// =============================================================================
+const OF = {
+  kind: new Set(["task", "intervention", "project"]),
+  status: new Set(["not_started", "in_progress", "on_hold", "cancelled", "completed"]),
+  raci: new Set(["responsible", "accountable", "consulted", "informed"]),
+  assignee: new Set(["person", "office", "membership", "gov_contact", "agency", "free"]),
+  chStatus: new Set(["open", "in_progress", "on_hold", "resolved", "cancelled"]),
+};
+const REF_PREFIX = { task: "TSK", intervention: "INT", project: "PRJ" };
+// Next ref code for a prefix: max numeric suffix + 1, zero-padded (e.g. INT-0007).
+async function nextRef(prefix, table) {
+  const [r] = await q(
+    `select coalesce(max(substring(ref_code from '[0-9]+')::int),0)+1 nx from ${table} where ref_code like $1`,
+    [prefix + "-%"]);
+  return prefix + "-" + String(r.nx).padStart(4, "0");
+}
+// Embedded RACI (resolved display label) for an action or challenge row `a.id`.
+const RACI_JSON = (parentKind) => `coalesce((
+  select json_agg(json_build_object(
+    'id', r.id, 'raci', r.raci, 'assignee_kind', r.assignee_kind,
+    'label', coalesce(pr.full_name, ou.display_name, gc.title, mu.display_name, r.agency_label, r.free_label)
+  ) order by r.raci)
+  from raci_assignments r
+    left join persons pr on pr.id = r.person_id
+    left join body_offices bo on bo.id = r.office_id
+    left join users ou on ou.id = bo.user_id
+    left join gov_contacts gc on gc.id = r.gov_contact_id
+    left join memberships mm on mm.id = r.membership_id
+    left join users mu on mu.id = mm.user_id
+  where r.parent_kind = '${parentKind}' and r.parent_id = a.id
+), '[]'::json)`;
+
+// ---- Taxonomies (the 3 classification axes) ----
+app.get("/api/of/taxonomies", async (req, res) => {
+  const [focus_areas, pillars, isic] = await Promise.all([
+    q(`select id, code, label, accent, sort_order from outcome_focus_areas where archived_at is null order by sort_order`),
+    q(`select id, platform_no, name, thrust, sort_order from gov_pillars where archived_at is null order by sort_order`),
+    q(`select code, parent_code, level, title, sort_order from isic_sectors order by sort_order`),
+  ]);
+  res.json({ focus_areas, pillars, isic });
+});
+
+// ---- Outcomes ----
+app.get("/api/of/outcomes", async (req, res) => {
+  const rows = await q(`
+    select o.id, o.node_id, o.axis, o.title, o.description, o.status, o.sort_order,
+           o.focus_area_id, fa.label focus_label, fa.accent,
+           o.gov_pillar_id, gp.platform_no, gp.name pillar_name, gp.thrust,
+           o.isic_code, isic.title isic_title,
+           (select count(*) from outcome_indicators i where i.outcome_id=o.id and i.archived_at is null)::int indicators
+    from outcomes o
+      left join outcome_focus_areas fa on fa.id=o.focus_area_id
+      left join gov_pillars gp on gp.id=o.gov_pillar_id
+      left join isic_sectors isic on isic.code=o.isic_code
+    where o.archived_at is null
+      and ($1::uuid is null or o.focus_area_id=$1)
+      and ($2::uuid is null or o.gov_pillar_id=$2)
+      and ($3::text is null or o.isic_code=$3)
+      and ($4::text is null or o.axis::text=$4)
+    order by o.sort_order, o.title`,
+    [req.query.focus || null, req.query.pillar || null, req.query.isic || null, req.query.axis || null]);
+  res.json(rows);
+});
+
+app.post("/api/of/outcomes", async (req, res) => {
+  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  const b = req.body || {};
+  if (!b.title) return res.status(400).json({ error: "title required" });
+  try {
+    const [row] = await q(`insert into outcomes
+      (node_id, axis, title, description, focus_area_id, gov_pillar_id, isic_code, status, sort_order, created_by)
+      values ($1,$2,$3,$4,$5,$6,$7,coalesce($8,'active'),coalesce($9,0),$10) returning id`,
+      [b.node_id || null, b.axis || "traditional", b.title, b.description || null,
+       b.focus_area_id || null, b.gov_pillar_id || null, b.isic_code || null,
+       b.status || null, b.sort_order ?? null, req.user?.uid || null]);
+    res.json({ ok: true, id: row.id });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+app.patch("/api/of/outcomes/:id", async (req, res) => {
+  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  const b = req.body || {};
+  const cols = [], vals = [];
+  for (const f of ["node_id", "axis", "title", "description", "focus_area_id", "gov_pillar_id", "isic_code", "status", "sort_order"])
+    if (f in b) { cols.push(`${f}=$${cols.length + 1}`); vals.push(b[f]); }
+  if (!cols.length) return res.json({ ok: true });
+  try {
+    await q(`update outcomes set ${cols.join(", ")} where id=$${cols.length + 1}`, [...vals, req.params.id]);
+    res.json({ ok: true });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+app.delete("/api/of/outcomes/:id", async (req, res) => {
+  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  try {
+    await q(`update outcomes set archived_at=now() where id=$1`, [req.params.id]);
+    res.json({ ok: true });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+// ---- Outcome indicators ----
+app.get("/api/of/outcomes/:id/indicators", async (req, res) => {
+  res.json(await q(`select id, outcome_id, name, unit, rollup, sort_order
+    from outcome_indicators where outcome_id=$1 and archived_at is null order by sort_order, name`, [req.params.id]));
+});
+
+// All indicators (flat, with their Outcome title) — for the data-entry add-picker.
+app.get("/api/of/indicators", async (req, res) => {
+  res.json(await q(`select i.id, i.outcome_id, i.name, i.unit, i.rollup, o.title outcome_title
+    from outcome_indicators i join outcomes o on o.id=i.outcome_id
+    where i.archived_at is null and o.archived_at is null order by o.title, i.name`));
+});
+
+app.post("/api/of/indicators", async (req, res) => {
+  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  const b = req.body || {};
+  if (!b.outcome_id || !b.name) return res.status(400).json({ error: "outcome_id and name required" });
+  const rollup = ["sum", "avg", "none"].includes(b.rollup) ? b.rollup : "sum";
+  try {
+    const [row] = await q(`insert into outcome_indicators (outcome_id, name, unit, rollup, sort_order)
+      values ($1,$2,$3,$4,coalesce($5,0)) returning id`,
+      [b.outcome_id, b.name, b.unit || null, rollup, b.sort_order ?? null]);
+    res.json({ ok: true, id: row.id });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+app.patch("/api/of/indicators/:id", async (req, res) => {
+  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  const b = req.body || {};
+  const cols = [], vals = [];
+  for (const f of ["name", "unit", "rollup", "sort_order"])
+    if (f in b) { cols.push(`${f}=$${cols.length + 1}`); vals.push(b[f]); }
+  if (!cols.length) return res.json({ ok: true });
+  try {
+    await q(`update outcome_indicators set ${cols.join(", ")} where id=$${cols.length + 1}`, [...vals, req.params.id]);
+    res.json({ ok: true });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+app.delete("/api/of/indicators/:id", async (req, res) => {
+  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  try {
+    await q(`update outcome_indicators set archived_at=now() where id=$1`, [req.params.id]);
+    res.json({ ok: true });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+// ---- Measurements + roll-up (the cascade) ----
+// Rolled UP to the chosen level per indicator, respecting sum/avg/none. Optional
+// classification filters (focus/pillar/isic) narrow which Outcomes contribute.
+app.get("/api/of/scorecard", async (req, res) => {
+  const axis = ["traditional", "government", "soqosoqo"].includes(req.query.axis) ? req.query.axis : "traditional";
+  const levels = SCORECARD_LEVELS[axis] || [];
+  const level = levels.includes(req.query.level) ? req.query.level : levels[0];
+  const rows = await q(`with recursive up as (
+      select m.indicator_id, i.rollup, i.name ind_name, i.unit,
+             o.id outcome_id, o.title outcome_title, o.focus_area_id, o.gov_pillar_id, o.isic_code,
+             m.target_value tv, m.actual_value av,
+             sn.id node_id, sn.level::text lvl, sn.label, sn.parent_id
+      from outcome_measurements m
+        join outcome_indicators i on i.id=m.indicator_id and i.archived_at is null
+        join outcomes o on o.id=i.outcome_id and o.archived_at is null
+        join scope_nodes sn on sn.id=m.node_id
+      where sn.axis=$1
+        and ($3::uuid is null or o.focus_area_id=$3)
+        and ($4::uuid is null or o.gov_pillar_id=$4)
+        and ($5::text is null or o.isic_code=$5)
+      union all
+      select up.indicator_id, up.rollup, up.ind_name, up.unit, up.outcome_id, up.outcome_title,
+             up.focus_area_id, up.gov_pillar_id, up.isic_code, up.tv, up.av,
+             p.id, p.level::text, p.label, p.parent_id
+      from up join scope_nodes p on p.id=up.parent_id
+      where up.rollup <> 'none')
+    select node_id, label, outcome_id, outcome_title, indicator_id, ind_name, unit, rollup,
+           case when rollup='avg' then avg(tv) else sum(tv) end::numeric tgt,
+           case when rollup='avg' then avg(av) else sum(av) end::numeric act
+    from up where lvl=$2
+    group by node_id, label, outcome_id, outcome_title, indicator_id, ind_name, unit, rollup
+    order by label, outcome_title, ind_name`,
+    [axis, level, req.query.focus || null, req.query.pillar || null, req.query.isic || null]);
+  res.json({ axis, level, levels, rows: rows.map(r => ({
+    node_id: r.node_id, node_label: r.label, outcome_id: r.outcome_id, outcome_title: r.outcome_title,
+    indicator_id: r.indicator_id, name: r.ind_name, unit: r.unit, rollup: r.rollup,
+    target: n(r.tgt), actual: n(r.act), variance: n(r.act) - n(r.tgt) })) });
+});
+
+// A node's OWN measurements (not rolled up) — for the data-entry editor.
+app.get("/api/of/node/:nodeId", async (req, res) => {
+  res.json(await q(`select m.id, m.indicator_id, i.name, i.unit, i.rollup, o.title outcome_title,
+      m.target_value target, m.actual_value actual, m.variance, m.period
+    from outcome_measurements m
+      join outcome_indicators i on i.id=m.indicator_id
+      join outcomes o on o.id=i.outcome_id
+    where m.node_id=$1 order by o.title, i.name`, [req.params.nodeId]));
+});
+
+// Upsert a node's measurement for an indicator+period (variance is generated).
+app.post("/api/of/measurements", async (req, res) => {
+  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  const b = req.body || {};
+  if (!b.indicator_id || !b.node_id) return res.status(400).json({ error: "indicator_id and node_id required" });
+  const period = b.period || "2026";
+  try {
+    const [row] = await q(`insert into outcome_measurements (indicator_id, node_id, period, target_value, actual_value)
+      values ($1,$2,$3,$4,$5)
+      on conflict (indicator_id, node_id, period)
+      do update set target_value=excluded.target_value, actual_value=excluded.actual_value
+      returning id`,
+      [b.indicator_id, b.node_id, period, n(b.target_value) || 0, n(b.actual_value) || 0]);
+    res.json({ ok: true, id: row.id });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+app.patch("/api/of/measurements/:id", async (req, res) => {
+  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  const b = req.body || {};
+  try {
+    await q(`update outcome_measurements set target_value=$1, actual_value=$2 where id=$3`,
+      [n(b.target_value) || 0, n(b.actual_value) || 0, req.params.id]);
+    res.json({ ok: true });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+app.delete("/api/of/measurements/:id", async (req, res) => {
+  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  try { await q(`delete from outcome_measurements where id=$1`, [req.params.id]); res.json({ ok: true }); }
+  catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+// ---- Actions: Task | Intervention | Project ----
+app.get("/api/of/actions", async (req, res) => {
+  const rows = await q(`select a.id, a.ref_code, a.kind, a.title, a.description,
+      a.outcome_measurement_id, a.outcome_id, o.title outcome_title, a.node_id, a.target_due_date, a.actual_due_date, a.status,
+      a.parent_intervention_id, a.project_id,
+      sn.label node_label,
+      (select count(*) from actions t where t.parent_intervention_id=a.id)::int task_count,
+      (select count(*) from intervention_indicators ii where ii.action_id=a.id)::int indicator_count,
+      (select count(*) from challenges c where c.action_id=a.id)::int challenge_count,
+      ${RACI_JSON("action")} raci
+    from actions a
+      left join scope_nodes sn on sn.id=a.node_id
+      left join outcomes o on o.id=a.outcome_id
+    where ($1::text is null or a.kind::text=$1)
+      and ($2::text is null or a.status::text=$2)
+      and ($3::uuid is null or a.outcome_measurement_id=$3)
+      and ($4::uuid is null or a.parent_intervention_id=$4)
+      and ($5::uuid is null or a.node_id=$5)
+      and ($6::uuid is null or a.outcome_id=$6)
+    order by a.created_at desc`,
+    [req.query.kind || null, req.query.status || null, req.query.measurement || null,
+     req.query.parent || null, req.query.node || null, req.query.outcome || null]);
+  res.json(rows);
+});
+
+app.post("/api/of/actions", async (req, res) => {
+  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  const b = req.body || {};
+  if (!OF.kind.has(b.kind)) return res.status(400).json({ error: "kind must be task|intervention|project" });
+  if (!b.title) return res.status(400).json({ error: "title required" });
+  const status = OF.status.has(b.status) ? b.status : "not_started";
+  // A task may only attach to a non-completed intervention (also enforced by trigger).
+  if (b.kind === "task" && b.parent_intervention_id) {
+    const [p] = await q(`select status from actions where id=$1 and kind='intervention'`, [b.parent_intervention_id]);
+    if (!p) return res.status(400).json({ error: "parent_intervention_id is not an intervention" });
+    if (p.status === "completed") return res.status(409).json({ error: "cannot attach a task to a completed intervention" });
+  }
+  try {
+    const ref = await nextRef(REF_PREFIX[b.kind], "actions");
+    const [row] = await q(`insert into actions
+      (ref_code, kind, title, description, outcome_measurement_id, outcome_id, node_id,
+       target_due_date, actual_due_date, status, parent_intervention_id, project_id, created_by)
+      values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) returning id, ref_code`,
+      [ref, b.kind, b.title, b.description || null, b.outcome_measurement_id || null, b.outcome_id || null, b.node_id || null,
+       b.target_due_date || null, b.actual_due_date || null, status,
+       b.kind === "task" ? (b.parent_intervention_id || null) : null,
+       b.kind === "project" ? (b.project_id || null) : null, req.user?.uid || null]);
+    res.json({ ok: true, id: row.id, ref_code: row.ref_code });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+app.patch("/api/of/actions/:id", async (req, res) => {
+  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  const b = req.body || {};
+  if (b.status && !OF.status.has(b.status)) return res.status(400).json({ error: "invalid status" });
+  const [cur] = await q(`select kind, status from actions where id=$1`, [req.params.id]);
+  if (!cur) return res.status(404).json({ error: "not found" });
+  // An intervention with open (non-completed/cancelled) tasks cannot be completed.
+  if (b.status === "completed" && cur.kind === "intervention") {
+    const [open] = await q(`select count(*)::int c from actions
+      where parent_intervention_id=$1 and status not in ('completed','cancelled')`, [req.params.id]);
+    if (open.c > 0) return res.status(409).json({ error: `intervention has ${open.c} open task(s); resolve them first` });
+  }
+  const cols = [], vals = [];
+  for (const f of ["title", "description", "outcome_measurement_id", "outcome_id", "node_id", "target_due_date", "actual_due_date", "status", "parent_intervention_id", "project_id"])
+    if (f in b) { cols.push(`${f}=$${cols.length + 1}`); vals.push(b[f]); }
+  cols.push(`updated_at=now()`);
+  try {
+    await q(`update actions set ${cols.join(", ")} where id=$${vals.length + 1}`, [...vals, req.params.id]);
+    res.json({ ok: true });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+app.delete("/api/of/actions/:id", async (req, res) => {
+  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    // polymorphic RACI is not FK-cascaded — clean it explicitly (intervention
+    // indicators & challenges cascade via their FKs).
+    await client.query(`delete from raci_assignments where parent_kind='action' and parent_id=$1`, [req.params.id]);
+    await client.query(`update actions set parent_intervention_id=null where parent_intervention_id=$1`, [req.params.id]);
+    await client.query(`delete from actions where id=$1`, [req.params.id]);
+    await client.query("COMMIT");
+    res.json({ ok: true });
+  } catch (e) { await client.query("ROLLBACK"); res.status(400).json({ error: e.message }); }
+  finally { client.release(); }
+});
+
+// ---- Intervention indicators (short-term; separate from outcome indicators) ----
+app.get("/api/of/actions/:id/intervention-indicators", async (req, res) => {
+  res.json(await q(`select id, action_id, name, unit, target_value, actual_value, period, sort_order
+    from intervention_indicators where action_id=$1 order by sort_order, name`, [req.params.id]));
+});
+
+app.post("/api/of/intervention-indicators", async (req, res) => {
+  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  const b = req.body || {};
+  if (!b.action_id || !b.name) return res.status(400).json({ error: "action_id and name required" });
+  try {
+    const [row] = await q(`insert into intervention_indicators
+      (action_id, name, unit, target_value, actual_value, period, sort_order)
+      values ($1,$2,$3,$4,$5,$6,coalesce($7,0)) returning id`,
+      [b.action_id, b.name, b.unit || null, n(b.target_value) || 0, n(b.actual_value) || 0, b.period || null, b.sort_order ?? null]);
+    res.json({ ok: true, id: row.id });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+app.patch("/api/of/intervention-indicators/:id", async (req, res) => {
+  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  const b = req.body || {};
+  const cols = [], vals = [];
+  for (const f of ["name", "unit", "target_value", "actual_value", "period", "sort_order"])
+    if (f in b) { cols.push(`${f}=$${cols.length + 1}`); vals.push(f.endsWith("_value") ? n(b[f]) || 0 : b[f]); }
+  if (!cols.length) return res.json({ ok: true });
+  try {
+    await q(`update intervention_indicators set ${cols.join(", ")} where id=$${cols.length + 1}`, [...vals, req.params.id]);
+    res.json({ ok: true });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+app.delete("/api/of/intervention-indicators/:id", async (req, res) => {
+  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  try { await q(`delete from intervention_indicators where id=$1`, [req.params.id]); res.json({ ok: true }); }
+  catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+// ---- RACI assignments (over actions & challenges) ----
+app.post("/api/of/raci", async (req, res) => {
+  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  const b = req.body || {};
+  if (!["action", "challenge"].includes(b.parent_kind) || !b.parent_id)
+    return res.status(400).json({ error: "parent_kind (action|challenge) and parent_id required" });
+  if (!OF.raci.has(b.raci)) return res.status(400).json({ error: "raci must be responsible|accountable|consulted|informed" });
+  if (!OF.assignee.has(b.assignee_kind)) return res.status(400).json({ error: "invalid assignee_kind" });
+  try {
+    const [row] = await q(`insert into raci_assignments
+      (parent_kind, parent_id, raci, assignee_kind, person_id, office_id, membership_id, gov_contact_id, agency_label, free_label)
+      values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) returning id`,
+      [b.parent_kind, b.parent_id, b.raci, b.assignee_kind, b.person_id || null, b.office_id || null,
+       b.membership_id || null, b.gov_contact_id || null, b.agency_label || null, b.free_label || null]);
+    res.json({ ok: true, id: row.id });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+app.delete("/api/of/raci/:id", async (req, res) => {
+  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  try { await q(`delete from raci_assignments where id=$1`, [req.params.id]); res.json({ ok: true }); }
+  catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+// ---- Challenges / impediment log ----
+// Actions past their target due date & still open — drives the "raise a challenge" prompt.
+app.get("/api/of/overdue", async (req, res) => {
+  res.json(await q(`select a.id, a.ref_code, a.kind, a.title, a.target_due_date, a.status,
+      sn.label node_label,
+      (a.target_due_date - current_date) days_overdue,
+      (select count(*) from challenges c where c.action_id=a.id)::int challenge_count
+    from actions_overdue a left join scope_nodes sn on sn.id=a.node_id
+    order by a.target_due_date`));
+});
+
+app.get("/api/of/challenges", async (req, res) => {
+  const rows = await q(`select a.id, a.ref_code, a.action_id, a.description, a.raised_on,
+      a.target_due_date, a.actual_due_date, a.status,
+      act.ref_code action_ref, act.title action_title,
+      ${RACI_JSON("challenge")} raci
+    from challenges a left join actions act on act.id=a.action_id
+    where ($1::uuid is null or a.action_id=$1)
+      and ($2::text is null or a.status::text=$2)
+    order by a.raised_on desc`,
+    [req.query.action || null, req.query.status || null]);
+  res.json(rows);
+});
+
+app.post("/api/of/challenges", async (req, res) => {
+  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  const b = req.body || {};
+  if (!b.action_id || !b.description) return res.status(400).json({ error: "action_id and description required" });
+  const status = OF.chStatus.has(b.status) ? b.status : "open";
+  try {
+    const ref = await nextRef("CHL", "challenges");
+    const [row] = await q(`insert into challenges
+      (ref_code, action_id, description, target_due_date, actual_due_date, status, created_by)
+      values ($1,$2,$3,$4,$5,$6,$7) returning id, ref_code`,
+      [ref, b.action_id, b.description, b.target_due_date || null, b.actual_due_date || null, status, req.user?.uid || null]);
+    res.json({ ok: true, id: row.id, ref_code: row.ref_code });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+app.patch("/api/of/challenges/:id", async (req, res) => {
+  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  const b = req.body || {};
+  if (b.status && !OF.chStatus.has(b.status)) return res.status(400).json({ error: "invalid status" });
+  const cols = [], vals = [];
+  for (const f of ["description", "target_due_date", "actual_due_date", "status"])
+    if (f in b) { cols.push(`${f}=$${cols.length + 1}`); vals.push(b[f]); }
+  cols.push(`updated_at=now()`);
+  try {
+    await q(`update challenges set ${cols.join(", ")} where id=$${vals.length + 1}`, [...vals, req.params.id]);
+    res.json({ ok: true });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+app.delete("/api/of/challenges/:id", async (req, res) => {
+  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query(`delete from raci_assignments where parent_kind='challenge' and parent_id=$1`, [req.params.id]);
+    await client.query(`delete from challenges where id=$1`, [req.params.id]);
+    await client.query("COMMIT");
+    res.json({ ok: true });
+  } catch (e) { await client.query("ROLLBACK"); res.status(400).json({ error: e.message }); }
+  finally { client.release(); }
+});
+
 // ---- DEV reset: clear the demo "activity" data, keep the village structure ----
 // Wipes money/efforts/notices/trade/minutes/lands/approvals. Keeps villages,
 // scope_nodes (hierarchy), users/memberships/offices, persons, plans, styling,
