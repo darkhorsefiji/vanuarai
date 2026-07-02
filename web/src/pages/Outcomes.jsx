@@ -1,4 +1,4 @@
-import OutcomeBoard from '../OutcomeBoard'
+import OutcomeBoard from "../OutcomeBoard";
 
 // The Outcome Framework scorecard. Full-width filters up top; then each Outcome
 // is a row — its indicators (rolled up the hierarchy, Actual/Target/Variance) on
@@ -10,10 +10,15 @@ export default function Outcomes() {
       <div className="pagehead">
         <div>
           <h1>Scorecard</h1>
-          <p className="sub">Long-term Outcomes classified by Vanua focus area, Government (TAB) platform and industry (ISIC) — indicators roll up every level. Variances are closed by tasks, interventions and projects; impediments are logged as challenges.</p>
+          <p className="sub">
+            Long-term Outcomes classified by Vanua focus area, Government (TAB)
+            platform and industry (ISIC) — indicators roll up every level.
+            Variances are closed by tasks, interventions and projects;
+            impediments are logged as challenges.
+          </p>
         </div>
       </div>
       <OutcomeBoard />
     </>
-  )
+  );
 }

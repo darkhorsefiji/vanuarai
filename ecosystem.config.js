@@ -13,14 +13,14 @@
 module.exports = {
   apps: [
     {
-      name: 'raivanua-api',
-      script: 'server.js',
+      name: "raivanua-api",
+      script: "server.js",
       cwd: __dirname,
-      watch: false,           // not a file-watcher; just keep it alive
-      autorestart: true,      // revive on crash
+      watch: false, // not a file-watcher; just keep it alive
+      autorestart: true, // revive on crash
       max_restarts: 50,
-      restart_delay: 2000,    // back off 2s between restarts
-      time: true,             // timestamp log lines
+      restart_delay: 2000, // back off 2s between restarts
+      time: true, // timestamp log lines
     },
   ],
-}
+};

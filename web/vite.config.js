@@ -1,5 +1,5 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
 
 // Dev: proxy API calls to the Express/Neon backend on :3000.
 // strictPort: own 5173 and fail loudly if it's taken, rather than silently
@@ -9,6 +9,6 @@ export default defineConfig({
   server: {
     port: 5173,
     strictPort: true,
-    proxy: { '/api': 'http://localhost:3000' },
+    proxy: { "/api": "http://localhost:3000" },
   },
-})
+});

@@ -2,7 +2,7 @@
 // Single-colour line icons on a 24×24 grid; they paint with `currentColor`,
 // so they inherit the sidebar link colour (and the active-item colour) for free.
 // Two interchangeable sets — pick one live on the Dev page.
-import { createContext, useContext, useState, useCallback } from 'react'
+import { createContext, useContext, useState, useCallback } from "react";
 
 // ── Set A — "Artefacts": literal Pacific / Fijian objects, fine line ──────────
 const ARTEFACTS = {
@@ -150,7 +150,7 @@ const ARTEFACTS = {
       <path d="M16.5 4 L20 4 L20 7.5" />
     </>
   ),
-}
+};
 
 // ── Set B — "Symbols": bolder, geometric / conceptual motifs ──────────────────
 const SYMBOLS = {
@@ -171,7 +171,10 @@ const SYMBOLS = {
       <path d="M44.6 17.6 C46.2 22 44.2 27.2 40.6 30.8 C36.6 34.8 30.4 37.7 25 38.4 C22 38.8 19 38.8 16.5 38.6" />
       <path d="M21 20.3 C18.6 23 16.4 26.2 15.4 28.7" />
       <path d="M15.4 28.7 C12.6 28.2 10.8 30.2 11.8 32.6 C9.2 32.4 7.8 34.4 8.8 36.5 C6.8 36.5 5.5 38 6 39.6 C4.6 39.9 3.8 41 4.5 42.1 C5.3 43.3 7.2 43.1 8.3 42.2 C9.7 41.1 11.7 41.2 13.5 40.4 C14.6 40 15.6 39.4 16.5 38.6" />
-      <path strokeWidth="2.1" d="M22.7 33.1 C22.7 29.7 18.6 28.4 16.5 30.8 C14.7 32.9 16.1 36.2 18.8 36.2 C20.9 36.2 21.8 34.4 20.8 33.1 C20.1 32.2 18.8 32.3 18.3 33.2" />
+      <path
+        strokeWidth="2.1"
+        d="M22.7 33.1 C22.7 29.7 18.6 28.4 16.5 30.8 C14.7 32.9 16.1 36.2 18.8 36.2 C20.9 36.2 21.8 34.4 20.8 33.1 C20.1 32.2 18.8 32.3 18.3 33.2"
+      />
     </g>
   ),
   // Tanoa (kava bowl) on legs — the heart of the vanua ceremony
@@ -268,47 +271,81 @@ const SYMBOLS = {
       <path d="M16 4 L20 4 L20 8" />
     </>
   ),
-}
+};
 
 export const ICON_SETS = {
-  artefacts: { label: 'Set A — Artefacts', hint: 'Literal cultural objects, fine line', stroke: 1.6, paths: ARTEFACTS },
-  symbols: { label: 'Set B — Symbols', hint: 'Bolder, geometric / conceptual', stroke: 1.9, paths: SYMBOLS },
-}
-const DEFAULT_SET = 'artefacts'
+  artefacts: {
+    label: "Set A — Artefacts",
+    hint: "Literal cultural objects, fine line",
+    stroke: 1.6,
+    paths: ARTEFACTS,
+  },
+  symbols: {
+    label: "Set B — Symbols",
+    hint: "Bolder, geometric / conceptual",
+    stroke: 1.9,
+    paths: SYMBOLS,
+  },
+};
+const DEFAULT_SET = "artefacts";
 
 // Sidebar order + display labels (used by the Dev comparison grid)
 export const ICON_ITEMS = [
-  ['profile', 'Profile'], ['kacikacivaki', 'Kacikacivaki'], ['vanua', 'Vanua'], ['government', 'Government'],
-  ['lands', 'Lands'], ['agreements', 'Agreements'], ['projects', 'Projects'],
-  ['trade', 'Trade'], ['fundraising', 'Fundraising'], ['financials', 'Financials'],
-  ['minutes', 'Minutes'], ['emergencies', 'Emergencies'], ['vscorecard', 'VScorecard'],
-]
+  ["profile", "Profile"],
+  ["kacikacivaki", "Kacikacivaki"],
+  ["vanua", "Vanua"],
+  ["government", "Government"],
+  ["lands", "Lands"],
+  ["agreements", "Agreements"],
+  ["projects", "Projects"],
+  ["trade", "Trade"],
+  ["fundraising", "Fundraising"],
+  ["financials", "Financials"],
+  ["minutes", "Minutes"],
+  ["emergencies", "Emergencies"],
+  ["vscorecard", "VScorecard"],
+];
 
 // ── Selection state (live-switchable, persisted) ──────────────────────────────
-const SET_KEY = 'vr_iconset'
-const IconSetCtx = createContext(null)
-export const useIconSet = () => useContext(IconSetCtx)
+const SET_KEY = "vr_iconset";
+const IconSetCtx = createContext(null);
+export const useIconSet = () => useContext(IconSetCtx);
 
 export function IconSetProvider({ children }) {
-  const [setId, setSetId] = useState(() => localStorage.getItem(SET_KEY) || DEFAULT_SET)
-  const choose = useCallback(id => {
-    if (!ICON_SETS[id]) return
-    localStorage.setItem(SET_KEY, id)
-    setSetId(id)
-  }, [])
-  return <IconSetCtx.Provider value={{ setId, choose }}>{children}</IconSetCtx.Provider>
+  const [setId, setSetId] = useState(
+    () => localStorage.getItem(SET_KEY) || DEFAULT_SET
+  );
+  const choose = useCallback((id) => {
+    if (!ICON_SETS[id]) return;
+    localStorage.setItem(SET_KEY, id);
+    setSetId(id);
+  }, []);
+  return (
+    <IconSetCtx.Provider value={{ setId, choose }}>
+      {children}
+    </IconSetCtx.Provider>
+  );
 }
 
 export function Icon({ name, size = 22, set }) {
-  const ctx = useIconSet()
-  const id = set || (ctx ? ctx.setId : DEFAULT_SET)
-  const def = ICON_SETS[id] || ICON_SETS[DEFAULT_SET]
-  const body = def.paths[name]
-  if (!body) return null
+  const ctx = useIconSet();
+  const id = set || (ctx ? ctx.setId : DEFAULT_SET);
+  const def = ICON_SETS[id] || ICON_SETS[DEFAULT_SET];
+  const body = def.paths[name];
+  if (!body) return null;
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth={def.stroke} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={def.stroke}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       {body}
     </svg>
-  )
+  );
 }

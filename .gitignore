@@ -3,3 +3,26 @@ node_modules/
 .env.*
 *.docx
 *.pdf
+# Platform-builder
+.web/
+graphify-out/
+.scratch/*
+!.scratch/.gitkeep
+web/dist/
+web/node_modules/
+# Sensitive
+*-secret*
+*cert*
+*private-key*
+*.pem
+*.key
+# OS
+.DS_Store
+Thumbs.db
+# Logs
+*.log
+npm-debug.log*
+# IDE
+.idea/
+.vscode/
+.env.example

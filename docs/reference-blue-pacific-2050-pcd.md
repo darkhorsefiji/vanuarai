@@ -20,31 +20,31 @@ The table titled **Summary**, columns: **Outcome / Indicator (with target)** ·
 **Goal** · **Outcome code**. (The site labels the third column "Progress", but
 its values are the Outcome reference codes, e.g. the dashboard URL `?outcome=1.3`.)
 
-| Outcome / Indicator (with target) | Goal | Outcome |
-|---|---|---|
-| Reduce deaths to children under 5 years of age to under 25 per 1,000 live births | G1 | 1.0 |
-| Reduce premature deaths from Non-communicable Diseases (NCDs) by at least one-third | G1 | 1.0 |
-| Universal coverage of essential health services | G1 | 1.2 |
-| 10 or more medical doctors per 10,000 population | G1 | 1.2 |
-| 25 or more nurses and midwives per 10,000 population | G1 | 1.2 |
-| Improved service coverage for people with severe mental health disorders | G1 | 1.2 |
-| Universal access to safe drinking water services | G1 | 1.3 |
-| Reduced prevalence of current tobacco use, aged 15 years and over, to less than 15% | G1 | 1.3 |
-| At least 87% of children achieving minimum proficiency in literacy, end primary | G2 | 2.0 |
-| At least 85% of children achieving minimum proficiency in numeracy, end primary | G2 | 2.0 |
-| All primary school teachers having minimum required qualifications | G2 | 2.1 |
-| All secondary school teachers having minimum required qualifications | G2 | 2.1 |
-| Substantially reduced share of youth not in education, employment or training | G2 | 2.2 |
-| At least 56% completion rate lower secondary education | G2 | 2.2 |
-| All children participating in ECE or organised pre-primary education | G2 | 2.3 |
-| Increased enrollment ratio for tertiary education | G2 | 2.3 |
-| All primary schools with adapted infrastructure, materials for students with disabilities | G2 | 2.3 |
-| Reduce population subjected to physical violence in previous 12 months | G3 | 3.0 |
-| All children under 5 years of age having their birth registered | G3 | 3.1 |
-| Reduced share of women and girls 15 years and over subjected to partner violence, last 12 months | G3 | 3.2 |
-| Increased proportion of women in managerial positions | G3 | 3.2 |
-| All women having family planning needs met with modern contraception | G3 | 3.2 |
-| All people with severe disabilities collecting disability social protection benefits | G3 | 3.3 |
+| Outcome / Indicator (with target)                                                                | Goal | Outcome |
+| ------------------------------------------------------------------------------------------------ | ---- | ------- |
+| Reduce deaths to children under 5 years of age to under 25 per 1,000 live births                 | G1   | 1.0     |
+| Reduce premature deaths from Non-communicable Diseases (NCDs) by at least one-third              | G1   | 1.0     |
+| Universal coverage of essential health services                                                  | G1   | 1.2     |
+| 10 or more medical doctors per 10,000 population                                                 | G1   | 1.2     |
+| 25 or more nurses and midwives per 10,000 population                                             | G1   | 1.2     |
+| Improved service coverage for people with severe mental health disorders                         | G1   | 1.2     |
+| Universal access to safe drinking water services                                                 | G1   | 1.3     |
+| Reduced prevalence of current tobacco use, aged 15 years and over, to less than 15%              | G1   | 1.3     |
+| At least 87% of children achieving minimum proficiency in literacy, end primary                  | G2   | 2.0     |
+| At least 85% of children achieving minimum proficiency in numeracy, end primary                  | G2   | 2.0     |
+| All primary school teachers having minimum required qualifications                               | G2   | 2.1     |
+| All secondary school teachers having minimum required qualifications                             | G2   | 2.1     |
+| Substantially reduced share of youth not in education, employment or training                    | G2   | 2.2     |
+| At least 56% completion rate lower secondary education                                           | G2   | 2.2     |
+| All children participating in ECE or organised pre-primary education                             | G2   | 2.3     |
+| Increased enrollment ratio for tertiary education                                                | G2   | 2.3     |
+| All primary schools with adapted infrastructure, materials for students with disabilities        | G2   | 2.3     |
+| Reduce population subjected to physical violence in previous 12 months                           | G3   | 3.0     |
+| All children under 5 years of age having their birth registered                                  | G3   | 3.1     |
+| Reduced share of women and girls 15 years and over subjected to partner violence, last 12 months | G3   | 3.2     |
+| Increased proportion of women in managerial positions                                            | G3   | 3.2     |
+| All women having family planning needs met with modern contraception                             | G3   | 3.2     |
+| All people with severe disabilities collecting disability social protection benefits             | G3   | 3.3     |
 
 ---
 
@@ -53,6 +53,7 @@ its values are the Outcome reference codes, e.g. the dashboard URL `?outcome=1.3
 Indicator codes in brackets are the dashboard's series codes (mostly SDG series).
 
 ### Goal 1 — Improved health and well-being of all Pacific peoples
+
 - **1.0 Improved health outcomes for all Pacific Peoples, particularly vulnerable communities and marginalised groups**
   - Maternal mortality ratio (SH_STA_MORT)
   - Under-five mortality rate (SH_DYN_MORT)
@@ -81,6 +82,7 @@ Indicator codes in brackets are the dashboard's series codes (mostly SDG series)
   - Compulsory physical education in school curriculum (BPI_MANAP1)
 
 ### Goal 2 — Improved educational achievement of Pacific learners through quality, accessible, affordable, and inclusive education at all levels
+
 - **2.0 Improved educational achievement of all Pacific learners**
   - Children/young people achieving minimum proficiency in reading and mathematics (SE_TOT_PRFL)
   - Population achieving at least a fixed level of proficiency in literacy and numeracy (SPC_4_6_1)
@@ -102,6 +104,7 @@ Indicator codes in brackets are the dashboard's series codes (mostly SDG series)
   - Gross enrolment ratio for tertiary education (GER_5T8)
 
 ### Goal 3 — The Pacific region realises human rights, gender equality, equity, and social inclusion
+
 - **3.0 The human rights of all Pacific peoples are respected, protected, and realised**
   - Population subjected to physical violence in previous 12 months (VC_VOV_PHYL)
   - Population subjected to robbery in previous 12 months (VC_VOV_ROBB)
@@ -127,6 +130,7 @@ Indicator codes in brackets are the dashboard's series codes (mostly SDG series)
   - Population covered by at least one social protection benefit (SI_COV_BENFTS)
 
 ### Goal 4 — The Pacific's diverse cultures, traditions, spirituality, and languages are visible, valued, safeguarded, and inform all national and regional development actions
+
 - **4.1 Strengthened institutional capacity and capability to promote and safeguard Pacific culture, traditions, languages, practices, and arts outcomes**
   - National budget allocated to culture — protection, preservation (heritage), and promotion (SPC_PROXY_2)
 
@@ -134,14 +138,14 @@ Indicator codes in brackets are the dashboard's series codes (mostly SDG series)
 
 ## C. How this maps to RaiVanua's Outcome Framework
 
-| Blue Pacific 2050 | RaiVanua Outcome Framework |
-|---|---|
-| Thematic Area (e.g. People-Centred Development) | a Government pillar / focus grouping |
-| **Goal** (G1–G4) | an **Outcome** (long-term goal), or a focus-area grouping |
-| **Outcome** (1.0, 1.2 …) | an **Outcome** (finer grain) |
-| **Indicator** (+ SDG code) | an **Outcome indicator** (`outcome_indicators`) |
-| target embedded in the row text | the indicator's **target_value** per node/period |
-| the "Summary" table | the roll-up scorecard view |
+| Blue Pacific 2050                               | RaiVanua Outcome Framework                                |
+| ----------------------------------------------- | --------------------------------------------------------- |
+| Thematic Area (e.g. People-Centred Development) | a Government pillar / focus grouping                      |
+| **Goal** (G1–G4)                                | an **Outcome** (long-term goal), or a focus-area grouping |
+| **Outcome** (1.0, 1.2 …)                        | an **Outcome** (finer grain)                              |
+| **Indicator** (+ SDG code)                      | an **Outcome indicator** (`outcome_indicators`)           |
+| target embedded in the row text                 | the indicator's **target_value** per node/period          |
+| the "Summary" table                             | the roll-up scorecard view                                |
 
 If we want this as live data, it's a clean seed: one migration inserting the
 Goals/Outcomes into `outcomes` and the indicators into `outcome_indicators`

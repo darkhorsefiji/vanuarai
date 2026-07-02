@@ -8,7 +8,8 @@
     "serve": "pm2 start ecosystem.config.js && pm2 save",
     "serve:logs": "pm2 logs raivanua-api",
     "serve:restart": "pm2 restart raivanua-api",
-    "serve:stop": "pm2 stop raivanua-api"
+    "serve:stop": "pm2 stop raivanua-api",
+    "prepare": "husky"
   },
   "dependencies": {
     "docx": "^9.7.1",
@@ -21,6 +22,9 @@
   },
   "devDependencies": {
     "concurrently": "^9.1.2",
-    "nodemon": "^3.1.9"
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.8",
+    "nodemon": "^3.1.9",
+    "prettier": "^3.9.4"
   }
 }

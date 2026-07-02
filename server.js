@@ -7,58 +7,102 @@ const pg = require("pg");
 const { Pool } = pg;
 // Return DATE columns (OID 1082) as raw 'YYYY-MM-DD' strings, not JS Date objects,
 // so due dates don't shift a day across timezones (server runs at UTC+12).
-pg.types.setTypeParser(1082, v => v);
+pg.types.setTypeParser(1082, (v) => v);
 const { OAuth2Client } = require("google-auth-library");
 const jwt = require("jsonwebtoken");
 const ExcelJS = require("exceljs");
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+});
 // Neon closes idle connections; an error on an idle pooled client is emitted on
 // the pool and would otherwise bubble to uncaughtException. Swallow + log so a
 // dropped idle connection never takes the process down (pool re-connects lazily).
-pool.on("error", (err) => console.error("pg pool error (idle client):", err && err.message ? err.message : err));
+pool.on("error", (err) =>
+  console.error(
+    "pg pool error (idle client):",
+    err && err.message ? err.message : err
+  )
+);
 const app = express();
 const VILLAGE = "Bagasau";
-const q = (sql, p = []) => pool.query(sql, p).then(r => r.rows);
-const n = v => Number(v);
-const NEXT_LEVEL = { vanua: 'yavusa', yavusa: 'mataqali', mataqali: 'tokatoka', tokatoka: 'vuvale', matanitu: 'provincial_council', provincial_council: 'district', district: 'village' };
-const BODY_LEVELS = new Set(['mataqali', 'village', 'soqosoqo']);
-const VALIDITY = new Set(['daily', 'weekly', 'fortnightly', 'monthly']);
+const q = (sql, p = []) => pool.query(sql, p).then((r) => r.rows);
+const n = (v) => Number(v);
+const NEXT_LEVEL = {
+  vanua: "yavusa",
+  yavusa: "mataqali",
+  mataqali: "tokatoka",
+  tokatoka: "vuvale",
+  matanitu: "provincial_council",
+  provincial_council: "district",
+  district: "village",
+};
+const BODY_LEVELS = new Set(["mataqali", "village", "soqosoqo"]);
+const VALIDITY = new Set(["daily", "weekly", "fortnightly", "monthly"]);
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
 const JWT_SECRET = process.env.JWT_SECRET || "dev-secret-change-me";
 const gclient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 // Resilience: a single bad request (e.g. malformed input -> rejected DB query in
 // an async handler) must never take down the whole API process.
-process.on("unhandledRejection", (err) => console.error("unhandledRejection:", err && err.message ? err.message : err));
-process.on("uncaughtException", (err) => console.error("uncaughtException:", err && err.message ? err.message : err));
+process.on("unhandledRejection", (err) =>
+  console.error("unhandledRejection:", err && err.message ? err.message : err)
+);
+process.on("uncaughtException", (err) =>
+  console.error("uncaughtException:", err && err.message ? err.message : err)
+);
 
 // permissive CORS for local dev (Vite on :5173)
-app.use((req, res, next) => { res.set("Access-Control-Allow-Origin", "*"); res.set("Access-Control-Allow-Headers", "Content-Type, Authorization"); next(); });
+app.use((req, res, next) => {
+  res.set("Access-Control-Allow-Origin", "*");
+  res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  next();
+});
 app.use(express.json());
 // decode a Bearer session token (if present) onto req.user
 app.use((req, res, next) => {
   const m = (req.headers.authorization || "").match(/^Bearer (.+)$/);
-  if (m) { try { req.user = jwt.verify(m[1], JWT_SECRET); } catch { /* ignore invalid token */ } }
+  if (m) {
+    try {
+      req.user = jwt.verify(m[1], JWT_SECRET);
+    } catch {
+      /* ignore invalid token */
+    }
+  }
   next();
 });
 
-app.get("/api/health", (req, res) => res.json({ ok: true, googleConfigured: !!GOOGLE_CLIENT_ID }));
+app.get("/api/health", (req, res) =>
+  res.json({ ok: true, googleConfigured: !!GOOGLE_CLIENT_ID })
+);
 
 // ---- Auth ----
 app.post("/api/auth/google", async (req, res) => {
-  if (!GOOGLE_CLIENT_ID) return res.status(500).json({ error: "Google login not configured on the server" });
+  if (!GOOGLE_CLIENT_ID)
+    return res
+      .status(500)
+      .json({ error: "Google login not configured on the server" });
   const { credential } = req.body || {};
-  if (!credential) return res.status(400).json({ error: "credential required" });
+  if (!credential)
+    return res.status(400).json({ error: "credential required" });
   try {
-    const ticket = await gclient.verifyIdToken({ idToken: credential, audience: GOOGLE_CLIENT_ID });
+    const ticket = await gclient.verifyIdToken({
+      idToken: credential,
+      audience: GOOGLE_CLIENT_ID,
+    });
     const p = ticket.getPayload();
     const [u] = await q(
       `insert into users(google_sub, email, display_name, photo_url) values($1,$2,$3,$4)
        on conflict (google_sub) do update set email=excluded.email, display_name=excluded.display_name, photo_url=excluded.photo_url
        returning id, email, display_name, is_app_admin`,
-      [p.sub, p.email, p.name || p.email, p.picture || null]);
-    const token = jwt.sign({ uid: u.id, email: u.email, name: u.display_name }, JWT_SECRET, { expiresIn: "30d" });
+      [p.sub, p.email, p.name || p.email, p.picture || null]
+    );
+    const token = jwt.sign(
+      { uid: u.id, email: u.email, name: u.display_name },
+      JWT_SECRET,
+      { expiresIn: "30d" }
+    );
     res.json({ token });
   } catch (e) {
     res.status(401).json({ error: "invalid Google token" });
@@ -67,24 +111,52 @@ app.post("/api/auth/google", async (req, res) => {
 
 app.get("/api/me", async (req, res) => {
   if (!req.user) return res.json({ user: null });
-  const [u] = await q(`select id, email, display_name, is_app_admin, photo_url from users where id=$1`, [req.user.uid]);
+  const [u] = await q(
+    `select id, email, display_name, is_app_admin, photo_url from users where id=$1`,
+    [req.user.uid]
+  );
   if (!u) return res.json({ user: null });
   const [mem] = await q(
     `select m.role, m.status from memberships m join villages v on v.id=m.village_id
-     where m.user_id=$1 and v.name=$2`, [u.id, VILLAGE]);
-  const offices = await q(`select office, body_node_id from body_offices where user_id=$1 and active=true`, [u.id]);
-  res.json({ user: { id: u.id, email: u.email, name: u.display_name, photo: u.photo_url, isAppAdmin: u.is_app_admin, role: mem?.role || null, status: mem?.status || null, offices } });
+     where m.user_id=$1 and v.name=$2`,
+    [u.id, VILLAGE]
+  );
+  const offices = await q(
+    `select office, body_node_id from body_offices where user_id=$1 and active=true`,
+    [u.id]
+  );
+  res.json({
+    user: {
+      id: u.id,
+      email: u.email,
+      name: u.display_name,
+      photo: u.photo_url,
+      isAppAdmin: u.is_app_admin,
+      role: mem?.role || null,
+      status: mem?.status || null,
+      offices,
+    },
+  });
 });
 
 app.get("/api/plans", async (req, res) => {
-  const rows = await q(`select p.id, p.name, p.volume_mb, p.validity, p.price_cents, p.active from plans p
-    join villages v on p.village_id=v.id where v.name=$1 order by p.price_cents`, [VILLAGE]);
-  res.json(rows.map(r => ({ ...r, price_cents: n(r.price_cents), volume_mb: n(r.volume_mb) })));
+  const rows = await q(
+    `select p.id, p.name, p.volume_mb, p.validity, p.price_cents, p.active from plans p
+    join villages v on p.village_id=v.id where v.name=$1 order by p.price_cents`,
+    [VILLAGE]
+  );
+  res.json(
+    rows.map((r) => ({
+      ...r,
+      price_cents: n(r.price_cents),
+      volume_mb: n(r.volume_mb),
+    }))
+  );
 });
 
 // Admin: plan configuration + pricing (surfaced on the Dev page). No auth gate yet — gate to admin later.
-const planFields = b => [
-  String(b.name || '').trim(),
+const planFields = (b) => [
+  String(b.name || "").trim(),
   Math.max(0, parseInt(b.volume_mb, 10) || 0),
   b.validity,
   Math.max(0, parseInt(b.price_cents, 10) || 0),
@@ -92,37 +164,56 @@ const planFields = b => [
 ];
 app.post("/api/plans", async (req, res) => {
   const b = req.body || {};
-  if (!b.name || !VALIDITY.has(b.validity)) return res.status(400).json({ error: "name and validity (daily/weekly/fortnightly/monthly) required" });
+  if (!b.name || !VALIDITY.has(b.validity))
+    return res.status(400).json({
+      error: "name and validity (daily/weekly/fortnightly/monthly) required",
+    });
   try {
     const [v] = await q(`select id from villages where name=$1`, [VILLAGE]);
     const [row] = await q(
       `insert into plans(village_id, name, volume_mb, validity, price_cents, active)
        values($1,$2,$3,$4,$5,$6) returning id`,
-      [v.id, ...planFields(b)]);
+      [v.id, ...planFields(b)]
+    );
     res.json({ ok: true, id: row.id });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 app.patch("/api/plans/:id", async (req, res) => {
   const b = req.body || {};
-  if (!b.name || !VALIDITY.has(b.validity)) return res.status(400).json({ error: "name and validity (daily/weekly/fortnightly/monthly) required" });
+  if (!b.name || !VALIDITY.has(b.validity))
+    return res.status(400).json({
+      error: "name and validity (daily/weekly/fortnightly/monthly) required",
+    });
   try {
-    await q(`update plans set name=$1, volume_mb=$2, validity=$3, price_cents=$4, active=$5 where id=$6`,
-      [...planFields(b), req.params.id]);
+    await q(
+      `update plans set name=$1, volume_mb=$2, validity=$3, price_cents=$4, active=$5 where id=$6`,
+      [...planFields(b), req.params.id]
+    );
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 app.delete("/api/plans/:id", async (req, res) => {
   try {
     await q(`delete from plans where id=$1`, [req.params.id]);
     res.json({ ok: true });
   } catch (e) {
-    res.status(409).json({ error: "Can't delete a plan that already has payments/sessions — set it inactive instead." });
+    res.status(409).json({
+      error:
+        "Can't delete a plan that already has payments/sessions — set it inactive instead.",
+    });
   }
 });
 
 app.get("/api/profile", async (req, res) => {
-  const [v] = await q(`select name, introduction, background, latitude, longitude, how_to_get_there
-    from villages where name=$1`, [VILLAGE]);
+  const [v] = await q(
+    `select name, introduction, background, latitude, longitude, how_to_get_there
+    from villages where name=$1`,
+    [VILLAGE]
+  );
   const [counts] = await q(`select
     (select count(*) from scope_nodes where level='yavusa')::int yavusa,
     (select count(*) from scope_nodes where level='mataqali')::int mataqali,
@@ -130,42 +221,68 @@ app.get("/api/profile", async (req, res) => {
     (select count(*) from scope_nodes where level='vuvale')::int vuvale,
     (select count(*) from scope_nodes where axis='soqosoqo')::int soqosoqo,
     (select count(*) from memberships)::int members`);
-  const resources = await q(`select sector, resource_score, participation_score, notes
+  const resources = await q(
+    `select sector, resource_score, participation_score, notes
     from village_resources vr join villages vi on vi.id=vr.village_id
-    where vi.name=$1 order by sort_order`, [VILLAGE]);
+    where vi.name=$1 order by sort_order`,
+    [VILLAGE]
+  );
   // District + Province sourced live from the Government (provincial) hierarchy:
   // village node -> parent (district/Tikina) -> grandparent (provincial council).
-  const [gov] = await q(`select dist.label district, prov.label province
+  const [gov] = await q(
+    `select dist.label district, prov.label province
     from villages vlg
       join scope_nodes vil on vil.id = vlg.village_node_id
       left join scope_nodes dist on dist.id = vil.parent_id
       left join scope_nodes prov on prov.id = dist.parent_id
-    where vlg.name=$1`, [VILLAGE]);
+    where vlg.name=$1`,
+    [VILLAGE]
+  );
   res.json({
-    name: v.name, district: gov?.district || null, province: gov?.province || null,
-    introduction: v.introduction, background: v.background,
+    name: v.name,
+    district: gov?.district || null,
+    province: gov?.province || null,
+    introduction: v.introduction,
+    background: v.background,
     latitude: v.latitude != null ? n(v.latitude) : null,
     longitude: v.longitude != null ? n(v.longitude) : null,
     how_to_get_there: v.how_to_get_there,
     counts,
-    resources: resources.map(r => ({ sector: r.sector, resource: n(r.resource_score), participation: n(r.participation_score), notes: r.notes })),
+    resources: resources.map((r) => ({
+      sector: r.sector,
+      resource: n(r.resource_score),
+      participation: n(r.participation_score),
+      notes: r.notes,
+    })),
   });
 });
 
 // Admin: update profile text + pinned location. (No auth yet — gate to official/admin later.)
 app.patch("/api/profile", async (req, res) => {
   const b = req.body || {};
-  const lat = b.latitude != null && b.latitude !== "" ? Number(b.latitude) : null;
-  const lon = b.longitude != null && b.longitude !== "" ? Number(b.longitude) : null;
+  const lat =
+    b.latitude != null && b.latitude !== "" ? Number(b.latitude) : null;
+  const lon =
+    b.longitude != null && b.longitude !== "" ? Number(b.longitude) : null;
   const [v] = await q(
     `update villages set introduction=$1, background=$2, how_to_get_there=$3, latitude=$4, longitude=$5
      where name=$6 returning name`,
-    [b.introduction ?? null, b.background ?? null, b.how_to_get_there ?? null, lat, lon, VILLAGE]);
+    [
+      b.introduction ?? null,
+      b.background ?? null,
+      b.how_to_get_there ?? null,
+      lat,
+      lon,
+      VILLAGE,
+    ]
+  );
   res.json({ ok: !!v });
 });
 
 app.get("/api/hierarchy", async (req, res) => {
-  const rows = await q(`select id,label,parent_id,level,axis from scope_nodes where archived_at is null`);
+  const rows = await q(
+    `select id,label,parent_id,level,axis from scope_nodes where archived_at is null`
+  );
   res.json(rows);
 });
 
@@ -175,48 +292,90 @@ app.post("/api/soqosoqo", async (req, res) => {
   const label = String((req.body || {}).label || "").trim();
   if (!label) return res.status(400).json({ error: "label required" });
   try {
-    const [v] = await q(`select id village_id, village_node_id from villages where name=$1`, [VILLAGE]);
-    if (!v || !v.village_node_id) return res.status(404).json({ error: "village node not found" });
+    const [v] = await q(
+      `select id village_id, village_node_id from villages where name=$1`,
+      [VILLAGE]
+    );
+    if (!v || !v.village_node_id)
+      return res.status(404).json({ error: "village node not found" });
     const [row] = await q(
       `insert into scope_nodes(axis, level, label, parent_id, village_id, is_body)
        values('soqosoqo','soqosoqo',$1,$2,$3,true) returning id`,
-      [label, v.village_node_id, v.village_id]);
+      [label, v.village_node_id, v.village_id]
+    );
     res.json({ ok: true, id: row.id });
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 
 // Government contact directory (provincial + divisional officers).
 app.get("/api/gov-contacts", async (req, res) => {
-  const rows = await q(`select gc.id, gc.title, gc.name, gc.role, gc.mobile, gc.office, gc.email
+  const rows = await q(
+    `select gc.id, gc.title, gc.name, gc.role, gc.mobile, gc.office, gc.email
     from gov_contacts gc join villages v on v.id=gc.village_id
-    where v.name=$1 order by gc.sort_order, gc.title`, [VILLAGE]);
+    where v.name=$1 order by gc.sort_order, gc.title`,
+    [VILLAGE]
+  );
   res.json(rows);
 });
 app.patch("/api/gov-contacts/:id", async (req, res) => {
   const b = req.body || {};
   try {
-    await q(`update gov_contacts set name=$1, role=$2, mobile=$3, office=$4, email=$5 where id=$6`,
-      [b.name || null, b.role || null, b.mobile || null, b.office || null, b.email || null, req.params.id]);
+    await q(
+      `update gov_contacts set name=$1, role=$2, mobile=$3, office=$4, email=$5 where id=$6`,
+      [
+        b.name || null,
+        b.role || null,
+        b.mobile || null,
+        b.office || null,
+        b.email || null,
+        req.params.id,
+      ]
+    );
     res.json({ ok: true });
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 
 // Lands: request pipeline + allocation register.
 app.get("/api/land-requests", async (req, res) => {
-  res.json(await q(`select lr.id, lr.requester, lr.purpose, lr.size, lr.est_rent_cents, lr.status, lr.votes_for, lr.voters_eligible
-    from land_requests lr join villages v on v.id=lr.village_id where v.name=$1 order by lr.sort_order`, [VILLAGE]));
+  res.json(
+    await q(
+      `select lr.id, lr.requester, lr.purpose, lr.size, lr.est_rent_cents, lr.status, lr.votes_for, lr.voters_eligible
+    from land_requests lr join villages v on v.id=lr.village_id where v.name=$1 order by lr.sort_order`,
+      [VILLAGE]
+    )
+  );
 });
 app.get("/api/land-allocations", async (req, res) => {
-  res.json(await q(`select la.id, la.leasee, la.purpose, la.term, to_char(la.expiry,'YYYY-MM-DD') expiry,
+  res.json(
+    await q(
+      `select la.id, la.leasee, la.purpose, la.term, to_char(la.expiry,'YYYY-MM-DD') expiry,
       la.lease_mgt, la.premium_cents, la.rent_year_cents
-    from land_allocations la join villages v on v.id=la.village_id where v.name=$1 order by la.sort_order`, [VILLAGE]));
+    from land_allocations la join villages v on v.id=la.village_id where v.name=$1 order by la.sort_order`,
+      [VILLAGE]
+    )
+  );
 });
 
 // Financials tabs: transactions, asset register, investments.
-const OFFICE_LABEL = { head: "Head (Turaga)", vunivola: "Secretary (Vunivola)", dauniyau: "Treasurer (Dau ni yau)", liuliu: "Leader (Liuliu)", village_admin: "Village Admin" };
-const ENTITY_LABEL = { traditional: "Vanua", government: "Government", soqosoqo: "Soqosoqo" };
+const OFFICE_LABEL = {
+  head: "Head (Turaga)",
+  vunivola: "Secretary (Vunivola)",
+  dauniyau: "Treasurer (Dau ni yau)",
+  liuliu: "Leader (Liuliu)",
+  village_admin: "Village Admin",
+};
+const ENTITY_LABEL = {
+  traditional: "Vanua",
+  government: "Government",
+  soqosoqo: "Soqosoqo",
+};
 app.get("/api/fin-transactions", async (req, res) => {
-  const rows = await q(`select t.id, to_char(t.tx_date,'YYYY-MM-DD') tx_date, t.description, t.fund, t.type, t.method, t.amount_cents,
+  const rows = await q(
+    `select t.id, to_char(t.tx_date,'YYYY-MM-DD') tx_date, t.description, t.fund, t.type, t.method, t.amount_cents,
       sn.level, sn.label body, sn.id body_id,
       t.donor_name, t.donor_role, t.donor_entity, t.donor_body,
       iu.display_name i_name, io.office i_office, isn.axis i_axis, isn.label i_body, to_char(t.initiated_at,'YYYY-MM-DD HH24:MI') i_at,
@@ -229,28 +388,74 @@ app.get("/api/fin-transactions", async (req, res) => {
     left join body_offices ao on ao.id=t.approver_office_id
     left join users au on au.id=ao.user_id
     left join scope_nodes asn on asn.id=ao.body_node_id
-    where v.name=$1 and t.archived_at is null order by t.tx_date desc`, [VILLAGE]);
-  res.json(rows.map(r => ({
-    id: r.id, tx_date: r.tx_date, description: r.description, fund: r.fund, type: r.type, method: r.method,
-    amount_cents: r.amount_cents, level: r.level, body: r.body, body_id: r.body_id,
-    donor: r.donor_name ? { name: r.donor_name, role: r.donor_role, entity: r.donor_entity, body: r.donor_body, at: r.tx_date } : null,
-    initiator: r.i_name ? { name: r.i_name, role: OFFICE_LABEL[r.i_office] || r.i_office, entity: ENTITY_LABEL[r.i_axis] || r.i_axis, body: r.i_body, at: r.i_at } : null,
-    approver: r.a_name ? { name: r.a_name, role: OFFICE_LABEL[r.a_office] || r.a_office, entity: ENTITY_LABEL[r.a_axis] || r.a_axis, body: r.a_body, at: r.a_at } : null,
-  })));
+    where v.name=$1 and t.archived_at is null order by t.tx_date desc`,
+    [VILLAGE]
+  );
+  res.json(
+    rows.map((r) => ({
+      id: r.id,
+      tx_date: r.tx_date,
+      description: r.description,
+      fund: r.fund,
+      type: r.type,
+      method: r.method,
+      amount_cents: r.amount_cents,
+      level: r.level,
+      body: r.body,
+      body_id: r.body_id,
+      donor: r.donor_name
+        ? {
+            name: r.donor_name,
+            role: r.donor_role,
+            entity: r.donor_entity,
+            body: r.donor_body,
+            at: r.tx_date,
+          }
+        : null,
+      initiator: r.i_name
+        ? {
+            name: r.i_name,
+            role: OFFICE_LABEL[r.i_office] || r.i_office,
+            entity: ENTITY_LABEL[r.i_axis] || r.i_axis,
+            body: r.i_body,
+            at: r.i_at,
+          }
+        : null,
+      approver: r.a_name
+        ? {
+            name: r.a_name,
+            role: OFFICE_LABEL[r.a_office] || r.a_office,
+            entity: ENTITY_LABEL[r.a_axis] || r.a_axis,
+            body: r.a_body,
+            at: r.a_at,
+          }
+        : null,
+    }))
+  );
 });
 app.get("/api/assets", async (req, res) => {
-  res.json(await q(`select a.id, a.name, a.category, to_char(a.acquired,'YYYY-MM-DD') acquired, a.value_cents, a.condition, a.custodian,
+  res.json(
+    await q(
+      `select a.id, a.name, a.category, to_char(a.acquired,'YYYY-MM-DD') acquired, a.value_cents, a.condition, a.custodian,
       sn.level, sn.label body, sn.id body_id
     from village_assets a join villages v on v.id=a.village_id
     left join scope_nodes sn on sn.id=a.classification_node_id
-    where v.name=$1 and a.archived_at is null order by a.sort_order`, [VILLAGE]));
+    where v.name=$1 and a.archived_at is null order by a.sort_order`,
+      [VILLAGE]
+    )
+  );
 });
 app.get("/api/investments", async (req, res) => {
-  res.json(await q(`select i.id, i.name, i.type, i.amount_cents, i.current_value_cents, i.return_pct, i.notes,
+  res.json(
+    await q(
+      `select i.id, i.name, i.type, i.amount_cents, i.current_value_cents, i.return_pct, i.notes,
       sn.level, sn.label body, sn.id body_id
     from village_investments i join villages v on v.id=i.village_id
     left join scope_nodes sn on sn.id=i.classification_node_id
-    where v.name=$1 and i.archived_at is null order by i.sort_order`, [VILLAGE]));
+    where v.name=$1 and i.archived_at is null order by i.sort_order`,
+      [VILLAGE]
+    )
+  );
 });
 
 // Kacikacivaki (announcements): channel 'koro' = official, 'lewe' = community.
@@ -258,18 +463,31 @@ app.get("/api/investments", async (req, res) => {
 // 'official' membership role (or app admin); edit/delete = owner or official.
 async function noticeActor(req) {
   if (!req.user) return null;
-  const [u] = await q(`select id, display_name, is_app_admin from users where id=$1`, [req.user.uid]);
+  const [u] = await q(
+    `select id, display_name, is_app_admin from users where id=$1`,
+    [req.user.uid]
+  );
   if (!u) return null;
-  const [mem] = await q(`select m.role from memberships m join villages v on v.id=m.village_id
-    where m.user_id=$1 and v.name=$2`, [u.id, VILLAGE]);
-  return { id: u.id, name: u.display_name, isAppAdmin: u.is_app_admin, role: mem?.role || null };
+  const [mem] = await q(
+    `select m.role from memberships m join villages v on v.id=m.village_id
+    where m.user_id=$1 and v.name=$2`,
+    [u.id, VILLAGE]
+  );
+  return {
+    id: u.id,
+    name: u.display_name,
+    isAppAdmin: u.is_app_admin,
+    role: mem?.role || null,
+  };
 }
-const isOfficial = a => !!a && (a.isAppAdmin || a.role === "official");
+const isOfficial = (a) => !!a && (a.isAppAdmin || a.role === "official");
 
 // app_admin (DEV) only — the top tier.
 async function isAppAdminReq(req) {
   if (!req.user) return false;
-  const [u] = await q(`select is_app_admin from users where id=$1`, [req.user.uid]);
+  const [u] = await q(`select is_app_admin from users where id=$1`, [
+    req.user.uid,
+  ]);
   return !!(u && u.is_app_admin);
 }
 
@@ -277,46 +495,79 @@ async function isAppAdminReq(req) {
 // Mirrors the frontend isVillageAdmin so node editing is enforced, not just hidden.
 async function isVillageAdminReq(req) {
   if (!req.user) return false;
-  const [u] = await q(`select is_app_admin from users where id=$1`, [req.user.uid]);
+  const [u] = await q(`select is_app_admin from users where id=$1`, [
+    req.user.uid,
+  ]);
   if (!u) return false;
   if (u.is_app_admin) return true;
-  const off = await q(`select 1 from body_offices where user_id=$1 and office='village_admin' and active=true limit 1`, [req.user.uid]);
+  const off = await q(
+    `select 1 from body_offices where user_id=$1 and office='village_admin' and active=true limit 1`,
+    [req.user.uid]
+  );
   return off.length > 0;
 }
 
 app.get("/api/notices", async (req, res) => {
-  res.json(await q(`select n.id, n.channel, n.author, n.author_role, n.body, n.created_by,
+  res.json(
+    await q(
+      `select n.id, n.channel, n.author, n.author_role, n.body, n.created_by,
       to_char(n.posted_at at time zone 'Pacific/Fiji','YYYY-MM-DD HH24:MI') posted_at,
       to_char(n.expires_at,'YYYY-MM-DD') expires_at,
       case when n.expires_at is null or n.expires_at >= (now() at time zone 'Pacific/Fiji')::date
            then 'Active' else 'Expired' end status
     from notices n join villages v on v.id=n.village_id where v.name=$1
-    order by n.posted_at desc`, [VILLAGE]));
+    order by n.posted_at desc`,
+      [VILLAGE]
+    )
+  );
 });
 app.post("/api/notices", async (req, res) => {
   const b = req.body || {};
-  const channel = b.channel === 'koro' ? 'koro' : 'lewe';
-  const body = String(b.body || '').trim();
+  const channel = b.channel === "koro" ? "koro" : "lewe";
+  const body = String(b.body || "").trim();
   if (!body) return res.status(400).json({ error: "body required" });
   try {
     const actor = await noticeActor(req);
     if (!actor) return res.status(401).json({ error: "sign in to post" });
-    if (channel === 'koro' && !isOfficial(actor)) return res.status(403).json({ error: "only village officials can post official notices" });
+    if (channel === "koro" && !isOfficial(actor))
+      return res
+        .status(403)
+        .json({ error: "only village officials can post official notices" });
     const [v] = await q(`select id from villages where name=$1`, [VILLAGE]);
     const [row] = await q(
       `insert into notices(village_id, channel, author, author_role, body, expires_at, created_by)
        values($1,$2,$3,$4,$5,$6,$7) returning id`,
-      [v.id, channel, actor.name, channel === 'koro' ? (b.author_role || 'Official') : null, body.slice(0, 2000), b.expires_at || null, actor.id]);
+      [
+        v.id,
+        channel,
+        actor.name,
+        channel === "koro" ? b.author_role || "Official" : null,
+        body.slice(0, 2000),
+        b.expires_at || null,
+        actor.id,
+      ]
+    );
     res.json({ ok: true, id: row.id });
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 async function noticePermission(req, res) {
   const actor = await noticeActor(req);
-  if (!actor) { res.status(401).json({ error: "sign in first" }); return null; }
-  const [n] = await q(`select created_by from notices where id=$1`, [req.params.id]);
-  if (!n) { res.status(404).json({ error: "post not found" }); return null; }
+  if (!actor) {
+    res.status(401).json({ error: "sign in first" });
+    return null;
+  }
+  const [n] = await q(`select created_by from notices where id=$1`, [
+    req.params.id,
+  ]);
+  if (!n) {
+    res.status(404).json({ error: "post not found" });
+    return null;
+  }
   if (!isOfficial(actor) && !(n.created_by && n.created_by === actor.id)) {
-    res.status(403).json({ error: "you can only change your own posts" }); return null;
+    res.status(403).json({ error: "you can only change your own posts" });
+    return null;
   }
   return actor;
 }
@@ -324,22 +575,31 @@ app.patch("/api/notices/:id", async (req, res) => {
   try {
     if (!(await noticePermission(req, res))) return;
     const b = req.body || {};
-    const body = String(b.body || '').trim();
+    const body = String(b.body || "").trim();
     if (!body) return res.status(400).json({ error: "body required" });
-    await q(`update notices set body=$1, expires_at=$2 where id=$3`, [body.slice(0, 2000), b.expires_at || null, req.params.id]);
+    await q(`update notices set body=$1, expires_at=$2 where id=$3`, [
+      body.slice(0, 2000),
+      b.expires_at || null,
+      req.params.id,
+    ]);
     res.json({ ok: true });
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 app.delete("/api/notices/:id", async (req, res) => {
   try {
     if (!(await noticePermission(req, res))) return;
     await q(`delete from notices where id=$1`, [req.params.id]);
     res.json({ ok: true });
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 
 app.get("/api/composition", async (req, res) => {
-  const rows = await q(`select vu.id vuvale_id, vu.label vuvale, tok.label tokatoka, mat.label mataqali,
+  const rows =
+    await q(`select vu.id vuvale_id, vu.label vuvale, tok.label tokatoka, mat.label mataqali,
       p.full_name, p.relationship, to_char(p.date_of_birth,'YYYY') yob, p.is_deceased
     from scope_nodes vu
       join scope_nodes tok on tok.id = vu.parent_id
@@ -350,36 +610,68 @@ app.get("/api/composition", async (req, res) => {
   const byVuvale = new Map();
   for (const r of rows) {
     if (!byVuvale.has(r.vuvale_id))
-      byVuvale.set(r.vuvale_id, { vuvale: r.vuvale, tokatoka: r.tokatoka, mataqali: r.mataqali, persons: [] });
+      byVuvale.set(r.vuvale_id, {
+        vuvale: r.vuvale,
+        tokatoka: r.tokatoka,
+        mataqali: r.mataqali,
+        persons: [],
+      });
     if (r.full_name)
-      byVuvale.get(r.vuvale_id).persons.push({ name: r.full_name, relationship: r.relationship, yob: r.yob, deceased: r.is_deceased });
+      byVuvale.get(r.vuvale_id).persons.push({
+        name: r.full_name,
+        relationship: r.relationship,
+        yob: r.yob,
+        deceased: r.is_deceased,
+      });
   }
   res.json([...byVuvale.values()]);
 });
 
 app.get("/api/level-styles", async (req, res) => {
-  res.json(await q(`select level, label, label_en, color, sort_order from level_styles order by sort_order`));
+  res.json(
+    await q(
+      `select level, label, label_en, color, sort_order from level_styles order by sort_order`
+    )
+  );
 });
 
 // DEV: add / remove hierarchy level name rows.
 app.post("/api/level-styles", async (req, res) => {
   const b = req.body || {};
-  const level = String(b.level || "").trim().toLowerCase().replace(/\s+/g, "_");
-  if (!level || !b.label) return res.status(400).json({ error: "level key and Fijian label required" });
+  const level = String(b.level || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "_");
+  if (!level || !b.label)
+    return res
+      .status(400)
+      .json({ error: "level key and Fijian label required" });
   try {
-    const [row] = await q(`insert into level_styles(level, label, label_en, color, sort_order)
+    const [row] = await q(
+      `insert into level_styles(level, label, label_en, color, sort_order)
       values($1,$2,$3,$4, coalesce((select max(sort_order) from level_styles),0)+1)
       on conflict (level) do nothing returning level`,
-      [level, String(b.label).slice(0, 40), (b.label_en || null), b.color || "#6f8a8f"]);
-    if (!row) return res.status(409).json({ error: "that level already exists" });
+      [
+        level,
+        String(b.label).slice(0, 40),
+        b.label_en || null,
+        b.color || "#6f8a8f",
+      ]
+    );
+    if (!row)
+      return res.status(409).json({ error: "that level already exists" });
     res.json({ ok: true, level: row.level });
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 app.delete("/api/level-styles/:level", async (req, res) => {
   try {
     await q(`delete from level_styles where level=$1`, [req.params.level]);
     res.json({ ok: true });
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 
 // Admin/DEV: update hierarchy level styling + names. Body: { styles:[{level,color,label,label_en?}] }
@@ -390,9 +682,11 @@ app.patch("/api/level-styles", async (req, res) => {
   try {
     await client.query("BEGIN");
     for (const s of styles) {
-      await client.query(`update level_styles set color=coalesce($1,color), label=coalesce($2,label),
+      await client.query(
+        `update level_styles set color=coalesce($1,color), label=coalesce($2,label),
           label_en=coalesce($3,label_en) where level=$4`,
-        [s.color ?? null, s.label ?? null, s.label_en ?? null, s.level]);
+        [s.color ?? null, s.label ?? null, s.label_en ?? null, s.level]
+      );
     }
     await client.query("COMMIT");
     res.json({ ok: true, updated: styles.length });
@@ -406,30 +700,54 @@ app.patch("/api/level-styles", async (req, res) => {
 
 // ---- Hierarchy node CRUD (village_admin only) ----
 app.post("/api/nodes", async (req, res) => {
-  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  if (!(await isVillageAdminReq(req)))
+    return res.status(403).json({ error: "village admin access required" });
   const { parent_id, label } = req.body || {};
-  if (!parent_id || !label) return res.status(400).json({ error: "parent_id and label required" });
+  if (!parent_id || !label)
+    return res.status(400).json({ error: "parent_id and label required" });
   try {
-    const [p] = await q(`select id, axis, level, village_id from scope_nodes where id=$1`, [parent_id]);
+    const [p] = await q(
+      `select id, axis, level, village_id from scope_nodes where id=$1`,
+      [parent_id]
+    );
     if (!p) return res.status(404).json({ error: "parent not found" });
     const childLevel = NEXT_LEVEL[p.level];
-    if (!childLevel) return res.status(400).json({ error: `cannot add a child under ${p.level}` });
+    if (!childLevel)
+      return res
+        .status(400)
+        .json({ error: `cannot add a child under ${p.level}` });
     const [row] = await q(
       `insert into scope_nodes(axis, level, label, parent_id, village_id, is_body)
        values($1,$2,$3,$4,$5,$6) returning id`,
-      [p.axis, childLevel, label, parent_id, p.village_id, BODY_LEVELS.has(childLevel)]);
+      [
+        p.axis,
+        childLevel,
+        label,
+        parent_id,
+        p.village_id,
+        BODY_LEVELS.has(childLevel),
+      ]
+    );
     res.json({ ok: true, id: row.id, level: childLevel });
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 
 app.patch("/api/nodes/:id", async (req, res) => {
-  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  if (!(await isVillageAdminReq(req)))
+    return res.status(403).json({ error: "village admin access required" });
   const { label } = req.body || {};
   if (!label) return res.status(400).json({ error: "label required" });
   try {
-    await q(`update scope_nodes set label=$1 where id=$2`, [label, req.params.id]);
+    await q(`update scope_nodes set label=$1 where id=$2`, [
+      label,
+      req.params.id,
+    ]);
     res.json({ ok: true });
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 
 // Archive (retire) a node and its whole subtree, cascade-archiving every linked
@@ -437,24 +755,46 @@ app.patch("/api/nodes/:id", async (req, res) => {
 // Memberships are left intact — members of a retired household stay members and
 // can be reassigned separately.
 app.delete("/api/nodes/:id", async (req, res) => {
-  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  if (!(await isVillageAdminReq(req)))
+    return res.status(403).json({ error: "village admin access required" });
   const id = req.params.id;
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    const sub = await client.query(`with recursive d as (
+    const sub = await client.query(
+      `with recursive d as (
         select id from scope_nodes where id=$1
         union all select sn.id from scope_nodes sn join d on sn.parent_id=d.id
-      ) select id from d`, [id]);
-    const ids = sub.rows.map(r => r.id);
+      ) select id from d`,
+      [id]
+    );
+    const ids = sub.rows.map((r) => r.id);
     const A = `set archived_at=now() where`;
-    await client.query(`update scope_nodes ${A} id = any($1::uuid[]) and archived_at is null`, [ids]);
-    await client.query(`update projects ${A} owner_body_node_id = any($1::uuid[]) and archived_at is null`, [ids]);
-    await client.query(`update ledger_entries ${A} (contributor_vuvale_id = any($1::uuid[])
-        or pot_id in (select id from pots where owner_body_node_id = any($1::uuid[]))) and archived_at is null`, [ids]);
-    await client.query(`update fin_transactions ${A} classification_node_id = any($1::uuid[]) and archived_at is null`, [ids]);
-    await client.query(`update village_assets ${A} classification_node_id = any($1::uuid[]) and archived_at is null`, [ids]);
-    await client.query(`update village_investments ${A} classification_node_id = any($1::uuid[]) and archived_at is null`, [ids]);
+    await client.query(
+      `update scope_nodes ${A} id = any($1::uuid[]) and archived_at is null`,
+      [ids]
+    );
+    await client.query(
+      `update projects ${A} owner_body_node_id = any($1::uuid[]) and archived_at is null`,
+      [ids]
+    );
+    await client.query(
+      `update ledger_entries ${A} (contributor_vuvale_id = any($1::uuid[])
+        or pot_id in (select id from pots where owner_body_node_id = any($1::uuid[]))) and archived_at is null`,
+      [ids]
+    );
+    await client.query(
+      `update fin_transactions ${A} classification_node_id = any($1::uuid[]) and archived_at is null`,
+      [ids]
+    );
+    await client.query(
+      `update village_assets ${A} classification_node_id = any($1::uuid[]) and archived_at is null`,
+      [ids]
+    );
+    await client.query(
+      `update village_investments ${A} classification_node_id = any($1::uuid[]) and archived_at is null`,
+      [ids]
+    );
     await client.query("COMMIT");
     res.json({ ok: true, archivedNodes: ids.length });
   } catch (e) {
@@ -467,30 +807,63 @@ app.delete("/api/nodes/:id", async (req, res) => {
 
 // ---- Archive (void) individual financial & fundraising records (village_admin) ----
 async function archiveRow(req, res, table) {
-  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
-  try { await q(`update ${table} set archived_at=now() where id=$1`, [req.params.id]); res.json({ ok: true }); }
-  catch (e) { res.status(400).json({ error: e.message }); }
+  if (!(await isVillageAdminReq(req)))
+    return res.status(403).json({ error: "village admin access required" });
+  try {
+    await q(`update ${table} set archived_at=now() where id=$1`, [
+      req.params.id,
+    ]);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 }
-app.delete("/api/fin-transactions/:id", (req, res) => archiveRow(req, res, "fin_transactions"));
-app.delete("/api/assets/:id", (req, res) => archiveRow(req, res, "village_assets"));
-app.delete("/api/investments/:id", (req, res) => archiveRow(req, res, "village_investments"));
-app.delete("/api/contributions/:id", (req, res) => archiveRow(req, res, "ledger_entries"));
-app.delete("/api/fundraising/:id", (req, res) => archiveRow(req, res, "projects"));
+app.delete("/api/fin-transactions/:id", (req, res) =>
+  archiveRow(req, res, "fin_transactions")
+);
+app.delete("/api/assets/:id", (req, res) =>
+  archiveRow(req, res, "village_assets")
+);
+app.delete("/api/investments/:id", (req, res) =>
+  archiveRow(req, res, "village_investments")
+);
+app.delete("/api/contributions/:id", (req, res) =>
+  archiveRow(req, res, "ledger_entries")
+);
+app.delete("/api/fundraising/:id", (req, res) =>
+  archiveRow(req, res, "projects")
+);
 
 // ---- Entity officers (Liuliu / Vunivola / Dauniyau) + assignment history ----
 const MANAGED_OFFICES = ["liuliu", "vunivola", "dauniyau"];
-const ENTITY_LABEL2 = { traditional: "Vanua", government: "Government", soqosoqo: "Soqosoqo" };
-const OFFICE_TITLE = { liuliu: "Liuliu", vunivola: "Vunivola", dauniyau: "Dauniyau" };
+const ENTITY_LABEL2 = {
+  traditional: "Vanua",
+  government: "Government",
+  soqosoqo: "Soqosoqo",
+};
+const OFFICE_TITLE = {
+  liuliu: "Liuliu",
+  vunivola: "Vunivola",
+  dauniyau: "Dauniyau",
+};
 
 // Bodies with their current officers, plus the candidate pools.
 app.get("/api/officers", async (req, res) => {
-  const bodies = await q(`select id, label, axis, level from scope_nodes where is_body=true and archived_at is null order by axis, label`);
-  const cur = await q(`select bo.body_node_id, bo.office, u.id user_id, u.display_name name
+  const bodies = await q(
+    `select id, label, axis, level from scope_nodes where is_body=true and archived_at is null order by axis, label`
+  );
+  const cur = await q(
+    `select bo.body_node_id, bo.office, u.id user_id, u.display_name name
     from body_offices bo join users u on u.id=bo.user_id
-    where bo.office::text = any($1) and bo.ended_at is null`, [MANAGED_OFFICES]);
-  const allMembers = await q(`select distinct u.id user_id, u.display_name name
+    where bo.office::text = any($1) and bo.ended_at is null`,
+    [MANAGED_OFFICES]
+  );
+  const allMembers = await q(
+    `select distinct u.id user_id, u.display_name name
     from users u join memberships m on m.user_id=u.id join villages v on v.id=m.village_id
-    where v.name=$1 and m.status='approved' order by u.display_name`, [VILLAGE]);
+    where v.name=$1 and m.status='approved' order by u.display_name`,
+    [VILLAGE]
+  );
   const roster = await q(`with recursive up as (
       select m.user_id, sn.id nid, sn.parent_id, sn.level::text lvl from memberships m
         join scope_nodes sn on sn.id=m.vuvale_node_id where m.vuvale_node_id is not null and m.status='approved'
@@ -498,125 +871,266 @@ app.get("/api/officers", async (req, res) => {
     select distinct up.nid mataqali_id, u.id user_id, u.display_name name
     from up join users u on u.id=up.user_id where up.lvl='mataqali' order by u.display_name`);
   const officersByBody = {};
-  for (const o of cur) (officersByBody[o.body_node_id] ||= {})[o.office] = { user_id: o.user_id, name: o.name };
+  for (const o of cur)
+    (officersByBody[o.body_node_id] ||= {})[o.office] = {
+      user_id: o.user_id,
+      name: o.name,
+    };
   const rosterByBody = {};
-  for (const r of roster) (rosterByBody[r.mataqali_id] ||= []).push({ user_id: r.user_id, name: r.name });
+  for (const r of roster)
+    (rosterByBody[r.mataqali_id] ||= []).push({
+      user_id: r.user_id,
+      name: r.name,
+    });
   res.json({
-    bodies: bodies.map(b => ({
-      id: b.id, label: b.label, axis: b.axis, entity: ENTITY_LABEL2[b.axis] || b.axis, level: b.level,
-      officers: { liuliu: officersByBody[b.id]?.liuliu || null, vunivola: officersByBody[b.id]?.vunivola || null, dauniyau: officersByBody[b.id]?.dauniyau || null },
+    bodies: bodies.map((b) => ({
+      id: b.id,
+      label: b.label,
+      axis: b.axis,
+      entity: ENTITY_LABEL2[b.axis] || b.axis,
+      level: b.level,
+      officers: {
+        liuliu: officersByBody[b.id]?.liuliu || null,
+        vunivola: officersByBody[b.id]?.vunivola || null,
+        dauniyau: officersByBody[b.id]?.dauniyau || null,
+      },
     })),
-    allMembers: allMembers.map(m => ({ user_id: m.user_id, name: m.name })),
+    allMembers: allMembers.map((m) => ({ user_id: m.user_id, name: m.name })),
     rosterByBody,
   });
 });
 
 // Assign (or vacate) a position — ends the incumbent's term and starts a new one.
 app.post("/api/officers/assign", async (req, res) => {
-  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  if (!(await isVillageAdminReq(req)))
+    return res.status(403).json({ error: "village admin access required" });
   const b = req.body || {};
   const office = MANAGED_OFFICES.includes(b.office) ? b.office : null;
-  if (!b.body_node_id || !office) return res.status(400).json({ error: "body_node_id and a valid office (liuliu/vunivola/dauniyau) required" });
+  if (!b.body_node_id || !office)
+    return res.status(400).json({
+      error:
+        "body_node_id and a valid office (liuliu/vunivola/dauniyau) required",
+    });
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    await client.query(`update body_offices set ended_at=now(), active=false
-      where body_node_id=$1 and office=$2 and ended_at is null`, [b.body_node_id, office]);
+    await client.query(
+      `update body_offices set ended_at=now(), active=false
+      where body_node_id=$1 and office=$2 and ended_at is null`,
+      [b.body_node_id, office]
+    );
     if (b.user_id) {
-      await client.query(`insert into body_offices(body_node_id, office, user_id, started_at, active)
-        values($1,$2,$3,now(),true)`, [b.body_node_id, office, b.user_id]);
+      await client.query(
+        `insert into body_offices(body_node_id, office, user_id, started_at, active)
+        values($1,$2,$3,now(),true)`,
+        [b.body_node_id, office, b.user_id]
+      );
     }
     await client.query("COMMIT");
     res.json({ ok: true });
-  } catch (e) { await client.query("ROLLBACK"); res.status(400).json({ error: e.message }); }
-  finally { client.release(); }
+  } catch (e) {
+    await client.query("ROLLBACK");
+    res.status(400).json({ error: e.message });
+  } finally {
+    client.release();
+  }
 });
 
 // Change log of officer assignments (current + past) with start/end + status.
 app.get("/api/officer-log", async (req, res) => {
-  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
-  const rows = await q(`select sn.label entity, sn.axis, sn.level, sn.id body_id, bo.office, u.display_name name,
+  if (!(await isVillageAdminReq(req)))
+    return res.status(403).json({ error: "village admin access required" });
+  const rows = await q(
+    `select sn.label entity, sn.axis, sn.level, sn.id body_id, bo.office, u.display_name name,
       to_char(bo.started_at,'YYYY-MM-DD') start_date, to_char(bo.ended_at,'YYYY-MM-DD') end_date, (bo.ended_at is null) active
     from body_offices bo join scope_nodes sn on sn.id=bo.body_node_id join users u on u.id=bo.user_id
-    where bo.office::text = any($1) order by bo.started_at desc nulls last, sn.label`, [MANAGED_OFFICES]);
-  res.json(rows.map(r => ({
-    entity: r.entity, axis: ENTITY_LABEL2[r.axis] || r.axis, level: r.level, body_id: r.body_id,
-    office: OFFICE_TITLE[r.office] || r.office,
-    name: r.name, start_date: r.start_date, end_date: r.end_date, status: r.active ? "Active" : "Inactive",
-  })));
+    where bo.office::text = any($1) order by bo.started_at desc nulls last, sn.label`,
+    [MANAGED_OFFICES]
+  );
+  res.json(
+    rows.map((r) => ({
+      entity: r.entity,
+      axis: ENTITY_LABEL2[r.axis] || r.axis,
+      level: r.level,
+      body_id: r.body_id,
+      office: OFFICE_TITLE[r.office] || r.office,
+      name: r.name,
+      start_date: r.start_date,
+      end_date: r.end_date,
+      status: r.active ? "Active" : "Inactive",
+    }))
+  );
 });
 
 // ---- Families & members: templated bulk download / import (village_admin) ----
-const TPL_COLS = ["Yavusa", "Mataqali", "Tokatoka", "Family (Vuvale)", "Member", "Gender", "Age", "Status", "Household owner"];
+const TPL_COLS = [
+  "Yavusa",
+  "Mataqali",
+  "Tokatoka",
+  "Family (Vuvale)",
+  "Member",
+  "Gender",
+  "Age",
+  "Status",
+  "Household owner",
+];
 
 // Download an .xlsx pre-filled with the current traditional hierarchy + people.
 // Header row is locked and column insert/delete is disabled; data cells stay editable.
 app.get("/api/hierarchy-template", async (req, res) => {
-  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
-  const vuvales = await q(`select v.id vid, v.label vuvale, t.label tokatoka, m.label mataqali, y.label yavusa
+  if (!(await isVillageAdminReq(req)))
+    return res.status(403).json({ error: "village admin access required" });
+  const vuvales =
+    await q(`select v.id vid, v.label vuvale, t.label tokatoka, m.label mataqali, y.label yavusa
     from scope_nodes v
     join scope_nodes t on t.id=v.parent_id
     join scope_nodes m on m.id=t.parent_id
     join scope_nodes y on y.id=m.parent_id
     where v.level='vuvale' and v.axis='traditional' and v.archived_at is null
     order by y.label, m.label, t.label, v.label`);
-  const persons = await q(`select vuvale_node_id, full_name, gender, is_deceased, is_owner,
+  const persons =
+    await q(`select vuvale_node_id, full_name, gender, is_deceased, is_owner,
       case when date_of_birth is null then null else extract(year from age(date_of_birth))::int end age
     from persons order by full_name`);
   const byVuvale = {};
   for (const p of persons) (byVuvale[p.vuvale_node_id] ||= []).push(p);
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet("Families");
-  ws.columns = TPL_COLS.map((h, i) => ({ header: h, width: i < 4 ? 18 : i === 4 ? 24 : 14 }));
+  ws.columns = TPL_COLS.map((h, i) => ({
+    header: h,
+    width: i < 4 ? 18 : i === 4 ? 24 : 14,
+  }));
   for (const v of vuvales) {
     const ppl = byVuvale[v.vid] || [];
-    if (!ppl.length) ws.addRow([v.yavusa, v.mataqali, v.tokatoka, v.vuvale, "", "", "", "", ""]);
-    else for (const p of ppl) ws.addRow([v.yavusa, v.mataqali, v.tokatoka, v.vuvale, p.full_name, p.gender || "", p.age ?? "", p.is_deceased ? "Deceased" : "Living", p.is_owner ? "Yes" : ""]);
+    if (!ppl.length)
+      ws.addRow([
+        v.yavusa,
+        v.mataqali,
+        v.tokatoka,
+        v.vuvale,
+        "",
+        "",
+        "",
+        "",
+        "",
+      ]);
+    else
+      for (const p of ppl)
+        ws.addRow([
+          v.yavusa,
+          v.mataqali,
+          v.tokatoka,
+          v.vuvale,
+          p.full_name,
+          p.gender || "",
+          p.age ?? "",
+          p.is_deceased ? "Deceased" : "Living",
+          p.is_owner ? "Yes" : "",
+        ]);
   }
   const hr = ws.getRow(1);
   hr.font = { bold: true, color: { argb: "FFFFFFFF" } };
-  hr.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF0C4651" } };
-  hr.eachCell(c => { c.protection = { locked: true }; });
+  hr.fill = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: { argb: "FF0C4651" },
+  };
+  hr.eachCell((c) => {
+    c.protection = { locked: true };
+  });
   const lastRow = ws.rowCount + 300; // spare editable rows for new families
-  for (let r = 2; r <= lastRow; r++) for (let c = 1; c <= TPL_COLS.length; c++) ws.getCell(r, c).protection = { locked: false };
+  for (let r = 2; r <= lastRow; r++)
+    for (let c = 1; c <= TPL_COLS.length; c++)
+      ws.getCell(r, c).protection = { locked: false };
   ws.views = [{ state: "frozen", ySplit: 1 }];
-  await ws.protect("", { selectLockedCells: true, selectUnlockedCells: true, formatCells: false, insertColumns: false, deleteColumns: false, insertRows: true, deleteRows: true, sort: true, autoFilter: true });
-  res.set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-  res.set("Content-Disposition", 'attachment; filename="vanuarai-families.xlsx"');
+  await ws.protect("", {
+    selectLockedCells: true,
+    selectUnlockedCells: true,
+    formatCells: false,
+    insertColumns: false,
+    deleteColumns: false,
+    insertRows: true,
+    deleteRows: true,
+    sort: true,
+    autoFilter: true,
+  });
+  res.set(
+    "Content-Type",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  );
+  res.set(
+    "Content-Disposition",
+    'attachment; filename="vanuarai-families.xlsx"'
+  );
   await wb.xlsx.write(res);
   res.end();
 });
 
 // Import an uploaded .xlsx: upsert nodes along each row's lineage and the member.
-app.post("/api/hierarchy-import",
-  express.raw({ type: ["application/octet-stream", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"], limit: "10mb" }),
+app.post(
+  "/api/hierarchy-import",
+  express.raw({
+    type: [
+      "application/octet-stream",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ],
+    limit: "10mb",
+  }),
   async (req, res) => {
-    if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
-    if (!req.body || !req.body.length) return res.status(400).json({ error: "no file uploaded" });
+    if (!(await isVillageAdminReq(req)))
+      return res.status(403).json({ error: "village admin access required" });
+    if (!req.body || !req.body.length)
+      return res.status(400).json({ error: "no file uploaded" });
     const client = await pool.connect();
     try {
       const wb = new ExcelJS.Workbook();
       await wb.xlsx.load(req.body);
       const ws = wb.getWorksheet("Families") || wb.worksheets[0];
-      if (!ws) return res.status(400).json({ error: "no sheet found in the file" });
+      if (!ws)
+        return res.status(400).json({ error: "no sheet found in the file" });
       const [v] = await q(`select id from villages where name=$1`, [VILLAGE]);
-      const [apex] = await q(`select id from scope_nodes where level='vanua' and axis='traditional' limit 1`);
-      if (!apex) return res.status(400).json({ error: "Vanua apex node missing" });
-      let nodesCreated = 0, membersAdded = 0, membersUpdated = 0, rowsRead = 0;
+      const [apex] = await q(
+        `select id from scope_nodes where level='vanua' and axis='traditional' limit 1`
+      );
+      if (!apex)
+        return res.status(400).json({ error: "Vanua apex node missing" });
+      let nodesCreated = 0,
+        membersAdded = 0,
+        membersUpdated = 0,
+        rowsRead = 0;
       await client.query("BEGIN");
       const ensureNode = async (label, level, parentId) => {
-        label = String(label || "").trim(); if (!label) return null;
-        const ex = (await client.query(`select id from scope_nodes where label=$1 and level=$2::scope_level and parent_id=$3 and archived_at is null`, [label, level, parentId])).rows[0];
+        label = String(label || "").trim();
+        if (!label) return null;
+        const ex = (
+          await client.query(
+            `select id from scope_nodes where label=$1 and level=$2::scope_level and parent_id=$3 and archived_at is null`,
+            [label, level, parentId]
+          )
+        ).rows[0];
         if (ex) return ex.id;
-        const r = await client.query(`insert into scope_nodes(axis, level, label, parent_id, village_id, is_body) values('traditional',$1::scope_level,$2,$3,$4,$5) returning id`, [level, label, parentId, v.id, level === "mataqali"]);
+        const r = await client.query(
+          `insert into scope_nodes(axis, level, label, parent_id, village_id, is_body) values('traditional',$1::scope_level,$2,$3,$4,$5) returning id`,
+          [level, label, parentId, v.id, level === "mataqali"]
+        );
         nodesCreated++;
         return r.rows[0].id;
       };
       const rows = [];
-      ws.eachRow({ includeEmpty: false }, (row, num) => { if (num > 1) rows.push(row); });
+      ws.eachRow({ includeEmpty: false }, (row, num) => {
+        if (num > 1) rows.push(row);
+      });
       for (const row of rows) {
-        const cell = i => String(row.getCell(i).value ?? "").trim();
-        const yav = cell(1), mat = cell(2), tok = cell(3), vuv = cell(4), member = cell(5), gender = cell(6), age = cell(7), status = cell(8), owner = cell(9);
+        const cell = (i) => String(row.getCell(i).value ?? "").trim();
+        const yav = cell(1),
+          mat = cell(2),
+          tok = cell(3),
+          vuv = cell(4),
+          member = cell(5),
+          gender = cell(6),
+          age = cell(7),
+          status = cell(8),
+          owner = cell(9);
         if (!yav || !mat || !tok || !vuv) continue;
         rowsRead++;
         const yId = await ensureNode(yav, "yavusa", apex.id);
@@ -624,34 +1138,77 @@ app.post("/api/hierarchy-import",
         const tId = await ensureNode(tok, "tokatoka", mId);
         const vId = await ensureNode(vuv, "vuvale", tId);
         if (member) {
-          const g = /^m/i.test(gender) ? "Male" : /^f/i.test(gender) ? "Female" : null;
+          const g = /^m/i.test(gender)
+            ? "Male"
+            : /^f/i.test(gender)
+              ? "Female"
+              : null;
           const dec = /^d/i.test(status);
           const own = /^(y|t|1|owner)/i.test(owner);
           // Age -> approximate date of birth (kept as the source of truth); blank leaves it unchanged
           let dob = null;
           const ageNum = parseInt(age, 10);
-          if (Number.isFinite(ageNum) && ageNum > 0 && ageNum < 130) { const d = new Date(); d.setFullYear(d.getFullYear() - ageNum); dob = d.toISOString().slice(0, 10); }
-          const ex = (await client.query(`select id from persons where vuvale_node_id=$1 and lower(full_name)=lower($2)`, [vId, member])).rows[0];
-          if (ex) { await client.query(`update persons set gender=$1, is_deceased=$2, is_owner=$3, date_of_birth=coalesce($4, date_of_birth) where id=$5`, [g, dec, own, dob, ex.id]); membersUpdated++; }
-          else { await client.query(`insert into persons(vuvale_node_id, full_name, gender, is_deceased, is_owner, date_of_birth) values($1,$2,$3,$4,$5,$6)`, [vId, member, g, dec, own, dob]); membersAdded++; }
+          if (Number.isFinite(ageNum) && ageNum > 0 && ageNum < 130) {
+            const d = new Date();
+            d.setFullYear(d.getFullYear() - ageNum);
+            dob = d.toISOString().slice(0, 10);
+          }
+          const ex = (
+            await client.query(
+              `select id from persons where vuvale_node_id=$1 and lower(full_name)=lower($2)`,
+              [vId, member]
+            )
+          ).rows[0];
+          if (ex) {
+            await client.query(
+              `update persons set gender=$1, is_deceased=$2, is_owner=$3, date_of_birth=coalesce($4, date_of_birth) where id=$5`,
+              [g, dec, own, dob, ex.id]
+            );
+            membersUpdated++;
+          } else {
+            await client.query(
+              `insert into persons(vuvale_node_id, full_name, gender, is_deceased, is_owner, date_of_birth) values($1,$2,$3,$4,$5,$6)`,
+              [vId, member, g, dec, own, dob]
+            );
+            membersAdded++;
+          }
         }
       }
       await client.query("COMMIT");
-      res.json({ ok: true, rowsRead, nodesCreated, membersAdded, membersUpdated });
-    } catch (e) { await client.query("ROLLBACK"); res.status(400).json({ error: e.message }); }
-    finally { client.release(); }
-  });
+      res.json({
+        ok: true,
+        rowsRead,
+        nodesCreated,
+        membersAdded,
+        membersUpdated,
+      });
+    } catch (e) {
+      await client.query("ROLLBACK");
+      res.status(400).json({ error: e.message });
+    } finally {
+      client.release();
+    }
+  }
+);
 
 // ---- Scorecard: BSC KPI targets, rolled UP the hierarchy to the chosen level ----
-const SCORECARD_LEVELS = { traditional: ["vanua", "yavusa", "mataqali", "tokatoka", "vuvale"], government: ["matanitu", "provincial_council", "district", "village"] };
+const SCORECARD_LEVELS = {
+  traditional: ["vanua", "yavusa", "mataqali", "tokatoka", "vuvale"],
+  government: ["matanitu", "provincial_council", "district", "village"],
+};
 app.get("/api/scorecard", async (req, res) => {
-  const axis = ["traditional", "government", "soqosoqo"].includes(req.query.axis) ? req.query.axis : "traditional";
+  const axis = ["traditional", "government", "soqosoqo"].includes(
+    req.query.axis
+  )
+    ? req.query.axis
+    : "traditional";
   const levels = SCORECARD_LEVELS[axis] || [];
   const level = levels.includes(req.query.level) ? req.query.level : levels[0];
   // Registry-driven roll-up: each measurement rolls up to its ancestors per its
   // KPI's rule — 'sum' (additive), 'avg' (mean of contributing nodes), or 'none'
   // (local; does not propagate past its own node). 'core'/'spinoff' is metadata.
-  const rows = await q(`with recursive up as (
+  const rows = await q(
+    `with recursive up as (
       select t.kpi_id, k.rollup, k.tier, k.perspective, k.name, k.unit, k.platform,
              t.target_value tv, t.actual_value av,
              sn.id node_id, sn.level::text lvl, sn.label, sn.parent_id
@@ -668,8 +1225,26 @@ app.get("/api/scorecard", async (req, res) => {
            case when rollup='avg' then avg(tv) else sum(tv) end::numeric tgt,
            case when rollup='avg' then avg(av) else sum(av) end::numeric act
     from up where lvl=$2 group by node_id, label, perspective, name, unit, rollup, tier, platform
-    order by label, perspective, name`, [axis, level]);
-  res.json({ axis, level, levels, rows: rows.map(r => ({ node_id: r.node_id, node_label: r.label, perspective: r.perspective, name: r.name, unit: r.unit, rollup: r.rollup, tier: r.tier, platform: r.platform, target: n(r.tgt), actual: n(r.act) })) });
+    order by label, perspective, name`,
+    [axis, level]
+  );
+  res.json({
+    axis,
+    level,
+    levels,
+    rows: rows.map((r) => ({
+      node_id: r.node_id,
+      node_label: r.label,
+      perspective: r.perspective,
+      name: r.name,
+      unit: r.unit,
+      rollup: r.rollup,
+      tier: r.tier,
+      platform: r.platform,
+      target: n(r.tgt),
+      actual: n(r.act),
+    })),
+  });
 });
 
 // ---- Scorecard data entry: KPI catalogue + per-node measurements -------------
@@ -677,78 +1252,128 @@ app.get("/api/scorecard", async (req, res) => {
 // (scorecard_targets) are a node's OWN target/actual for a KPI. Reads are open;
 // writes are village-admin only.
 app.get("/api/scorecard/kpis", async (req, res) => {
-  res.json(await q(`select id, perspective, name, unit, rollup, tier, platform from scorecard_kpis
-    where archived_at is null order by perspective, name`));
+  res.json(
+    await q(`select id, perspective, name, unit, rollup, tier, platform from scorecard_kpis
+    where archived_at is null order by perspective, name`)
+  );
 });
 
 app.post("/api/scorecard/kpis", async (req, res) => {
-  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  if (!(await isVillageAdminReq(req)))
+    return res.status(403).json({ error: "village admin access required" });
   const b = req.body || {};
-  if (!b.perspective || !b.name) return res.status(400).json({ error: "perspective and name required" });
+  if (!b.perspective || !b.name)
+    return res.status(400).json({ error: "perspective and name required" });
   const rollup = ["sum", "avg", "none"].includes(b.rollup) ? b.rollup : "sum";
   const tier = ["core", "spinoff"].includes(b.tier) ? b.tier : "core";
-  const platform = [1, 2, 3, 4, 5].includes(Number(b.platform)) ? Number(b.platform) : null;
+  const platform = [1, 2, 3, 4, 5].includes(Number(b.platform))
+    ? Number(b.platform)
+    : null;
   try {
-    const [row] = await q(`insert into scorecard_kpis (perspective, name, unit, rollup, tier, platform)
+    const [row] = await q(
+      `insert into scorecard_kpis (perspective, name, unit, rollup, tier, platform)
       values ($1,$2,$3,$4,$5,$6)
       on conflict (perspective, name) do update set unit=excluded.unit, rollup=excluded.rollup, tier=excluded.tier, platform=excluded.platform, archived_at=null
-      returning id`, [b.perspective, b.name, b.unit || null, rollup, tier, platform]);
+      returning id`,
+      [b.perspective, b.name, b.unit || null, rollup, tier, platform]
+    );
     res.json({ ok: true, id: row.id });
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 
 // Archive a catalogue KPI (its measurements drop out of the roll-up, which
 // joins on k.archived_at is null).
 app.delete("/api/scorecard/kpis/:id", async (req, res) => {
-  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  if (!(await isVillageAdminReq(req)))
+    return res.status(403).json({ error: "village admin access required" });
   try {
-    await q(`update scorecard_kpis set archived_at=now() where id=$1`, [req.params.id]);
+    await q(`update scorecard_kpis set archived_at=now() where id=$1`, [
+      req.params.id,
+    ]);
     res.json({ ok: true });
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 
 // A node's OWN measurements (not rolled up) — for the editor.
 app.get("/api/scorecard/node/:nodeId", async (req, res) => {
-  res.json(await q(`select t.id, t.kpi_id, k.perspective, k.name, k.unit, k.rollup, k.tier,
+  res.json(
+    await q(
+      `select t.id, t.kpi_id, k.perspective, k.name, k.unit, k.rollup, k.tier,
       t.target_value target, t.actual_value actual
     from scorecard_targets t join scorecard_kpis k on k.id=t.kpi_id
-    where t.node_id=$1 and t.archived_at is null order by k.perspective, k.name`, [req.params.nodeId]));
+    where t.node_id=$1 and t.archived_at is null order by k.perspective, k.name`,
+      [req.params.nodeId]
+    )
+  );
 });
 
 // Upsert a node's measurement for a KPI (one live row per node+kpi).
 app.post("/api/scorecard/targets", async (req, res) => {
-  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  if (!(await isVillageAdminReq(req)))
+    return res.status(403).json({ error: "village admin access required" });
   const b = req.body || {};
-  if (!b.node_id || !b.kpi_id) return res.status(400).json({ error: "node_id and kpi_id required" });
+  if (!b.node_id || !b.kpi_id)
+    return res.status(400).json({ error: "node_id and kpi_id required" });
   try {
-    const existing = await q(`select id from scorecard_targets where node_id=$1 and kpi_id=$2 and archived_at is null`, [b.node_id, b.kpi_id]);
+    const existing = await q(
+      `select id from scorecard_targets where node_id=$1 and kpi_id=$2 and archived_at is null`,
+      [b.node_id, b.kpi_id]
+    );
     if (existing.length) {
-      await q(`update scorecard_targets set target_value=$1, actual_value=$2 where id=$3`, [n(b.target_value) || 0, n(b.actual_value) || 0, existing[0].id]);
+      await q(
+        `update scorecard_targets set target_value=$1, actual_value=$2 where id=$3`,
+        [n(b.target_value) || 0, n(b.actual_value) || 0, existing[0].id]
+      );
       return res.json({ ok: true, id: existing[0].id });
     }
     // perspective/name/unit are denormalised from the registry at write time
-    const [row] = await q(`insert into scorecard_targets (node_id, kpi_id, perspective, name, unit, target_value, actual_value, period)
+    const [row] = await q(
+      `insert into scorecard_targets (node_id, kpi_id, perspective, name, unit, target_value, actual_value, period)
       select $1, k.id, k.perspective, k.name, k.unit, $3, $4, $5 from scorecard_kpis k where k.id=$2 returning id`,
-      [b.node_id, b.kpi_id, n(b.target_value) || 0, n(b.actual_value) || 0, b.period || "2026"]);
+      [
+        b.node_id,
+        b.kpi_id,
+        n(b.target_value) || 0,
+        n(b.actual_value) || 0,
+        b.period || "2026",
+      ]
+    );
     res.json({ ok: true, id: row.id });
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 
 app.patch("/api/scorecard/targets/:id", async (req, res) => {
-  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  if (!(await isVillageAdminReq(req)))
+    return res.status(403).json({ error: "village admin access required" });
   const b = req.body || {};
   try {
-    await q(`update scorecard_targets set target_value=$1, actual_value=$2 where id=$3`, [n(b.target_value) || 0, n(b.actual_value) || 0, req.params.id]);
+    await q(
+      `update scorecard_targets set target_value=$1, actual_value=$2 where id=$3`,
+      [n(b.target_value) || 0, n(b.actual_value) || 0, req.params.id]
+    );
     res.json({ ok: true });
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 
 app.delete("/api/scorecard/targets/:id", async (req, res) => {
-  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  if (!(await isVillageAdminReq(req)))
+    return res.status(403).json({ error: "village admin access required" });
   try {
-    await q(`update scorecard_targets set archived_at=now() where id=$1`, [req.params.id]);
+    await q(`update scorecard_targets set archived_at=now() where id=$1`, [
+      req.params.id,
+    ]);
     res.json({ ok: true });
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 
 // =============================================================================
@@ -759,17 +1384,37 @@ app.delete("/api/scorecard/targets/:id", async (req, res) => {
 // =============================================================================
 const OF = {
   kind: new Set(["task", "intervention", "project"]),
-  status: new Set(["not_started", "in_progress", "on_hold", "cancelled", "completed"]),
+  status: new Set([
+    "not_started",
+    "in_progress",
+    "on_hold",
+    "cancelled",
+    "completed",
+  ]),
   raci: new Set(["responsible", "accountable", "consulted", "informed"]),
-  assignee: new Set(["person", "office", "membership", "gov_contact", "agency", "free"]),
-  chStatus: new Set(["open", "in_progress", "on_hold", "resolved", "cancelled"]),
+  assignee: new Set([
+    "person",
+    "office",
+    "membership",
+    "gov_contact",
+    "agency",
+    "free",
+  ]),
+  chStatus: new Set([
+    "open",
+    "in_progress",
+    "on_hold",
+    "resolved",
+    "cancelled",
+  ]),
 };
 const REF_PREFIX = { task: "TSK", intervention: "INT", project: "PRJ" };
 // Next ref code for a prefix: max numeric suffix + 1, zero-padded (e.g. INT-0007).
 async function nextRef(prefix, table) {
   const [r] = await q(
     `select coalesce(max(substring(ref_code from '[0-9]+')::int),0)+1 nx from ${table} where ref_code like $1`,
-    [prefix + "-%"]);
+    [prefix + "-%"]
+  );
   return prefix + "-" + String(r.nx).padStart(4, "0");
 }
 // Embedded RACI (resolved display label) for an action or challenge row `a.id`.
@@ -791,16 +1436,23 @@ const RACI_JSON = (parentKind) => `coalesce((
 // ---- Taxonomies (the 3 classification axes) ----
 app.get("/api/of/taxonomies", async (req, res) => {
   const [focus_areas, pillars, isic] = await Promise.all([
-    q(`select id, code, label, accent, sort_order from outcome_focus_areas where archived_at is null order by sort_order`),
-    q(`select id, platform_no, name, thrust, sort_order from gov_pillars where archived_at is null order by sort_order`),
-    q(`select code, parent_code, level, title, sort_order from isic_sectors order by sort_order`),
+    q(
+      `select id, code, label, accent, sort_order from outcome_focus_areas where archived_at is null order by sort_order`
+    ),
+    q(
+      `select id, platform_no, name, thrust, sort_order from gov_pillars where archived_at is null order by sort_order`
+    ),
+    q(
+      `select code, parent_code, level, title, sort_order from isic_sectors order by sort_order`
+    ),
   ]);
   res.json({ focus_areas, pillars, isic });
 });
 
 // ---- Outcomes ----
 app.get("/api/of/outcomes", async (req, res) => {
-  const rows = await q(`
+  const rows = await q(
+    `
     select o.id, o.node_id, o.axis, o.title, o.description, o.status, o.sort_order,
            o.focus_area_id, fa.label focus_label, fa.accent,
            o.gov_pillar_id, gp.platform_no, gp.name pillar_name, gp.thrust,
@@ -816,101 +1468,179 @@ app.get("/api/of/outcomes", async (req, res) => {
       and ($3::text is null or o.isic_code=$3)
       and ($4::text is null or o.axis::text=$4)
     order by o.sort_order, o.title`,
-    [req.query.focus || null, req.query.pillar || null, req.query.isic || null, req.query.axis || null]);
+    [
+      req.query.focus || null,
+      req.query.pillar || null,
+      req.query.isic || null,
+      req.query.axis || null,
+    ]
+  );
   res.json(rows);
 });
 
 app.post("/api/of/outcomes", async (req, res) => {
-  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  if (!(await isVillageAdminReq(req)))
+    return res.status(403).json({ error: "village admin access required" });
   const b = req.body || {};
   if (!b.title) return res.status(400).json({ error: "title required" });
   try {
-    const [row] = await q(`insert into outcomes
+    const [row] = await q(
+      `insert into outcomes
       (node_id, axis, title, description, focus_area_id, gov_pillar_id, isic_code, status, sort_order, created_by)
       values ($1,$2,$3,$4,$5,$6,$7,coalesce($8,'active'),coalesce($9,0),$10) returning id`,
-      [b.node_id || null, b.axis || "traditional", b.title, b.description || null,
-       b.focus_area_id || null, b.gov_pillar_id || null, b.isic_code || null,
-       b.status || null, b.sort_order ?? null, req.user?.uid || null]);
+      [
+        b.node_id || null,
+        b.axis || "traditional",
+        b.title,
+        b.description || null,
+        b.focus_area_id || null,
+        b.gov_pillar_id || null,
+        b.isic_code || null,
+        b.status || null,
+        b.sort_order ?? null,
+        req.user?.uid || null,
+      ]
+    );
     res.json({ ok: true, id: row.id });
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 
 app.patch("/api/of/outcomes/:id", async (req, res) => {
-  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  if (!(await isVillageAdminReq(req)))
+    return res.status(403).json({ error: "village admin access required" });
   const b = req.body || {};
-  const cols = [], vals = [];
-  for (const f of ["node_id", "axis", "title", "description", "focus_area_id", "gov_pillar_id", "isic_code", "status", "sort_order"])
-    if (f in b) { cols.push(`${f}=$${cols.length + 1}`); vals.push(b[f]); }
+  const cols = [],
+    vals = [];
+  for (const f of [
+    "node_id",
+    "axis",
+    "title",
+    "description",
+    "focus_area_id",
+    "gov_pillar_id",
+    "isic_code",
+    "status",
+    "sort_order",
+  ])
+    if (f in b) {
+      cols.push(`${f}=$${cols.length + 1}`);
+      vals.push(b[f]);
+    }
   if (!cols.length) return res.json({ ok: true });
   try {
-    await q(`update outcomes set ${cols.join(", ")} where id=$${cols.length + 1}`, [...vals, req.params.id]);
+    await q(
+      `update outcomes set ${cols.join(", ")} where id=$${cols.length + 1}`,
+      [...vals, req.params.id]
+    );
     res.json({ ok: true });
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 
 app.delete("/api/of/outcomes/:id", async (req, res) => {
-  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  if (!(await isVillageAdminReq(req)))
+    return res.status(403).json({ error: "village admin access required" });
   try {
-    await q(`update outcomes set archived_at=now() where id=$1`, [req.params.id]);
+    await q(`update outcomes set archived_at=now() where id=$1`, [
+      req.params.id,
+    ]);
     res.json({ ok: true });
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 
 // ---- Outcome indicators ----
 app.get("/api/of/outcomes/:id/indicators", async (req, res) => {
-  res.json(await q(`select id, outcome_id, name, unit, rollup, sort_order
-    from outcome_indicators where outcome_id=$1 and archived_at is null order by sort_order, name`, [req.params.id]));
+  res.json(
+    await q(
+      `select id, outcome_id, name, unit, rollup, sort_order
+    from outcome_indicators where outcome_id=$1 and archived_at is null order by sort_order, name`,
+      [req.params.id]
+    )
+  );
 });
 
 // All indicators (flat, with their Outcome title) — for the data-entry add-picker.
 app.get("/api/of/indicators", async (req, res) => {
-  res.json(await q(`select i.id, i.outcome_id, i.name, i.unit, i.rollup, o.title outcome_title
+  res.json(
+    await q(`select i.id, i.outcome_id, i.name, i.unit, i.rollup, o.title outcome_title
     from outcome_indicators i join outcomes o on o.id=i.outcome_id
-    where i.archived_at is null and o.archived_at is null order by o.title, i.name`));
+    where i.archived_at is null and o.archived_at is null order by o.title, i.name`)
+  );
 });
 
 app.post("/api/of/indicators", async (req, res) => {
-  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  if (!(await isVillageAdminReq(req)))
+    return res.status(403).json({ error: "village admin access required" });
   const b = req.body || {};
-  if (!b.outcome_id || !b.name) return res.status(400).json({ error: "outcome_id and name required" });
+  if (!b.outcome_id || !b.name)
+    return res.status(400).json({ error: "outcome_id and name required" });
   const rollup = ["sum", "avg", "none"].includes(b.rollup) ? b.rollup : "sum";
   try {
-    const [row] = await q(`insert into outcome_indicators (outcome_id, name, unit, rollup, sort_order)
+    const [row] = await q(
+      `insert into outcome_indicators (outcome_id, name, unit, rollup, sort_order)
       values ($1,$2,$3,$4,coalesce($5,0)) returning id`,
-      [b.outcome_id, b.name, b.unit || null, rollup, b.sort_order ?? null]);
+      [b.outcome_id, b.name, b.unit || null, rollup, b.sort_order ?? null]
+    );
     res.json({ ok: true, id: row.id });
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 
 app.patch("/api/of/indicators/:id", async (req, res) => {
-  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  if (!(await isVillageAdminReq(req)))
+    return res.status(403).json({ error: "village admin access required" });
   const b = req.body || {};
-  const cols = [], vals = [];
+  const cols = [],
+    vals = [];
   for (const f of ["name", "unit", "rollup", "sort_order"])
-    if (f in b) { cols.push(`${f}=$${cols.length + 1}`); vals.push(b[f]); }
+    if (f in b) {
+      cols.push(`${f}=$${cols.length + 1}`);
+      vals.push(b[f]);
+    }
   if (!cols.length) return res.json({ ok: true });
   try {
-    await q(`update outcome_indicators set ${cols.join(", ")} where id=$${cols.length + 1}`, [...vals, req.params.id]);
+    await q(
+      `update outcome_indicators set ${cols.join(", ")} where id=$${cols.length + 1}`,
+      [...vals, req.params.id]
+    );
     res.json({ ok: true });
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 
 app.delete("/api/of/indicators/:id", async (req, res) => {
-  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  if (!(await isVillageAdminReq(req)))
+    return res.status(403).json({ error: "village admin access required" });
   try {
-    await q(`update outcome_indicators set archived_at=now() where id=$1`, [req.params.id]);
+    await q(`update outcome_indicators set archived_at=now() where id=$1`, [
+      req.params.id,
+    ]);
     res.json({ ok: true });
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 
 // ---- Measurements + roll-up (the cascade) ----
 // Rolled UP to the chosen level per indicator, respecting sum/avg/none. Optional
 // classification filters (focus/pillar/isic) narrow which Outcomes contribute.
 app.get("/api/of/scorecard", async (req, res) => {
-  const axis = ["traditional", "government", "soqosoqo"].includes(req.query.axis) ? req.query.axis : "traditional";
+  const axis = ["traditional", "government", "soqosoqo"].includes(
+    req.query.axis
+  )
+    ? req.query.axis
+    : "traditional";
   const levels = SCORECARD_LEVELS[axis] || [];
   const level = levels.includes(req.query.level) ? req.query.level : levels[0];
-  const rows = await q(`with recursive up as (
+  const rows = await q(
+    `with recursive up as (
       select m.indicator_id, i.rollup, i.name ind_name, i.unit,
              o.id outcome_id, o.title outcome_title, o.focus_area_id, o.gov_pillar_id, o.isic_code,
              m.target_value tv, m.actual_value av,
@@ -935,59 +1665,108 @@ app.get("/api/of/scorecard", async (req, res) => {
     from up where lvl=$2
     group by node_id, label, outcome_id, outcome_title, indicator_id, ind_name, unit, rollup
     order by label, outcome_title, ind_name`,
-    [axis, level, req.query.focus || null, req.query.pillar || null, req.query.isic || null]);
-  res.json({ axis, level, levels, rows: rows.map(r => ({
-    node_id: r.node_id, node_label: r.label, outcome_id: r.outcome_id, outcome_title: r.outcome_title,
-    indicator_id: r.indicator_id, name: r.ind_name, unit: r.unit, rollup: r.rollup,
-    target: n(r.tgt), actual: n(r.act), variance: n(r.act) - n(r.tgt) })) });
+    [
+      axis,
+      level,
+      req.query.focus || null,
+      req.query.pillar || null,
+      req.query.isic || null,
+    ]
+  );
+  res.json({
+    axis,
+    level,
+    levels,
+    rows: rows.map((r) => ({
+      node_id: r.node_id,
+      node_label: r.label,
+      outcome_id: r.outcome_id,
+      outcome_title: r.outcome_title,
+      indicator_id: r.indicator_id,
+      name: r.ind_name,
+      unit: r.unit,
+      rollup: r.rollup,
+      target: n(r.tgt),
+      actual: n(r.act),
+      variance: n(r.act) - n(r.tgt),
+    })),
+  });
 });
 
 // A node's OWN measurements (not rolled up) — for the data-entry editor.
 app.get("/api/of/node/:nodeId", async (req, res) => {
-  res.json(await q(`select m.id, m.indicator_id, i.name, i.unit, i.rollup, o.title outcome_title,
+  res.json(
+    await q(
+      `select m.id, m.indicator_id, i.name, i.unit, i.rollup, o.title outcome_title,
       m.target_value target, m.actual_value actual, m.variance, m.period
     from outcome_measurements m
       join outcome_indicators i on i.id=m.indicator_id
       join outcomes o on o.id=i.outcome_id
-    where m.node_id=$1 order by o.title, i.name`, [req.params.nodeId]));
+    where m.node_id=$1 order by o.title, i.name`,
+      [req.params.nodeId]
+    )
+  );
 });
 
 // Upsert a node's measurement for an indicator+period (variance is generated).
 app.post("/api/of/measurements", async (req, res) => {
-  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  if (!(await isVillageAdminReq(req)))
+    return res.status(403).json({ error: "village admin access required" });
   const b = req.body || {};
-  if (!b.indicator_id || !b.node_id) return res.status(400).json({ error: "indicator_id and node_id required" });
+  if (!b.indicator_id || !b.node_id)
+    return res.status(400).json({ error: "indicator_id and node_id required" });
   const period = b.period || "2026";
   try {
-    const [row] = await q(`insert into outcome_measurements (indicator_id, node_id, period, target_value, actual_value)
+    const [row] = await q(
+      `insert into outcome_measurements (indicator_id, node_id, period, target_value, actual_value)
       values ($1,$2,$3,$4,$5)
       on conflict (indicator_id, node_id, period)
       do update set target_value=excluded.target_value, actual_value=excluded.actual_value
       returning id`,
-      [b.indicator_id, b.node_id, period, n(b.target_value) || 0, n(b.actual_value) || 0]);
+      [
+        b.indicator_id,
+        b.node_id,
+        period,
+        n(b.target_value) || 0,
+        n(b.actual_value) || 0,
+      ]
+    );
     res.json({ ok: true, id: row.id });
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 
 app.patch("/api/of/measurements/:id", async (req, res) => {
-  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  if (!(await isVillageAdminReq(req)))
+    return res.status(403).json({ error: "village admin access required" });
   const b = req.body || {};
   try {
-    await q(`update outcome_measurements set target_value=$1, actual_value=$2 where id=$3`,
-      [n(b.target_value) || 0, n(b.actual_value) || 0, req.params.id]);
+    await q(
+      `update outcome_measurements set target_value=$1, actual_value=$2 where id=$3`,
+      [n(b.target_value) || 0, n(b.actual_value) || 0, req.params.id]
+    );
     res.json({ ok: true });
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 
 app.delete("/api/of/measurements/:id", async (req, res) => {
-  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
-  try { await q(`delete from outcome_measurements where id=$1`, [req.params.id]); res.json({ ok: true }); }
-  catch (e) { res.status(400).json({ error: e.message }); }
+  if (!(await isVillageAdminReq(req)))
+    return res.status(403).json({ error: "village admin access required" });
+  try {
+    await q(`delete from outcome_measurements where id=$1`, [req.params.id]);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 
 // ---- Actions: Task | Intervention | Project ----
 app.get("/api/of/actions", async (req, res) => {
-  const rows = await q(`select a.id, a.ref_code, a.kind, a.title, a.description,
+  const rows = await q(
+    `select a.id, a.ref_code, a.kind, a.title, a.description,
       a.outcome_measurement_id, a.outcome_id, o.title outcome_title, a.indicator_id, oi.name kpi_name,
       a.node_id, a.target_due_date, a.actual_due_date, a.status,
       a.parent_intervention_id, a.project_id,
@@ -1007,150 +1786,298 @@ app.get("/api/of/actions", async (req, res) => {
       and ($5::uuid is null or a.node_id=$5)
       and ($6::uuid is null or a.outcome_id=$6)
     order by a.created_at desc`,
-    [req.query.kind || null, req.query.status || null, req.query.measurement || null,
-     req.query.parent || null, req.query.node || null, req.query.outcome || null]);
+    [
+      req.query.kind || null,
+      req.query.status || null,
+      req.query.measurement || null,
+      req.query.parent || null,
+      req.query.node || null,
+      req.query.outcome || null,
+    ]
+  );
   res.json(rows);
 });
 
 app.post("/api/of/actions", async (req, res) => {
-  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  if (!(await isVillageAdminReq(req)))
+    return res.status(403).json({ error: "village admin access required" });
   const b = req.body || {};
-  if (!OF.kind.has(b.kind)) return res.status(400).json({ error: "kind must be task|intervention|project" });
+  if (!OF.kind.has(b.kind))
+    return res
+      .status(400)
+      .json({ error: "kind must be task|intervention|project" });
   if (!b.title) return res.status(400).json({ error: "title required" });
   const status = OF.status.has(b.status) ? b.status : "not_started";
   // A task may only attach to a non-completed intervention (also enforced by trigger).
   if (b.kind === "task" && b.parent_intervention_id) {
-    const [p] = await q(`select status from actions where id=$1 and kind='intervention'`, [b.parent_intervention_id]);
-    if (!p) return res.status(400).json({ error: "parent_intervention_id is not an intervention" });
-    if (p.status === "completed") return res.status(409).json({ error: "cannot attach a task to a completed intervention" });
+    const [p] = await q(
+      `select status from actions where id=$1 and kind='intervention'`,
+      [b.parent_intervention_id]
+    );
+    if (!p)
+      return res
+        .status(400)
+        .json({ error: "parent_intervention_id is not an intervention" });
+    if (p.status === "completed")
+      return res
+        .status(409)
+        .json({ error: "cannot attach a task to a completed intervention" });
   }
   try {
     const ref = await nextRef(REF_PREFIX[b.kind], "actions");
-    const [row] = await q(`insert into actions
+    const [row] = await q(
+      `insert into actions
       (ref_code, kind, title, description, outcome_measurement_id, outcome_id, indicator_id, node_id,
        target_due_date, actual_due_date, status, parent_intervention_id, project_id, created_by)
       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) returning id, ref_code`,
-      [ref, b.kind, b.title, b.description || null, b.outcome_measurement_id || null, b.outcome_id || null, b.indicator_id || null, b.node_id || null,
-       b.target_due_date || null, b.actual_due_date || null, status,
-       b.kind === "task" ? (b.parent_intervention_id || null) : null,
-       b.kind === "project" ? (b.project_id || null) : null, req.user?.uid || null]);
+      [
+        ref,
+        b.kind,
+        b.title,
+        b.description || null,
+        b.outcome_measurement_id || null,
+        b.outcome_id || null,
+        b.indicator_id || null,
+        b.node_id || null,
+        b.target_due_date || null,
+        b.actual_due_date || null,
+        status,
+        b.kind === "task" ? b.parent_intervention_id || null : null,
+        b.kind === "project" ? b.project_id || null : null,
+        req.user?.uid || null,
+      ]
+    );
     res.json({ ok: true, id: row.id, ref_code: row.ref_code });
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 
 app.patch("/api/of/actions/:id", async (req, res) => {
-  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  if (!(await isVillageAdminReq(req)))
+    return res.status(403).json({ error: "village admin access required" });
   const b = req.body || {};
-  if (b.status && !OF.status.has(b.status)) return res.status(400).json({ error: "invalid status" });
-  const [cur] = await q(`select kind, status from actions where id=$1`, [req.params.id]);
+  if (b.status && !OF.status.has(b.status))
+    return res.status(400).json({ error: "invalid status" });
+  const [cur] = await q(`select kind, status from actions where id=$1`, [
+    req.params.id,
+  ]);
   if (!cur) return res.status(404).json({ error: "not found" });
   // An intervention with open (non-completed/cancelled) tasks cannot be completed.
   if (b.status === "completed" && cur.kind === "intervention") {
-    const [open] = await q(`select count(*)::int c from actions
-      where parent_intervention_id=$1 and status not in ('completed','cancelled')`, [req.params.id]);
-    if (open.c > 0) return res.status(409).json({ error: `intervention has ${open.c} open task(s); resolve them first` });
+    const [open] = await q(
+      `select count(*)::int c from actions
+      where parent_intervention_id=$1 and status not in ('completed','cancelled')`,
+      [req.params.id]
+    );
+    if (open.c > 0)
+      return res.status(409).json({
+        error: `intervention has ${open.c} open task(s); resolve them first`,
+      });
   }
-  const cols = [], vals = [];
-  for (const f of ["title", "description", "outcome_measurement_id", "outcome_id", "indicator_id", "node_id", "target_due_date", "actual_due_date", "status", "parent_intervention_id", "project_id"])
-    if (f in b) { cols.push(`${f}=$${cols.length + 1}`); vals.push(b[f]); }
+  const cols = [],
+    vals = [];
+  for (const f of [
+    "title",
+    "description",
+    "outcome_measurement_id",
+    "outcome_id",
+    "indicator_id",
+    "node_id",
+    "target_due_date",
+    "actual_due_date",
+    "status",
+    "parent_intervention_id",
+    "project_id",
+  ])
+    if (f in b) {
+      cols.push(`${f}=$${cols.length + 1}`);
+      vals.push(b[f]);
+    }
   cols.push(`updated_at=now()`);
   try {
-    await q(`update actions set ${cols.join(", ")} where id=$${vals.length + 1}`, [...vals, req.params.id]);
+    await q(
+      `update actions set ${cols.join(", ")} where id=$${vals.length + 1}`,
+      [...vals, req.params.id]
+    );
     res.json({ ok: true });
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 
 app.delete("/api/of/actions/:id", async (req, res) => {
-  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  if (!(await isVillageAdminReq(req)))
+    return res.status(403).json({ error: "village admin access required" });
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
     // polymorphic RACI is not FK-cascaded — clean it explicitly (intervention
     // indicators & challenges cascade via their FKs).
-    await client.query(`delete from raci_assignments where parent_kind='action' and parent_id=$1`, [req.params.id]);
-    await client.query(`update actions set parent_intervention_id=null where parent_intervention_id=$1`, [req.params.id]);
+    await client.query(
+      `delete from raci_assignments where parent_kind='action' and parent_id=$1`,
+      [req.params.id]
+    );
+    await client.query(
+      `update actions set parent_intervention_id=null where parent_intervention_id=$1`,
+      [req.params.id]
+    );
     await client.query(`delete from actions where id=$1`, [req.params.id]);
     await client.query("COMMIT");
     res.json({ ok: true });
-  } catch (e) { await client.query("ROLLBACK"); res.status(400).json({ error: e.message }); }
-  finally { client.release(); }
+  } catch (e) {
+    await client.query("ROLLBACK");
+    res.status(400).json({ error: e.message });
+  } finally {
+    client.release();
+  }
 });
 
 // ---- Intervention indicators (short-term; separate from outcome indicators) ----
 app.get("/api/of/actions/:id/intervention-indicators", async (req, res) => {
-  res.json(await q(`select id, action_id, name, unit, target_value, actual_value, period, sort_order
-    from intervention_indicators where action_id=$1 order by sort_order, name`, [req.params.id]));
+  res.json(
+    await q(
+      `select id, action_id, name, unit, target_value, actual_value, period, sort_order
+    from intervention_indicators where action_id=$1 order by sort_order, name`,
+      [req.params.id]
+    )
+  );
 });
 
 app.post("/api/of/intervention-indicators", async (req, res) => {
-  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  if (!(await isVillageAdminReq(req)))
+    return res.status(403).json({ error: "village admin access required" });
   const b = req.body || {};
-  if (!b.action_id || !b.name) return res.status(400).json({ error: "action_id and name required" });
+  if (!b.action_id || !b.name)
+    return res.status(400).json({ error: "action_id and name required" });
   try {
-    const [row] = await q(`insert into intervention_indicators
+    const [row] = await q(
+      `insert into intervention_indicators
       (action_id, name, unit, target_value, actual_value, period, sort_order)
       values ($1,$2,$3,$4,$5,$6,coalesce($7,0)) returning id`,
-      [b.action_id, b.name, b.unit || null, n(b.target_value) || 0, n(b.actual_value) || 0, b.period || null, b.sort_order ?? null]);
+      [
+        b.action_id,
+        b.name,
+        b.unit || null,
+        n(b.target_value) || 0,
+        n(b.actual_value) || 0,
+        b.period || null,
+        b.sort_order ?? null,
+      ]
+    );
     res.json({ ok: true, id: row.id });
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 
 app.patch("/api/of/intervention-indicators/:id", async (req, res) => {
-  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  if (!(await isVillageAdminReq(req)))
+    return res.status(403).json({ error: "village admin access required" });
   const b = req.body || {};
-  const cols = [], vals = [];
-  for (const f of ["name", "unit", "target_value", "actual_value", "period", "sort_order"])
-    if (f in b) { cols.push(`${f}=$${cols.length + 1}`); vals.push(f.endsWith("_value") ? n(b[f]) || 0 : b[f]); }
+  const cols = [],
+    vals = [];
+  for (const f of [
+    "name",
+    "unit",
+    "target_value",
+    "actual_value",
+    "period",
+    "sort_order",
+  ])
+    if (f in b) {
+      cols.push(`${f}=$${cols.length + 1}`);
+      vals.push(f.endsWith("_value") ? n(b[f]) || 0 : b[f]);
+    }
   if (!cols.length) return res.json({ ok: true });
   try {
-    await q(`update intervention_indicators set ${cols.join(", ")} where id=$${cols.length + 1}`, [...vals, req.params.id]);
+    await q(
+      `update intervention_indicators set ${cols.join(", ")} where id=$${cols.length + 1}`,
+      [...vals, req.params.id]
+    );
     res.json({ ok: true });
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 
 app.delete("/api/of/intervention-indicators/:id", async (req, res) => {
-  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
-  try { await q(`delete from intervention_indicators where id=$1`, [req.params.id]); res.json({ ok: true }); }
-  catch (e) { res.status(400).json({ error: e.message }); }
+  if (!(await isVillageAdminReq(req)))
+    return res.status(403).json({ error: "village admin access required" });
+  try {
+    await q(`delete from intervention_indicators where id=$1`, [req.params.id]);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 
 // ---- RACI assignments (over actions & challenges) ----
 app.post("/api/of/raci", async (req, res) => {
-  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  if (!(await isVillageAdminReq(req)))
+    return res.status(403).json({ error: "village admin access required" });
   const b = req.body || {};
   if (!["action", "challenge"].includes(b.parent_kind) || !b.parent_id)
-    return res.status(400).json({ error: "parent_kind (action|challenge) and parent_id required" });
-  if (!OF.raci.has(b.raci)) return res.status(400).json({ error: "raci must be responsible|accountable|consulted|informed" });
-  if (!OF.assignee.has(b.assignee_kind)) return res.status(400).json({ error: "invalid assignee_kind" });
+    return res
+      .status(400)
+      .json({ error: "parent_kind (action|challenge) and parent_id required" });
+  if (!OF.raci.has(b.raci))
+    return res.status(400).json({
+      error: "raci must be responsible|accountable|consulted|informed",
+    });
+  if (!OF.assignee.has(b.assignee_kind))
+    return res.status(400).json({ error: "invalid assignee_kind" });
   try {
-    const [row] = await q(`insert into raci_assignments
+    const [row] = await q(
+      `insert into raci_assignments
       (parent_kind, parent_id, raci, assignee_kind, person_id, office_id, membership_id, gov_contact_id, agency_label, free_label)
       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) returning id`,
-      [b.parent_kind, b.parent_id, b.raci, b.assignee_kind, b.person_id || null, b.office_id || null,
-       b.membership_id || null, b.gov_contact_id || null, b.agency_label || null, b.free_label || null]);
+      [
+        b.parent_kind,
+        b.parent_id,
+        b.raci,
+        b.assignee_kind,
+        b.person_id || null,
+        b.office_id || null,
+        b.membership_id || null,
+        b.gov_contact_id || null,
+        b.agency_label || null,
+        b.free_label || null,
+      ]
+    );
     res.json({ ok: true, id: row.id });
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 
 app.delete("/api/of/raci/:id", async (req, res) => {
-  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
-  try { await q(`delete from raci_assignments where id=$1`, [req.params.id]); res.json({ ok: true }); }
-  catch (e) { res.status(400).json({ error: e.message }); }
+  if (!(await isVillageAdminReq(req)))
+    return res.status(403).json({ error: "village admin access required" });
+  try {
+    await q(`delete from raci_assignments where id=$1`, [req.params.id]);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 
 // ---- Challenges / impediment log ----
 // Actions past their target due date & still open — drives the "raise a challenge" prompt.
 app.get("/api/of/overdue", async (req, res) => {
-  res.json(await q(`select a.id, a.ref_code, a.kind, a.title, a.target_due_date, a.status,
+  res.json(
+    await q(`select a.id, a.ref_code, a.kind, a.title, a.target_due_date, a.status,
       sn.label node_label,
       (a.target_due_date - current_date) days_overdue,
       (select count(*) from challenges c where c.action_id=a.id)::int challenge_count
     from actions_overdue a left join scope_nodes sn on sn.id=a.node_id
-    order by a.target_due_date`));
+    order by a.target_due_date`)
+  );
 });
 
 app.get("/api/of/challenges", async (req, res) => {
-  const rows = await q(`select a.id, a.ref_code, a.action_id, a.description, a.raised_on,
+  const rows = await q(
+    `select a.id, a.ref_code, a.action_id, a.description, a.raised_on,
       a.target_due_date, a.actual_due_date, a.status,
       act.ref_code action_ref, act.title action_title,
       ${RACI_JSON("challenge")} raci
@@ -1158,50 +2085,91 @@ app.get("/api/of/challenges", async (req, res) => {
     where ($1::uuid is null or a.action_id=$1)
       and ($2::text is null or a.status::text=$2)
     order by a.raised_on desc`,
-    [req.query.action || null, req.query.status || null]);
+    [req.query.action || null, req.query.status || null]
+  );
   res.json(rows);
 });
 
 app.post("/api/of/challenges", async (req, res) => {
-  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  if (!(await isVillageAdminReq(req)))
+    return res.status(403).json({ error: "village admin access required" });
   const b = req.body || {};
-  if (!b.action_id || !b.description) return res.status(400).json({ error: "action_id and description required" });
+  if (!b.action_id || !b.description)
+    return res
+      .status(400)
+      .json({ error: "action_id and description required" });
   const status = OF.chStatus.has(b.status) ? b.status : "open";
   try {
     const ref = await nextRef("CHL", "challenges");
-    const [row] = await q(`insert into challenges
+    const [row] = await q(
+      `insert into challenges
       (ref_code, action_id, description, target_due_date, actual_due_date, status, created_by)
       values ($1,$2,$3,$4,$5,$6,$7) returning id, ref_code`,
-      [ref, b.action_id, b.description, b.target_due_date || null, b.actual_due_date || null, status, req.user?.uid || null]);
+      [
+        ref,
+        b.action_id,
+        b.description,
+        b.target_due_date || null,
+        b.actual_due_date || null,
+        status,
+        req.user?.uid || null,
+      ]
+    );
     res.json({ ok: true, id: row.id, ref_code: row.ref_code });
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 
 app.patch("/api/of/challenges/:id", async (req, res) => {
-  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  if (!(await isVillageAdminReq(req)))
+    return res.status(403).json({ error: "village admin access required" });
   const b = req.body || {};
-  if (b.status && !OF.chStatus.has(b.status)) return res.status(400).json({ error: "invalid status" });
-  const cols = [], vals = [];
-  for (const f of ["description", "target_due_date", "actual_due_date", "status"])
-    if (f in b) { cols.push(`${f}=$${cols.length + 1}`); vals.push(b[f]); }
+  if (b.status && !OF.chStatus.has(b.status))
+    return res.status(400).json({ error: "invalid status" });
+  const cols = [],
+    vals = [];
+  for (const f of [
+    "description",
+    "target_due_date",
+    "actual_due_date",
+    "status",
+  ])
+    if (f in b) {
+      cols.push(`${f}=$${cols.length + 1}`);
+      vals.push(b[f]);
+    }
   cols.push(`updated_at=now()`);
   try {
-    await q(`update challenges set ${cols.join(", ")} where id=$${vals.length + 1}`, [...vals, req.params.id]);
+    await q(
+      `update challenges set ${cols.join(", ")} where id=$${vals.length + 1}`,
+      [...vals, req.params.id]
+    );
     res.json({ ok: true });
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 
 app.delete("/api/of/challenges/:id", async (req, res) => {
-  if (!(await isVillageAdminReq(req))) return res.status(403).json({ error: "village admin access required" });
+  if (!(await isVillageAdminReq(req)))
+    return res.status(403).json({ error: "village admin access required" });
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    await client.query(`delete from raci_assignments where parent_kind='challenge' and parent_id=$1`, [req.params.id]);
+    await client.query(
+      `delete from raci_assignments where parent_kind='challenge' and parent_id=$1`,
+      [req.params.id]
+    );
     await client.query(`delete from challenges where id=$1`, [req.params.id]);
     await client.query("COMMIT");
     res.json({ ok: true });
-  } catch (e) { await client.query("ROLLBACK"); res.status(400).json({ error: e.message }); }
-  finally { client.release(); }
+  } catch (e) {
+    await client.query("ROLLBACK");
+    res.status(400).json({ error: e.message });
+  } finally {
+    client.release();
+  }
 });
 
 // ---- DEV reset: clear the demo "activity" data, keep the village structure ----
@@ -1210,19 +2178,37 @@ app.delete("/api/of/challenges/:id", async (req, res) => {
 // gov contacts and config. app_admin (DEV) only. Empty external tables that
 // reference resolutions (audit_log, land_use_applications) get cascaded too.
 const RESET_TABLES = [
-  "ledger_entries", "pots", "projects", "project_photos",
-  "fin_transactions", "village_assets", "village_investments",
-  "notices", "trade_listings", "trade_buyers", "trade_contacts",
-  "minutes", "resolutions", "land_requests", "land_allocations", "approvals",
+  "ledger_entries",
+  "pots",
+  "projects",
+  "project_photos",
+  "fin_transactions",
+  "village_assets",
+  "village_investments",
+  "notices",
+  "trade_listings",
+  "trade_buyers",
+  "trade_contacts",
+  "minutes",
+  "resolutions",
+  "land_requests",
+  "land_allocations",
+  "approvals",
 ];
 app.post("/api/dev/reset", async (req, res) => {
-  if (!(await isAppAdminReq(req))) return res.status(403).json({ error: "app admin (DEV) access required" });
+  if (!(await isAppAdminReq(req)))
+    return res.status(403).json({ error: "app admin (DEV) access required" });
   const client = await pool.connect();
   try {
     const counts = {};
-    for (const t of RESET_TABLES) counts[t] = (await client.query(`select count(*)::int c from "${t}"`)).rows[0].c;
+    for (const t of RESET_TABLES)
+      counts[t] = (
+        await client.query(`select count(*)::int c from "${t}"`)
+      ).rows[0].c;
     await client.query("BEGIN");
-    await client.query(`TRUNCATE ${RESET_TABLES.join(", ")} RESTART IDENTITY CASCADE`);
+    await client.query(
+      `TRUNCATE ${RESET_TABLES.join(", ")} RESTART IDENTITY CASCADE`
+    );
     await client.query("COMMIT");
     const clearedRows = Object.values(counts).reduce((s, n) => s + n, 0);
     res.json({ ok: true, clearedRows, tables: counts });
@@ -1237,8 +2223,9 @@ app.post("/api/dev/reset", async (req, res) => {
 // ---- Vuvale persons CRUD (Admin) ----
 app.get("/api/vuvale/:id/persons", async (req, res) => {
   // household owners first (male then female), then everyone else oldest-first
-  res.json(await q(
-    `select id, full_name, gender, relationship, is_owner,
+  res.json(
+    await q(
+      `select id, full_name, gender, relationship, is_owner,
        to_char(date_of_birth,'YYYY-MM-DD') dob, to_char(date_of_death,'YYYY-MM-DD') dod, is_deceased,
        case when date_of_birth is null then null
             when date_of_death is not null then extract(year from age(date_of_death, date_of_birth))::int
@@ -1246,23 +2233,50 @@ app.get("/api/vuvale/:id/persons", async (req, res) => {
      from persons where vuvale_node_id=$1
      order by is_owner desc,
        case when is_owner and gender='Male' then 0 when is_owner then 1 else 2 end,
-       date_of_birth asc nulls last, full_name`, [req.params.id]));
+       date_of_birth asc nulls last, full_name`,
+      [req.params.id]
+    )
+  );
 });
 
 app.post("/api/persons", async (req, res) => {
   const b = req.body || {};
-  if (!b.vuvale_node_id || !b.full_name) return res.status(400).json({ error: "vuvale_node_id and full_name required" });
+  if (!b.vuvale_node_id || !b.full_name)
+    return res
+      .status(400)
+      .json({ error: "vuvale_node_id and full_name required" });
   const [row] = await q(
     `insert into persons(vuvale_node_id, full_name, gender, relationship, date_of_birth, date_of_death, is_deceased, is_owner)
      values($1,$2,$3,$4,$5,$6,$7,$8) returning id`,
-    [b.vuvale_node_id, b.full_name, b.gender || null, b.relationship || null, b.date_of_birth || null, b.date_of_death || null, !!b.is_deceased, !!b.is_owner]);
+    [
+      b.vuvale_node_id,
+      b.full_name,
+      b.gender || null,
+      b.relationship || null,
+      b.date_of_birth || null,
+      b.date_of_death || null,
+      !!b.is_deceased,
+      !!b.is_owner,
+    ]
+  );
   res.json({ ok: true, id: row.id });
 });
 
 app.patch("/api/persons/:id", async (req, res) => {
   const b = req.body || {};
-  await q(`update persons set full_name=$1, gender=$2, relationship=$3, date_of_birth=$4, date_of_death=$5, is_deceased=$6, is_owner=$7 where id=$8`,
-    [b.full_name, b.gender || null, b.relationship || null, b.date_of_birth || null, b.date_of_death || null, !!b.is_deceased, !!b.is_owner, req.params.id]);
+  await q(
+    `update persons set full_name=$1, gender=$2, relationship=$3, date_of_birth=$4, date_of_death=$5, is_deceased=$6, is_owner=$7 where id=$8`,
+    [
+      b.full_name,
+      b.gender || null,
+      b.relationship || null,
+      b.date_of_birth || null,
+      b.date_of_death || null,
+      !!b.is_deceased,
+      !!b.is_owner,
+      req.params.id,
+    ]
+  );
   res.json({ ok: true });
 });
 
@@ -1272,38 +2286,61 @@ app.delete("/api/persons/:id", async (req, res) => {
 });
 
 app.get("/api/projects", async (req, res) => {
-  const rows = await q(`select p.id, p.name, p.budget_cents, p.physical_progress prog, p.status, sn.label owner,
+  const rows =
+    await q(`select p.id, p.name, p.budget_cents, p.physical_progress prog, p.status, sn.label owner,
       to_char(p.start_date,'YYYY-MM-DD') start_date, to_char(p.end_date,'YYYY-MM-DD') end_date,
       coalesce(sum(le.amount_cents) filter (where le.direction='in'),0)::bigint raised,
       coalesce(sum(le.amount_cents) filter (where le.direction='out' and le.archived_at is null),0)::bigint spent
     from projects p join scope_nodes sn on sn.id=p.owner_body_node_id
     left join ledger_entries le on le.pot_id=p.pot_id and le.archived_at is null
     where p.archived_at is null group by p.id, sn.label order by p.name`);
-  const photos = await q(`select project_id, image_ref, caption from project_photos order by id`);
+  const photos = await q(
+    `select project_id, image_ref, caption from project_photos order by id`
+  );
   const byProj = {};
-  for (const ph of photos) (byProj[ph.project_id] = byProj[ph.project_id] || []).push({ src: ph.image_ref, caption: ph.caption });
-  res.json(rows.map(r => ({
-    id: r.id, name: r.name, owner: r.owner, status: r.status,
-    start_date: r.start_date, end_date: r.end_date,
-    budget_cents: n(r.budget_cents), prog: n(r.prog), raised: n(r.raised), spent: n(r.spent),
-    photos: byProj[r.id] || [],
-  })));
+  for (const ph of photos)
+    (byProj[ph.project_id] = byProj[ph.project_id] || []).push({
+      src: ph.image_ref,
+      caption: ph.caption,
+    });
+  res.json(
+    rows.map((r) => ({
+      id: r.id,
+      name: r.name,
+      owner: r.owner,
+      status: r.status,
+      start_date: r.start_date,
+      end_date: r.end_date,
+      budget_cents: n(r.budget_cents),
+      prog: n(r.prog),
+      raised: n(r.raised),
+      spent: n(r.spent),
+      photos: byProj[r.id] || [],
+    }))
+  );
 });
 
 app.get("/api/fundraising", async (req, res) => {
-  const rows = await q(`select p.id, p.name, sn.label owner, sn.level, sn.id body_id, po.goal_cents,
+  const rows =
+    await q(`select p.id, p.name, sn.label owner, sn.level, sn.id body_id, po.goal_cents,
       coalesce(sum(le.amount_cents) filter (where le.direction='in'),0)::bigint raised
     from projects p join pots po on po.id=p.pot_id join scope_nodes sn on sn.id=p.owner_body_node_id
     left join ledger_entries le on le.pot_id=p.pot_id and le.archived_at is null
     where p.archived_at is null group by p.id, sn.label, sn.level, sn.id, po.goal_cents order by raised desc`);
-  res.json(rows.map(r => ({ ...r, goal_cents: n(r.goal_cents), raised: n(r.raised) })));
+  res.json(
+    rows.map((r) => ({
+      ...r,
+      goal_cents: n(r.goal_cents),
+      raised: n(r.raised),
+    }))
+  );
 });
 
 // optional scope to a set of fundraising projects (their pots). A present-but-empty
 // `projects` param means "no matching efforts" → no contributions (not "all").
 function projectScope(req, params) {
-  if (req.query.projects === undefined) return '';
-  const ids = String(req.query.projects).split(',').filter(Boolean);
+  if (req.query.projects === undefined) return "";
+  const ids = String(req.query.projects).split(",").filter(Boolean);
   params.push(ids);
   return `and le.pot_id in (select pot_id from projects where id = any($${params.length}::uuid[]))`;
 }
@@ -1314,10 +2351,13 @@ const ACTIVE_LEDGER = `and le.archived_at is null and not exists (select 1 from 
 // Contributions (money in) grouped by the donor's lineage ancestor at a chosen
 // level — Mataqali / Tokatoka / Vuvale. Walks contributor_vuvale_id up the tree.
 app.get("/api/contributions", async (req, res) => {
-  const level = ['mataqali', 'tokatoka', 'vuvale'].includes(req.query.level) ? req.query.level : 'mataqali';
+  const level = ["mataqali", "tokatoka", "vuvale"].includes(req.query.level)
+    ? req.query.level
+    : "mataqali";
   const params = [level];
   const scope = projectScope(req, params);
-  const rows = await q(`with recursive up as (
+  const rows = await q(
+    `with recursive up as (
       select le.id le_id, le.amount_cents, sn.id node_id, sn.level::text lvl, sn.label, sn.parent_id
       from ledger_entries le join scope_nodes sn on sn.id=le.contributor_vuvale_id
       where le.direction='in' ${ACTIVE_LEDGER} ${scope}
@@ -1326,16 +2366,21 @@ app.get("/api/contributions", async (req, res) => {
       from up join scope_nodes p on p.id=up.parent_id
     )
     select label, sum(amount_cents)::bigint total
-    from up where lvl=$1 group by node_id, label order by total desc`, params);
-  res.json(rows.map(r => ({ label: r.label, total: n(r.total) })));
+    from up where lvl=$1 group by node_id, label order by total desc`,
+    params
+  );
+  res.json(rows.map((r) => ({ label: r.label, total: n(r.total) })));
 });
 
 // Individual contributions with the donor's ancestor body at the chosen level.
 app.get("/api/contributions-detail", async (req, res) => {
-  const level = ['mataqali', 'tokatoka', 'vuvale'].includes(req.query.level) ? req.query.level : 'mataqali';
+  const level = ["mataqali", "tokatoka", "vuvale"].includes(req.query.level)
+    ? req.query.level
+    : "mataqali";
   const params = [level];
   const scope = projectScope(req, params);
-  const rows = await q(`with recursive up as (
+  const rows = await q(
+    `with recursive up as (
       select le.id le_id, le.amount_cents, le.contributor_name, le.created_at,
              sn.level::text lvl, sn.label, sn.parent_id
       from ledger_entries le join scope_nodes sn on sn.id=le.contributor_vuvale_id
@@ -1345,14 +2390,17 @@ app.get("/api/contributions-detail", async (req, res) => {
       from up join scope_nodes p on p.id=up.parent_id
     )
     select le_id id, to_char(created_at,'YYYY-MM-DD') date, contributor_name name, label body, amount_cents amount
-    from up where lvl=$1 order by created_at desc, amount_cents desc`, params);
+    from up where lvl=$1 order by created_at desc, amount_cents desc`,
+    params
+  );
   res.json(rows);
 });
 
 app.get("/api/financials", async (req, res) => {
   // all body pots in the village's world (village + its soqosoqo + mataqali), tagged with level
   // so the Funds tab can be filtered by Yasana/Tikina/Koro/Soqosoqo/Mataqali like the other tabs.
-  const rows = await q(`select po.purpose, sn.level, sn.label body, sn.id body_id,
+  const rows =
+    await q(`select po.purpose, sn.level, sn.label body, sn.id body_id,
       coalesce(sum(le.amount_cents) filter (where le.direction='in'),0)::bigint tin,
       coalesce(sum(le.amount_cents) filter (where le.direction='out'),0)::bigint tout
     from pots po
@@ -1361,11 +2409,21 @@ app.get("/api/financials", async (req, res) => {
     where sn.archived_at is null
       and not exists (select 1 from projects pr where pr.pot_id=po.id and pr.archived_at is not null)
     group by po.id, po.purpose, sn.level, sn.label, sn.id order by po.purpose`);
-  res.json(rows.map(r => ({ purpose: r.purpose, level: r.level, body: r.body, body_id: r.body_id, tin: n(r.tin), tout: n(r.tout) })));
+  res.json(
+    rows.map((r) => ({
+      purpose: r.purpose,
+      level: r.level,
+      body: r.body,
+      body_id: r.body_id,
+      tin: n(r.tin),
+      tout: n(r.tout),
+    }))
+  );
 });
 
 app.get("/api/minutes", async (req, res) => {
-  const rows = await q(`select m.id, m.title, to_char(m.meeting_date,'YYYY-MM-DD') d, sn.level, sn.label, sn.id body_id,
+  const rows =
+    await q(`select m.id, m.title, to_char(m.meeting_date,'YYYY-MM-DD') d, sn.level, sn.label, sn.id body_id,
       coalesce(json_agg(json_build_object('ref', r.ref_label, 'summary', r.summary, 'status', r.status) order by r.ref_label)
                filter (where r.id is not null), '[]') resolutions
     from minutes m join scope_nodes sn on sn.id=m.classification_node_id
@@ -1375,94 +2433,169 @@ app.get("/api/minutes", async (req, res) => {
 
 // Trade: seller listings (members post), buyer directory, key contacts.
 app.get("/api/trade-listings", async (req, res) => {
-  res.json(await q(`select t.id, t.group_id, t.seller, t.produce, t.qty_kg, t.created_by, t.mobile,
+  res.json(
+    await q(
+      `select t.id, t.group_id, t.seller, t.produce, t.qty_kg, t.created_by, t.mobile,
       to_char(t.available_from,'YYYY-MM-DD') available_from, to_char(t.available_to,'YYYY-MM-DD') available_to
     from trade_listings t join villages v on v.id=t.village_id where v.name=$1
-    order by t.created_at desc, t.id`, [VILLAGE]));
+    order by t.created_at desc, t.id`,
+      [VILLAGE]
+    )
+  );
 });
 app.post("/api/trade-listings", async (req, res) => {
   const b = req.body || {};
   // one posting = one group; accepts items:[{produce, qty_kg}] or a legacy single produce/qty_kg
-  const items = (Array.isArray(b.items) ? b.items : [{ produce: b.produce, qty_kg: b.qty_kg }])
-    .map(it => ({ produce: String(it.produce || '').trim().slice(0, 60), qty: Number(it.qty_kg) }))
-    .filter(it => it.produce && it.qty > 0);
-  if (!items.length) return res.status(400).json({ error: "at least one produce with a quantity (kg) is required" });
+  const items = (
+    Array.isArray(b.items)
+      ? b.items
+      : [{ produce: b.produce, qty_kg: b.qty_kg }]
+  )
+    .map((it) => ({
+      produce: String(it.produce || "")
+        .trim()
+        .slice(0, 60),
+      qty: Number(it.qty_kg),
+    }))
+    .filter((it) => it.produce && it.qty > 0);
+  if (!items.length)
+    return res
+      .status(400)
+      .json({ error: "at least one produce with a quantity (kg) is required" });
   try {
     const actor = await noticeActor(req);
-    if (!actor) return res.status(401).json({ error: "sign in to post a listing" });
+    if (!actor)
+      return res.status(401).json({ error: "sign in to post a listing" });
     // seller is editable (posting on behalf of someone without access); defaults to the poster
-    const seller = String(b.seller || '').trim().slice(0, 80) || actor.name;
+    const seller =
+      String(b.seller || "")
+        .trim()
+        .slice(0, 80) || actor.name;
     const [v] = await q(`select id from villages where name=$1`, [VILLAGE]);
     const gid = require("crypto").randomUUID();
     for (const it of items) {
       await q(
         `insert into trade_listings(village_id, group_id, seller, produce, qty_kg, available_from, available_to, mobile, created_by)
          values($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-        [v.id, gid, seller, it.produce, it.qty, b.available_from || null, b.available_to || null, (b.mobile || '').slice(0, 25) || null, actor.id]);
+        [
+          v.id,
+          gid,
+          seller,
+          it.produce,
+          it.qty,
+          b.available_from || null,
+          b.available_to || null,
+          (b.mobile || "").slice(0, 25) || null,
+          actor.id,
+        ]
+      );
     }
     res.json({ ok: true, group_id: gid, count: items.length });
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 app.delete("/api/trade-listing-groups/:gid", async (req, res) => {
   try {
     const actor = await noticeActor(req);
     if (!actor) return res.status(401).json({ error: "sign in first" });
-    const [t] = await q(`select created_by from trade_listings where group_id=$1 limit 1`, [req.params.gid]);
+    const [t] = await q(
+      `select created_by from trade_listings where group_id=$1 limit 1`,
+      [req.params.gid]
+    );
     if (!t) return res.status(404).json({ error: "listing not found" });
     if (!isOfficial(actor) && !(t.created_by && t.created_by === actor.id))
-      return res.status(403).json({ error: "you can only remove your own listings" });
+      return res
+        .status(403)
+        .json({ error: "you can only remove your own listings" });
     await q(`delete from trade_listings where group_id=$1`, [req.params.gid]);
     res.json({ ok: true });
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 app.delete("/api/trade-listings/:id", async (req, res) => {
   try {
     const actor = await noticeActor(req);
     if (!actor) return res.status(401).json({ error: "sign in first" });
-    const [t] = await q(`select created_by from trade_listings where id=$1`, [req.params.id]);
+    const [t] = await q(`select created_by from trade_listings where id=$1`, [
+      req.params.id,
+    ]);
     if (!t) return res.status(404).json({ error: "listing not found" });
     if (!isOfficial(actor) && !(t.created_by && t.created_by === actor.id))
-      return res.status(403).json({ error: "you can only remove your own listings" });
+      return res
+        .status(403)
+        .json({ error: "you can only remove your own listings" });
     await q(`delete from trade_listings where id=$1`, [req.params.id]);
     res.json({ ok: true });
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 app.get("/api/trade-buyers", async (req, res) => {
-  res.json(await q(`select b.id, b.name, b.buys, b.location, b.mobile, b.email
-    from trade_buyers b join villages v on v.id=b.village_id where v.name=$1 order by b.sort_order, b.name`, [VILLAGE]));
+  res.json(
+    await q(
+      `select b.id, b.name, b.buys, b.location, b.mobile, b.email
+    from trade_buyers b join villages v on v.id=b.village_id where v.name=$1 order by b.sort_order, b.name`,
+      [VILLAGE]
+    )
+  );
 });
 app.get("/api/trade-contacts", async (req, res) => {
-  res.json(await q(`select c.id, c.category, c.name, c.detail, c.mobile, c.location
-    from trade_contacts c join villages v on v.id=c.village_id where v.name=$1 order by c.sort_order, c.name`, [VILLAGE]));
+  res.json(
+    await q(
+      `select c.id, c.category, c.name, c.detail, c.mobile, c.location
+    from trade_contacts c join villages v on v.id=c.village_id where v.name=$1 order by c.sort_order, c.name`,
+      [VILLAGE]
+    )
+  );
 });
 
 // Resolution action types (DEV-administered list offered by the Action button / future workflow).
 app.get("/api/resolution-action-types", async (req, res) => {
-  res.json(await q(`select id, label from resolution_action_types order by sort_order, label`));
+  res.json(
+    await q(
+      `select id, label from resolution_action_types order by sort_order, label`
+    )
+  );
 });
 app.post("/api/resolution-action-types", async (req, res) => {
   const label = String((req.body || {}).label || "").trim();
   if (!label) return res.status(400).json({ error: "label required" });
   try {
-    const [row] = await q(`insert into resolution_action_types(label, sort_order)
+    const [row] = await q(
+      `insert into resolution_action_types(label, sort_order)
       values($1, coalesce((select max(sort_order) from resolution_action_types),0)+1)
-      on conflict (label) do nothing returning id`, [label]);
+      on conflict (label) do nothing returning id`,
+      [label]
+    );
     res.json({ ok: true, id: row?.id || null });
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 app.delete("/api/resolution-action-types/:id", async (req, res) => {
   try {
     await q(`delete from resolution_action_types where id=$1`, [req.params.id]);
     res.json({ ok: true });
-  } catch (e) { res.status(400).json({ error: e.message }); }
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 });
 
 // Serve built React app if present (production); dev uses the Vite server with a proxy.
 const dist = path.join(__dirname, "web", "dist");
 app.use(express.static(dist));
-app.get(/^(?!\/api).*/, (req, res) => res.sendFile(path.join(dist, "index.html"), err => { if (err) res.status(404).end(); }));
+app.get(/^(?!\/api).*/, (req, res) =>
+  res.sendFile(path.join(dist, "index.html"), (err) => {
+    if (err) res.status(404).end();
+  })
+);
 
 // API_PORT wins over PORT: dev tooling (e.g. the preview launcher) injects PORT
 // for the front-end; the API must stay on 3000 to match Vite's /api proxy.
-const PORT = process.env.API_PORT || (process.env.npm_lifecycle_event === "dev" ? 3000 : process.env.PORT) || 3000;
+const PORT =
+  process.env.API_PORT ||
+  (process.env.npm_lifecycle_event === "dev" ? 3000 : process.env.PORT) ||
+  3000;
 app.listen(PORT, () => console.log("VanuaRai API on http://localhost:" + PORT));
