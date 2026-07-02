@@ -1,13 +1,12 @@
 import { useLevels } from '../levels'
 import { COMMODITIES, TOT_IMP, TOT_TGT, CASCADE, fjm } from '../strategy'
 import { EditableText } from '../copy'
-import Scorecard from '../Scorecard'
 
-// The single Scorecard view — "Meda Matata Mada", Cakaudrove's child-centric,
-// trickle-up Balanced Scorecard. The live, editable, rolled-up scorecard sits on
-// top (By Perspective / By TAB Platform lenses); the strategy framework below it
-// is the context. Framework prose is EditableText (DEV ✎ pencil edits it; edits
-// persist per-browser in localStorage). Strategy data model lives in strategy.js.
+// The "Strategy" page — "Meda Matata Mada", Cakaudrove's child-centric, trickle-up
+// strategy framework: vision, the two delivery engines, the 10%-in-10-years import
+// targets, and the action-plan cascade. The live measurement board lives separately
+// under "Scorecard" (the Outcome Framework, /outcomes). Framework prose is
+// EditableText (DEV ✎ pencil; edits persist per-browser). Model lives in strategy.js.
 export default function VScorecard() {
   const { map } = useLevels()
   const lv = k => map[k] || {}
@@ -17,15 +16,12 @@ export default function VScorecard() {
       <div className="pagehead">
         <div>
           <h1>Strategy</h1>
-          <EditableText as="p" className="sub" id="sc.page.sub">Meda Matata Mada — Cakaudrove’s child-centric, trickle-up Balanced Scorecard. Enter data at the Mataqali, Tokatoka &amp; Vuvale; it rolls up to the Vanua.</EditableText>
+          <EditableText as="p" className="sub" id="sc.page.sub">Meda Matata Mada — Cakaudrove’s child-centric, trickle-up strategy framework. The live measurement board is under Scorecard.</EditableText>
         </div>
       </div>
 
-      {/* The live, editable, rolled-up scorecard (lens toggle + per-node entry). */}
-      <Scorecard axis="traditional" />
-
-      {/* ── Strategy framework (the "why" behind the numbers) ───────────────── */}
-      <div className="card vsc-vision" style={{ marginTop: 26 }}>
+      {/* ── Strategy framework (the "why") ──────────────────────────────────── */}
+      <div className="card vsc-vision">
         <div className="vsc-vision-main">
           <EditableText as="span" className="vsc-eyebrow" id="sc.vision.eyebrow">Our objective</EditableText>
           <EditableText as="h2" id="sc.vision.title">Peace and prosperity prevails across Cakaudrove.</EditableText>
