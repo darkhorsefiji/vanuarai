@@ -195,8 +195,11 @@ function TA({ ta, id, sm }) {
   const a = eff(".a", ta.a);
   const t = eff(".t", ta.t);
   const prog = t - b ? clamp(Math.round(((a - b) / (t - b)) * 100)) : 0;
-  const basePos = t ? clamp((b / t) * 100) : 0;
-  const actPos = t ? clamp((a / t) * 100) : 0;
+  // Baseline → Target scale: the baseline is the left edge (0%) and the target
+  // the right edge (100%), so the actual sits at the progress % and the fill
+  // equals the progress — no dead track before the baseline.
+  const basePos = 0;
+  const actPos = prog;
   const N = (suf, def) =>
     id ? (
       <EditableText as="span" id={id + suf}>
