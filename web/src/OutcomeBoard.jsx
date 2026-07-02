@@ -131,10 +131,10 @@ export default function OutcomeBoard() {
       </div>
 
       <div className="finfilter of-classfilter">
-        <span className="finfilter-lbl">Pillar</span>
+        <span className="finfilter-lbl">Platform</span>
         <button className={'fchip' + (pillar === '' ? ' active' : '')} onClick={() => setPillar('')}>All</button>
         {tax.pillars.map(p => (
-          <button key={p.id} className={'fchip' + (pillar === p.id ? ' active' : '')} title={p.name} onClick={() => setPillar(p.id)}>P{p.platform_no}</button>
+          <button key={p.id} className={'fchip of-tip' + (pillar === p.id ? ' active' : '')} data-tip={`P${p.platform_no} · ${p.name}`} aria-label={p.name} onClick={() => setPillar(p.id)}>P{p.platform_no}</button>
         ))}
         <label className="of-isicsel" style={{ marginLeft: 14 }}>ISIC&nbsp;
           <select value={isic} onChange={e => setIsic(e.target.value)}>
@@ -194,7 +194,7 @@ export default function OutcomeBoard() {
                       <span>{o.title}</span>
                       <span className="of-badges">
                         {o.focus_label && <span className="of-badge" style={{ '--b': o.accent || 'var(--ocean)' }}>{o.focus_label}</span>}
-                        {o.platform_no && <span className="of-badge of-badge-p" title={o.pillar_name}>P{o.platform_no}</span>}
+                        {o.platform_no && <span className="of-badge of-badge-p of-tip" data-tip={`P${o.platform_no} · ${o.pillar_name}`} aria-label={o.pillar_name}>P{o.platform_no}</span>}
                         {o.isic_code && <span className="of-badge of-badge-i" title={o.isic_title}>{o.isic_code}</span>}
                       </span>
                     </div>

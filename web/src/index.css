@@ -794,6 +794,14 @@ header.top > .authbox{z-index:40}
 .of-badge{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;padding:2px 6px;border-radius:6px;color:#fff;background:var(--b,var(--ocean));white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .of-badge-p{background:var(--deep)}
 .of-badge-i{background:var(--muted)}
+/* Immediate styled hover tooltip (e.g. P1–P5 → full Platform name) */
+.of-tip{position:relative;overflow:visible}
+.of-tip:hover::after{content:attr(data-tip);position:absolute;left:50%;top:calc(100% + 9px);transform:translateX(-50%);
+  background:var(--deep);color:#fff;padding:6px 10px;border-radius:8px;font-size:12px;font-weight:600;line-height:1.35;
+  letter-spacing:.2px;text-transform:none;text-align:center;width:max-content;max-width:240px;
+  box-shadow:0 8px 20px rgba(0,0,0,.28);z-index:60;pointer-events:none}
+.of-tip:hover::before{content:'';position:absolute;left:50%;top:calc(100% + 3px);transform:translateX(-50%);
+  border:5px solid transparent;border-bottom-color:var(--deep);z-index:60;pointer-events:none}
 .of-var{margin-left:8px;font-weight:800}
 .of-var.neg{color:var(--clay)}
 .of-var.pos{color:var(--sage)}
