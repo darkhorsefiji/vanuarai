@@ -245,6 +245,8 @@ export const THEME_GROUPS = [
       { k: "--ptg-fill", l: "Progress fill", t: "color", d: "#46a877" },
       { k: "--ptg-track", l: "Track (empty)", t: "color", d: "#e6eeec" },
       { k: "--ptg-pct", l: "Percent text", t: "color", d: "#0c4651" },
+      { k: "--ptg-act", l: "Actual value text", t: "color", d: "#46a877" },
+      { k: "--ptg-num", l: "Baseline/Target text", t: "color", d: "#21464c" },
       { k: "--ptg-marker", l: "Markers", t: "color", d: "#0c4651" },
       {
         k: "--ptg-h",

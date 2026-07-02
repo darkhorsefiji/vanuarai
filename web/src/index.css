@@ -4071,13 +4071,13 @@ header.top > .authbox {
   position: absolute;
   font-size: 11px;
   font-weight: 800;
-  color: var(--ink);
+  color: var(--ptg-num, var(--ink));
   white-space: nowrap;
 }
 .pt-gn-act {
   bottom: 0;
   transform: translateX(-50%);
-  color: var(--ptg-fill, #46a877);
+  color: var(--ptg-act, var(--ptg-fill, #46a877));
 }
 .pt-gn-base {
   top: 0;
