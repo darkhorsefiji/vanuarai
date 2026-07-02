@@ -14,7 +14,12 @@ Newest first.
 
 | CHG | Date | Commit | Change |
 |-----|------|--------|--------|
-| CHG-0023 | 2026-07-02 | _this commit_ | Make the Scorecard framework text editable inline (EditableText: vision, engines, 10% rows, cascade) via the DEV ✎ pencil |
+| CHG-0027 | 2026-07-02 | _pending_ | Outcome framework (Phase 3 UI): new "Outcomes" page (`/outcomes`) — OutcomeBoard (3-axis filters, roll-up Actual/Target/Variance per node, inline per-node data entry) + ActionsRegister (actions task/intervention/project w/ status + RACI chips + nested tasks + intervention-indicators, challenge log, overdue strip, variance→"raise action" flow). Reuses scorecard CSS; added `/api/of/indicators`. Verified live in preview (roll-up math, INT/TSK/CHL creation, RACI all green) |
+| CHG-0026 | 2026-07-02 | _pending_ | Outcome framework (Phase 2 API): `/api/of/*` routes — taxonomies, outcome + indicator + measurement CRUD w/ recursive roll-up & variance, actions (task/intervention/project) w/ ref-codes + RACI + completion guard, intervention-indicators, challenges + overdue view. Village-admin gated; 17-check smoke test green |
+| CHG-0025 | 2026-07-02 | _pending_ | Outcome framework (Phase 1b seed, migration 040): enter the existing Meda Matata Mada strategy as real data — 11 finer-grained Outcomes (one TAB pillar each, tagged focus-area/pillar/ISIC) covering all 25 framework KPIs as outcome indicators. Replaces strategy.js as content source |
+| CHG-0024 | 2026-07-02 | _pending_ | Outcome framework (Phase 1 schema, migration 039): Outcome→Indicator→Variance→Action→Challenge results model — outcomes tagged on 3 axes (Vanua focus area / TAB pillar / ISIC), actions (task/intervention/project) w/ RACI + status, separate intervention-indicators, challenge log; seed focus-area/pillar/ISIC taxonomies. Replaces the BSC scorecard (old tables retained for rollback). See docs/outcome-framework-spec.md |
+| CHG-0024 | 2026-07-02 | _this commit_ | Sidebar: rename "Scorecard"→"Strategy" (/vscorecard) and "Outcomes"→"Scorecard" (/outcomes); sync page H1s |
+| CHG-0023 | 2026-07-02 | 75d1796 | Make the Scorecard framework text editable inline (EditableText: vision, engines, 10% rows, cascade) via the DEV ✎ pencil |
 | CHG-0022 | 2026-06-19 | a91547a | Consolidate to ONE Scorecard: live scorecard+framework on renamed "Scorecard" page; remove scorecard from Vanua & TAB section from Government |
 | CHG-0021 | 2026-06-19 | dd964cf | Scorecard: By Perspective/By TAB Platform lens toggle; entry gated to Mataqali/Tokatoka/Vuvale (upper levels view-only) |
 | CHG-0020 | 2026-06-19 | af995ee | Add TAB platform to KPI registry (migration 038) — foundation for the "By Platform" scorecard lens |

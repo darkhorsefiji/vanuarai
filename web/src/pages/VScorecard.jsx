@@ -16,7 +16,7 @@ export default function VScorecard() {
     <>
       <div className="pagehead">
         <div>
-          <h1>Scorecard</h1>
+          <h1>Strategy</h1>
           <EditableText as="p" className="sub" id="sc.page.sub">Meda Matata Mada — Cakaudrove’s child-centric, trickle-up Balanced Scorecard. Enter data at the Mataqali, Tokatoka &amp; Vuvale; it rolls up to the Vanua.</EditableText>
         </div>
       </div>
