@@ -13,5 +13,5 @@ export PATH="$NVM_DIR/versions/node/$(node -v)/bin:$PATH"
 npm ci
 npm ci --prefix web
 npm run build
-pm2 start ecosystem.config.js
+pm2 startOrReload ecosystem.config.js
 pm2 save
