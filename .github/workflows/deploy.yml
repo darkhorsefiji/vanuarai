@@ -43,18 +43,14 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - uses: webfactory/ssh-agent@v0.9.1
-        with:
-          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
-
-      - name: Verify key fingerprint
-        run: ssh-add -l
-
       - name: Deploy to VPS
         run: |
           set -e
-          ssh -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes \
-            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "bash -s" <<'REMOTE'
+          mkdir -p ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes -i ~/.ssh/deploy_key \
+            $VPS_USER@$VPS_HOST "bash -s" <<'REMOTE'
           set -e
           cd /var/www/vanuarai
           git pull origin main
@@ -64,3 +60,7 @@ jobs:
           pm2 start ecosystem.config.js
           pm2 save
           REMOTE
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
