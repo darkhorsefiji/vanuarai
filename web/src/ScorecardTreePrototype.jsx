@@ -13,7 +13,7 @@
 // layout. Edits persist per-browser (localStorage), like the rest of the app copy.
 // When a layout wins: fold it into OutcomeBoard and DELETE this file + the switcher.
 
-import { EditableText } from "./copy";
+import { EditableText, useCopy } from "./copy";
 
 // Editable text node with a stable id (shared across variants).
 const ET = ({ id, children }) => (
@@ -179,8 +179,12 @@ const num = (n) => Number(n).toLocaleString();
 // Baseline → Actual → Target. Progress is measured from the baseline: how much of
 // the baseline→target gap has been closed. The bar is scaled 0→target, with a tick
 // at the baseline and the fill running baseline→actual.
-function TA({ ta, sm }) {
-  const b = ta.b ?? 0;
+function TA({ ta, id, sm }) {
+  // The baseline is editable (✎ pencil): its value comes from the copy store
+  // (override) or the sample default. Progress + bar recompute from it live.
+  const ctx = useCopy();
+  const raw = ctx && id ? ctx.get(id + ".b", ta.b) : ta.b;
+  const b = Number.isFinite(Number(raw)) ? Number(raw) : (ta.b ?? 0);
   const prog =
     ta.t - b ? clamp(Math.round(((ta.a - b) / (ta.t - b)) * 100)) : 0;
   const basePos = ta.t ? clamp((b / ta.t) * 100) : 0;
@@ -188,8 +192,17 @@ function TA({ ta, sm }) {
   return (
     <div className={"pt-ta" + (sm ? " pt-ta-sm" : "")}>
       <span className="pt-ta-val">
-        <span className="pt-base">base {num(b)}</span> {num(ta.a)} / {num(ta.t)}{" "}
-        {ta.u} · <b>{prog}%</b>
+        <span className="pt-base">
+          base{" "}
+          {id ? (
+            <EditableText as="span" id={id + ".b"}>
+              {ta.b}
+            </EditableText>
+          ) : (
+            num(b)
+          )}
+        </span>{" "}
+        {num(ta.a)} / {num(ta.t)} {ta.u} · <b>{prog}%</b>
       </span>
       <div className="pt-bar">
         <i
@@ -248,7 +261,7 @@ function VariantA() {
                   <div className="pt-node pt-a-obj">
                     <span className="pt-cap">Strategic Objective</span>
                     <ET id={idObj(fi, oi)}>{o.name}</ET>
-                    <TA ta={o.ta} sm />
+                    <TA ta={o.ta} id={idObj(fi, oi)} sm />
                   </div>
                   <div className="pt-a-kids">
                     {o.levers.map((l, li) => (
@@ -279,6 +292,7 @@ function VariantA() {
                                     </div>
                                     <TA
                                       ta={{ b: k.b, a: k.a, t: k.t, u: k.u }}
+                                      id={idKpi(fi, oi, li, ii, ki)}
                                       sm
                                     />
                                   </div>
@@ -319,7 +333,7 @@ function VariantB() {
                   <span>
                     <ET id={idObj(fi, oi)}>{o.name}</ET>
                   </span>
-                  <TA ta={o.ta} sm />
+                  <TA ta={o.ta} id={idObj(fi, oi)} sm />
                 </div>
                 {o.levers.map((l, li) => (
                   <div className="pt-b-lever" key={li}>
@@ -344,7 +358,11 @@ function VariantB() {
                                   k={k}
                                 />
                               </span>
-                              <TA ta={{ b: k.b, a: k.a, t: k.t, u: k.u }} sm />
+                              <TA
+                                ta={{ b: k.b, a: k.a, t: k.t, u: k.u }}
+                                id={idKpi(fi, oi, li, ii, ki)}
+                                sm
+                              />
                             </div>
                           ))}
                         </div>
@@ -401,7 +419,7 @@ function VariantC() {
                         {oFirst && (
                           <td className="pt-c-obj" rowSpan={objLeaves(o)}>
                             <ET id={idObj(fi, oi)}>{o.name}</ET>
-                            <TA ta={o.ta} sm />
+                            <TA ta={o.ta} id={idObj(fi, oi)} sm />
                           </td>
                         )}
                         {lFirst && (
@@ -422,7 +440,11 @@ function VariantC() {
                           <KpiLabel id={idKpi(fi, oi, li, ii, ki)} k={k} />
                         </td>
                         <td>
-                          <TA ta={{ b: k.b, a: k.a, t: k.t, u: k.u }} sm />
+                          <TA
+                            ta={{ b: k.b, a: k.a, t: k.t, u: k.u }}
+                            id={idKpi(fi, oi, li, ii, ki)}
+                            sm
+                          />
                         </td>
                       </tr>
                     );
