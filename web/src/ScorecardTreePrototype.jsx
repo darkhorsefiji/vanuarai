@@ -31,6 +31,7 @@ const LEVELS = [
   "Target vs Actual",
 ];
 
+// ta / kpi values are { b: baseline, a: actual, t: target, u: unit }.
 const TREE = [
   {
     focus: "Child Development & Family Cohesion",
@@ -38,7 +39,7 @@ const TREE = [
     objectives: [
       {
         name: "Every child achieves at school",
-        ta: { a: 6, t: 8, u: "children" },
+        ta: { b: 4, a: 6, t: 8, u: "children" },
         levers: [
           {
             name: "Home learning environment",
@@ -50,6 +51,7 @@ const TREE = [
                   {
                     name: "Children attending",
                     u: "children",
+                    b: 10,
                     a: 18,
                     t: 25,
                     f: "weekly",
@@ -57,6 +59,7 @@ const TREE = [
                   {
                     name: "Homework completion",
                     u: "%",
+                    b: 60,
                     a: 72,
                     t: 90,
                     f: "weekly",
@@ -70,6 +73,7 @@ const TREE = [
                   {
                     name: "Construction complete",
                     u: "%",
+                    b: 0,
                     a: 40,
                     t: 100,
                     f: "monthly",
@@ -82,7 +86,7 @@ const TREE = [
       },
       {
         name: "Strong, cohesive families",
-        ta: { a: 6, t: 9, u: "people" },
+        ta: { b: 3, a: 6, t: 9, u: "people" },
         levers: [
           {
             name: "Weekly soli & family devotion",
@@ -94,6 +98,7 @@ const TREE = [
                   {
                     name: "Members at weekly soli",
                     u: "people",
+                    b: 4,
                     a: 6,
                     t: 9,
                     f: "weekly",
@@ -112,7 +117,7 @@ const TREE = [
     objectives: [
       {
         name: "Substitute 10% of Kumala flour imports",
-        ta: { a: 2.1, t: 14.5, u: "FJD m" },
+        ta: { b: 0.5, a: 2.1, t: 14.5, u: "FJD m" },
         levers: [
           {
             name: "Co-operative aggregation (VCDCL)",
@@ -124,6 +129,7 @@ const TREE = [
                   {
                     name: "Kumala supplied to miller",
                     u: "tonnes",
+                    b: 20,
                     a: 120,
                     t: 850,
                     f: "monthly",
@@ -131,6 +137,7 @@ const TREE = [
                   {
                     name: "Co-op revenue",
                     u: "FJD",
+                    b: 50000,
                     a: 210000,
                     t: 1450000,
                     f: "monthly",
@@ -144,6 +151,7 @@ const TREE = [
                   {
                     name: "Households cultivating kumala",
                     u: "households",
+                    b: 12,
                     a: 34,
                     t: 120,
                     f: "monthly",
@@ -165,18 +173,32 @@ const idLever = (fi, oi, li) => `sc.t.${fi}.o${oi}.l${li}`;
 const idIv = (fi, oi, li, ii) => `sc.t.${fi}.o${oi}.l${li}.i${ii}`;
 const idKpi = (fi, oi, li, ii, ki) => `sc.t.${fi}.o${oi}.l${li}.i${ii}.k${ki}`;
 
-const pct = (a, t) => (t ? Math.min(100, Math.round((a / t) * 100)) : 0);
+const clamp = (n) => Math.max(0, Math.min(100, n));
 const num = (n) => Number(n).toLocaleString();
 
+// Baseline → Actual → Target. Progress is measured from the baseline: how much of
+// the baseline→target gap has been closed. The bar is scaled 0→target, with a tick
+// at the baseline and the fill running baseline→actual.
 function TA({ ta, sm }) {
-  const p = pct(ta.a, ta.t);
+  const b = ta.b ?? 0;
+  const prog =
+    ta.t - b ? clamp(Math.round(((ta.a - b) / (ta.t - b)) * 100)) : 0;
+  const basePos = ta.t ? clamp((b / ta.t) * 100) : 0;
+  const actPos = ta.t ? clamp((ta.a / ta.t) * 100) : 0;
   return (
     <div className={"pt-ta" + (sm ? " pt-ta-sm" : "")}>
       <span className="pt-ta-val">
-        {num(ta.a)} / {num(ta.t)} {ta.u} · <b>{p}%</b>
+        <span className="pt-base">base {num(b)}</span> {num(ta.a)} / {num(ta.t)}{" "}
+        {ta.u} · <b>{prog}%</b>
       </span>
       <div className="pt-bar">
-        <i style={{ width: p + "%" }} />
+        <i
+          style={{
+            left: Math.min(basePos, actPos) + "%",
+            width: Math.abs(actPos - basePos) + "%",
+          }}
+        />
+        <span className="pt-bar-base" style={{ left: basePos + "%" }} />
       </div>
     </div>
   );
@@ -255,7 +277,10 @@ function VariantA() {
                                         k={k}
                                       />
                                     </div>
-                                    <TA ta={{ a: k.a, t: k.t, u: k.u }} sm />
+                                    <TA
+                                      ta={{ b: k.b, a: k.a, t: k.t, u: k.u }}
+                                      sm
+                                    />
                                   </div>
                                 ))}
                               </div>
@@ -319,7 +344,7 @@ function VariantB() {
                                   k={k}
                                 />
                               </span>
-                              <TA ta={{ a: k.a, t: k.t, u: k.u }} sm />
+                              <TA ta={{ b: k.b, a: k.a, t: k.t, u: k.u }} sm />
                             </div>
                           ))}
                         </div>
@@ -397,7 +422,7 @@ function VariantC() {
                           <KpiLabel id={idKpi(fi, oi, li, ii, ki)} k={k} />
                         </td>
                         <td>
-                          <TA ta={{ a: k.a, t: k.t, u: k.u }} sm />
+                          <TA ta={{ b: k.b, a: k.a, t: k.t, u: k.u }} sm />
                         </td>
                       </tr>
                     );

@@ -4038,7 +4038,7 @@ header.top > .authbox {
   background: var(--pop);
 }
 .pt-ta {
-  min-width: 150px;
+  min-width: 172px;
   margin-top: 5px;
 }
 .pt-ta-val {
@@ -4050,18 +4050,39 @@ header.top > .authbox {
 .pt-ta-val b {
   color: var(--ink);
 }
+.pt-base {
+  font-size: 9.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--muted);
+  background: var(--line);
+  border-radius: 5px;
+  padding: 1px 5px;
+  margin-right: 3px;
+}
 .pt-bar {
-  height: 6px;
+  position: relative;
+  height: 7px;
   border-radius: 4px;
   background: var(--line);
-  overflow: hidden;
-  margin-top: 3px;
+  margin-top: 4px;
 }
 .pt-bar > i {
-  display: block;
+  position: absolute;
+  top: 0;
   height: 100%;
   background: var(--sage);
   border-radius: 4px;
+}
+.pt-bar-base {
+  position: absolute;
+  top: -1px;
+  width: 2px;
+  height: 9px;
+  margin-left: -1px;
+  background: var(--deep);
+  border-radius: 1px;
 }
 .pt-kpi-name {
   font-size: 13px;
