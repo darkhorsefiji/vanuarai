@@ -14,7 +14,8 @@ Newest first.
 
 | CHG | Date | Commit | Change |
 |-----|------|--------|--------|
-| CHG-0031 | 2026-07-02 | _this commit_ | Action row: remove the ▸ expand icon + its column; clicking the id/title area now toggles the drawer |
+| CHG-0032 | 2026-07-02 | _this commit_ | Add reference doc: Blue Pacific 2050 People-Centred Development (for later use) |
+| CHG-0031 | 2026-07-02 | 68ff040 | Action row: remove the ▸ expand icon + its column; clicking the id/title area now toggles the drawer |
 | CHG-0030 | 2026-07-02 | 0bb7d7d | Interventions correction: middle type "Intervention"→"Initiative" (umbrella stays Interventions); actions link to KPI/indicator (migration 042) + show Objective·KPI; id stacked under type; target & actual due dates shown+editable; fix DATE off-by-one (pg type parser) |
 | CHG-0029 | 2026-07-02 | 2083f95 | Scorecard board: rename "Pillar"→"Platform"; styled hover tooltip on P1–P5 chips & badges showing the full Platform name |
 | CHG-0028 | 2026-07-02 | 38c6a48 | Strategy page: remove the old BSC live scorecard (superseded by the Outcome Framework); page is now the pure strategy framework |
