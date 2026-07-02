@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 set -e
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 if [ ! -d /var/www/vanuarai/.git ]; then
   rm -rf /var/www/vanuarai
   git clone https://darkhorsefiji:__GIT_TOKEN__@github.com/darkhorsefiji/vanuarai.git /var/www/vanuarai
@@ -7,6 +9,7 @@ fi
 cd /var/www/vanuarai
 git remote set-url origin https://darkhorsefiji:__GIT_TOKEN__@github.com/darkhorsefiji/vanuarai.git
 git pull origin main
+export PATH="$NVM_DIR/versions/node/$(node -v)/bin:$PATH"
 npm ci
 npm ci --prefix web
 npm run build
