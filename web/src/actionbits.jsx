@@ -4,7 +4,8 @@ import { get, send } from './api'
 // Shared building blocks for the Actions UI (used by the per-Outcome ActionCard).
 export const STATUSES = ['not_started', 'in_progress', 'on_hold', 'cancelled', 'completed']
 export const CH_STATUSES = ['open', 'in_progress', 'on_hold', 'resolved', 'cancelled']
-export const KIND_LABEL = { task: 'Task', intervention: 'Intervention', project: 'Project' }
+export const KIND_LABEL = { task: 'Task', intervention: 'Initiative', project: 'Project' }
+const dOnly = d => (d ? String(d).slice(0, 10) : '')
 export const RACI_ABBR = { responsible: 'R', accountable: 'A', consulted: 'C', informed: 'I' }
 export const human = s => (s || '').replace(/_/g, ' ')
 
@@ -152,16 +153,28 @@ export function ActionRow({ action: a, childrenOf, govContacts, canEdit, onChang
     try { await send('DELETE', '/of/actions/' + a.id); onChange() } catch (e) { alert(e.message) }
   }
   async function delRaci(r) { try { await send('DELETE', '/of/raci/' + r.id); onChange() } catch (e) { alert(e.message) } }
+  async function setDue(field, val) { try { await send('PATCH', '/of/actions/' + a.id, { [field]: val || null }); onChange() } catch (e) { alert(e.message) } }
   const kids = childrenOf ? childrenOf(a.id) : []
   return (
     <>
       <div className={'of-action' + (nested ? ' nested' : '')}>
         <button className="of-exp" onClick={() => setOpen(o => !o)}>{open ? '▾' : '▸'}</button>
-        <span className={'of-kind of-k-' + a.kind}>{KIND_LABEL[a.kind]}</span>
-        <span className="of-ref">{a.ref_code}</span>
-        <span className="of-title">{a.title}</span>
+        {/* type on top, id beneath it — saves horizontal space */}
+        <span className="of-idcol">
+          <span className={'of-kind of-k-' + a.kind}>{KIND_LABEL[a.kind]}</span>
+          <span className="of-ref">{a.ref_code}</span>
+        </span>
+        <span className="of-titlecol">
+          <span className="of-title">{a.title}</span>
+          {(a.outcome_title || a.kpi_name) && (
+            <span className="of-link">↳ {a.outcome_title || '—'}{a.kpi_name ? <> · <b>{a.kpi_name}</b></> : null}</span>
+          )}
+          <span className="of-dues">
+            <span className="meta">Target due: <b>{dOnly(a.target_due_date) || '—'}</b></span>
+            <span className="meta">Actual due: <b>{dOnly(a.actual_due_date) || '—'}</b></span>
+          </span>
+        </span>
         <RaciChips raci={a.raci} />
-        {a.target_due_date && <span className="meta of-due">due {a.target_due_date.slice(0, 10)}</span>}
         <select className={'of-status of-s-' + a.status} value={a.status} onChange={e => setStatus(e.target.value)} disabled={!canEdit}>
           {STATUSES.map(s => <option key={s} value={s}>{human(s)}</option>)}
         </select>
@@ -170,6 +183,12 @@ export function ActionRow({ action: a, childrenOf, govContacts, canEdit, onChang
       {open && (
         <div className="of-drawer">
           {a.description && <p className="of-desc">{a.description}</p>}
+          {canEdit && (
+            <div className="of-dueedit">
+              <label className="meta">Target due <input type="date" value={dOnly(a.target_due_date)} onChange={e => setDue('target_due_date', e.target.value)} /></label>
+              <label className="meta">Actual due <input type="date" value={dOnly(a.actual_due_date)} onChange={e => setDue('actual_due_date', e.target.value)} /></label>
+            </div>
+          )}
           <div className="of-sub-h">RACI</div>
           <RaciChips raci={a.raci} onDel={canEdit ? delRaci : null} />
           {canEdit && <AddRaci parent_kind="action" parent_id={a.id} govContacts={govContacts} onDone={onChange} />}

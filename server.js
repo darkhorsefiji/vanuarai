@@ -3,7 +3,11 @@
 require("dotenv").config({ path: __dirname + "/.env" });
 const path = require("path");
 const express = require("express");
-const { Pool } = require("pg");
+const pg = require("pg");
+const { Pool } = pg;
+// Return DATE columns (OID 1082) as raw 'YYYY-MM-DD' strings, not JS Date objects,
+// so due dates don't shift a day across timezones (server runs at UTC+12).
+pg.types.setTypeParser(1082, v => v);
 const { OAuth2Client } = require("google-auth-library");
 const jwt = require("jsonwebtoken");
 const ExcelJS = require("exceljs");
@@ -984,7 +988,8 @@ app.delete("/api/of/measurements/:id", async (req, res) => {
 // ---- Actions: Task | Intervention | Project ----
 app.get("/api/of/actions", async (req, res) => {
   const rows = await q(`select a.id, a.ref_code, a.kind, a.title, a.description,
-      a.outcome_measurement_id, a.outcome_id, o.title outcome_title, a.node_id, a.target_due_date, a.actual_due_date, a.status,
+      a.outcome_measurement_id, a.outcome_id, o.title outcome_title, a.indicator_id, oi.name kpi_name,
+      a.node_id, a.target_due_date, a.actual_due_date, a.status,
       a.parent_intervention_id, a.project_id,
       sn.label node_label,
       (select count(*) from actions t where t.parent_intervention_id=a.id)::int task_count,
@@ -994,6 +999,7 @@ app.get("/api/of/actions", async (req, res) => {
     from actions a
       left join scope_nodes sn on sn.id=a.node_id
       left join outcomes o on o.id=a.outcome_id
+      left join outcome_indicators oi on oi.id=a.indicator_id
     where ($1::text is null or a.kind::text=$1)
       and ($2::text is null or a.status::text=$2)
       and ($3::uuid is null or a.outcome_measurement_id=$3)
@@ -1021,10 +1027,10 @@ app.post("/api/of/actions", async (req, res) => {
   try {
     const ref = await nextRef(REF_PREFIX[b.kind], "actions");
     const [row] = await q(`insert into actions
-      (ref_code, kind, title, description, outcome_measurement_id, outcome_id, node_id,
+      (ref_code, kind, title, description, outcome_measurement_id, outcome_id, indicator_id, node_id,
        target_due_date, actual_due_date, status, parent_intervention_id, project_id, created_by)
-      values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) returning id, ref_code`,
-      [ref, b.kind, b.title, b.description || null, b.outcome_measurement_id || null, b.outcome_id || null, b.node_id || null,
+      values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) returning id, ref_code`,
+      [ref, b.kind, b.title, b.description || null, b.outcome_measurement_id || null, b.outcome_id || null, b.indicator_id || null, b.node_id || null,
        b.target_due_date || null, b.actual_due_date || null, status,
        b.kind === "task" ? (b.parent_intervention_id || null) : null,
        b.kind === "project" ? (b.project_id || null) : null, req.user?.uid || null]);
@@ -1045,7 +1051,7 @@ app.patch("/api/of/actions/:id", async (req, res) => {
     if (open.c > 0) return res.status(409).json({ error: `intervention has ${open.c} open task(s); resolve them first` });
   }
   const cols = [], vals = [];
-  for (const f of ["title", "description", "outcome_measurement_id", "outcome_id", "node_id", "target_due_date", "actual_due_date", "status", "parent_intervention_id", "project_id"])
+  for (const f of ["title", "description", "outcome_measurement_id", "outcome_id", "indicator_id", "node_id", "target_due_date", "actual_due_date", "status", "parent_intervention_id", "project_id"])
     if (f in b) { cols.push(`${f}=$${cols.length + 1}`); vals.push(b[f]); }
   cols.push(`updated_at=now()`);
   try {

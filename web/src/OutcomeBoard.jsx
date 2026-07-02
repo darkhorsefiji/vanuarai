@@ -212,7 +212,7 @@ export default function OutcomeBoard() {
                           </div>
                           <div className="bar"><i style={{ width: pct + '%' }} /></div>
                           {canEdit && varc < 0 &&
-                            <button className="mini of-raise" onClick={() => setRaiseFor({ key: rowKey, title: `Close gap: ${k.name}` })}>＋ Raise action to close gap</button>}
+                            <button className="mini of-raise" onClick={() => setRaiseFor({ key: rowKey, title: `Close gap: ${k.name}`, indicator_id: k.indicator_id })}>＋ Raise action to close gap</button>}
                         </div>
                       )
                     })}
@@ -228,6 +228,7 @@ export default function OutcomeBoard() {
                     onChange={bump}
                     autoOpen={raiseFor?.key === rowKey}
                     prefillTitle={raiseFor?.key === rowKey ? raiseFor.title : ''}
+                    prefillIndicator={raiseFor?.key === rowKey ? raiseFor.indicator_id : null}
                     onConsume={() => setRaiseFor(null)}
                   />
                 </div>
