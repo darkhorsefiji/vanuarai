@@ -51,7 +51,8 @@ export default function Outcomes() {
               <>
                 <b>Layout prototype ({variant})</b> — horizontal tree with
                 sample data. Use the switcher (top-right) or ←/→ to compare;
-                “Live board” returns to the real data.
+                “Live board” returns to the real data. Toggle the ✎ pencil (top
+                bar) to edit any label — edits apply to all three layouts.
               </>
             ) : (
               <>
