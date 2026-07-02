@@ -204,7 +204,6 @@ export default function OutcomeBoard() {
     (node.outcomes[r.outcome_id] ||= []).push(r);
   }
   const nodes = Object.values(byNode);
-  const multiNode = nodes.length > 1;
   const axisNodes = nodeList
     .filter((n) => n.axis === axis && EDITABLE_LEVELS.includes(n.level))
     .sort(
@@ -422,7 +421,7 @@ export default function OutcomeBoard() {
       ) : (
         nodes.map((nd) => (
           <div key={nd.id}>
-            {multiNode && <h4 className="of-node-h">{nd.label}</h4>}
+            <h4 className="of-node-h">{nd.label}</h4>
             {Object.entries(nd.outcomes).map(([oid, rows]) => {
               const o = meta[oid] || { id: oid, title: rows[0].outcome_title };
               const rowKey = nd.id + ":" + oid;
