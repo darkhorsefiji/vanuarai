@@ -224,7 +224,12 @@ function TA({ ta, id, sm }) {
             width: Math.abs(actPos - basePos) + "%",
           }}
         />
-        <span className="pt-gpct">{prog}%</span>
+        <span
+          className={"pt-gpct" + (actPos > 72 ? " pt-gpct-left" : "")}
+          style={{ left: actPos + "%" }}
+        >
+          {prog}%
+        </span>
         <span className="pt-gmk pt-gmk-base" style={{ left: basePos + "%" }} />
         <span className="pt-gmk pt-gmk-act" style={{ left: actPos + "%" }} />
         <span className="pt-gmk pt-gmk-tgt" style={{ left: "100%" }} />
