@@ -53,7 +53,8 @@ jobs:
       - name: Deploy to VPS
         run: |
           set -e
-          ssh -o StrictHostKeyChecking=accept-new ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "bash -s" <<'REMOTE'
+          ssh -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "bash -s" <<'REMOTE'
           set -e
           cd /var/www/vanuarai
           git pull origin main
