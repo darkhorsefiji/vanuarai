@@ -179,39 +179,60 @@ const num = (n) => Number(n).toLocaleString();
 // Baseline → Actual → Target. Progress is measured from the baseline: how much of
 // the baseline→target gap has been closed. The bar is scaled 0→target, with a tick
 // at the baseline and the fill running baseline→actual.
+// Progress gauge. Baseline / Actual / Target / Unit are all editable (✎ pencil),
+// read from the copy store (override) or the sample default; everything recomputes
+// live. The bar is scaled 0→target with the % inside it, a baseline tick + value,
+// a target tick + value, and a taller "actual" marker with its value above it.
+// Colours + height are themeable via --ptg-* (DEV 🎨 → "Scorecard gauge").
 function TA({ ta, id, sm }) {
-  // The baseline is editable (✎ pencil): its value comes from the copy store
-  // (override) or the sample default. Progress + bar recompute from it live.
   const ctx = useCopy();
-  const raw = ctx && id ? ctx.get(id + ".b", ta.b) : ta.b;
-  const b = Number.isFinite(Number(raw)) ? Number(raw) : (ta.b ?? 0);
-  const prog =
-    ta.t - b ? clamp(Math.round(((ta.a - b) / (ta.t - b)) * 100)) : 0;
-  const basePos = ta.t ? clamp((b / ta.t) * 100) : 0;
-  const actPos = ta.t ? clamp((ta.a / ta.t) * 100) : 0;
+  const eff = (suf, def) => {
+    const r = ctx && id ? ctx.get(id + suf, def) : def;
+    const n = Number(r);
+    return Number.isFinite(n) ? n : def;
+  };
+  const b = eff(".b", ta.b ?? 0);
+  const a = eff(".a", ta.a);
+  const t = eff(".t", ta.t);
+  const prog = t - b ? clamp(Math.round(((a - b) / (t - b)) * 100)) : 0;
+  const basePos = t ? clamp((b / t) * 100) : 0;
+  const actPos = t ? clamp((a / t) * 100) : 0;
+  const N = (suf, def) =>
+    id ? (
+      <EditableText as="span" id={id + suf}>
+        {def}
+      </EditableText>
+    ) : (
+      <span>{num(def)}</span>
+    );
   return (
-    <div className={"pt-ta" + (sm ? " pt-ta-sm" : "")}>
-      <span className="pt-ta-val">
-        <span className="pt-base">
-          base{" "}
-          {id ? (
-            <EditableText as="span" id={id + ".b"}>
-              {ta.b}
-            </EditableText>
-          ) : (
-            num(b)
-          )}
-        </span>{" "}
-        {num(ta.a)} / {num(ta.t)} {ta.u} · <b>{prog}%</b>
-      </span>
-      <div className="pt-bar">
+    <div className={"pt-gauge" + (sm ? " pt-gauge-sm" : "")}>
+      <div className="pt-gauge-units">Units: {N(".u", ta.u)}</div>
+      <div className="pt-gauge-top">
+        <span className="pt-gn pt-gn-act" style={{ left: actPos + "%" }}>
+          {N(".a", ta.a)}
+        </span>
+      </div>
+      <div className="pt-gauge-bar">
         <i
+          className="pt-gfill"
           style={{
             left: Math.min(basePos, actPos) + "%",
             width: Math.abs(actPos - basePos) + "%",
           }}
         />
-        <span className="pt-bar-base" style={{ left: basePos + "%" }} />
+        <span className="pt-gpct">{prog}%</span>
+        <span className="pt-gmk pt-gmk-base" style={{ left: basePos + "%" }} />
+        <span className="pt-gmk pt-gmk-act" style={{ left: actPos + "%" }} />
+        <span className="pt-gmk pt-gmk-tgt" style={{ left: "100%" }} />
+      </div>
+      <div className="pt-gauge-bot">
+        <span className="pt-gn pt-gn-base" style={{ left: basePos + "%" }}>
+          {N(".b", ta.b)}
+        </span>
+        <span className="pt-gn pt-gn-tgt" style={{ left: "100%" }}>
+          {N(".t", ta.t)}
+        </span>
       </div>
     </div>
   );
@@ -222,14 +243,10 @@ const TypePill = ({ t }) => (
   </span>
 );
 const Freq = ({ f }) => <span className="pt-freq">{f}</span>;
-// KPI name + unit (both editable), plus the frequency badge.
+// KPI name (editable) + frequency badge. The unit now lives in the gauge ("Units:").
 const KpiLabel = ({ id, k }) => (
   <>
-    <ET id={id}>{k.name}</ET>{" "}
-    <span className="pt-unit">
-      (<ET id={id + ".u"}>{k.u}</ET>)
-    </span>{" "}
-    <Freq f={k.f} />
+    <ET id={id}>{k.name}</ET> <Freq f={k.f} />
   </>
 );
 const LevelLegend = () => (
