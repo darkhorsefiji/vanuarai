@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
-if [ ! -d /var/www/vanuarai ]; then
-  mkdir -p /var/www
+if [ ! -d /var/www/vanuarai/.git ]; then
+  rm -rf /var/www/vanuarai
   git clone https://darkhorsefiji:__GIT_TOKEN__@github.com/darkhorsefiji/vanuarai.git /var/www/vanuarai
 fi
 cd /var/www/vanuarai
