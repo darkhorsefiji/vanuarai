@@ -6,6 +6,7 @@ import Kacikacivaki from './pages/Kacikacivaki'
 import Hierarchy from './pages/Hierarchy'
 import Government from './pages/Government'
 import VScorecard from './pages/VScorecard'
+import Outcomes from './pages/Outcomes'
 import Projects from './pages/Projects'
 import Fundraising from './pages/Fundraising'
 import Financials from './pages/Financials'
@@ -119,6 +120,7 @@ export default function App() {
                 <Route path="/vanua" element={<Hierarchy />} />
                 <Route path="/government" element={<Government />} />
                 <Route path="/vscorecard" element={<VScorecard />} />
+                <Route path="/outcomes" element={<Outcomes />} />
                 <Route path="/projects" element={<Projects />} />
                 <Route path="/fundraising" element={<Fundraising />} />
                 <Route path="/financials" element={<Financials />} />
