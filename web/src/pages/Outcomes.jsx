@@ -49,23 +49,27 @@ export default function Outcomes() {
           <p className="sub">
             {isProto ? (
               <>
-                <b>Layout prototype ({variant})</b> — horizontal tree with sample
-                data. Use the switcher (bottom) or ←/→ to compare; “Live board”
-                returns to the real data.
+                <b>Layout prototype ({variant})</b> — horizontal tree with
+                sample data. Use the switcher (top-right) or ←/→ to compare;
+                “Live board” returns to the real data.
               </>
             ) : (
               <>
                 Long-term Outcomes classified by Vanua focus area, Government
                 (TAB) platform and industry (ISIC) — indicators roll up every
-                level. Variances are closed by tasks, interventions and projects;
-                impediments are logged as challenges.
+                level. Variances are closed by tasks, interventions and
+                projects; impediments are logged as challenges.
               </>
             )}
           </p>
         </div>
       </div>
 
-      {isProto ? <ScorecardTreePrototype variant={variant} /> : <OutcomeBoard />}
+      {isProto ? (
+        <ScorecardTreePrototype variant={variant} />
+      ) : (
+        <OutcomeBoard />
+      )}
       <PrototypeSwitcher current={variant} onPick={pick} />
     </>
   );
