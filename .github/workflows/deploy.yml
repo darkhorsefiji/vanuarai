@@ -51,15 +51,19 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes -i ~/.ssh/deploy_key \
             $VPS_USER@$VPS_HOST "bash -s" <<'REMOTE'
-          set -e
-          cd /var/www/vanuarai
-          git pull origin main
-          npm ci
-          npm ci --prefix web
-          npm run build
-          pm2 start ecosystem.config.js
-          pm2 save
-          REMOTE
+           set -e
+           if [ ! -d /var/www/vanuarai ]; then
+             mkdir -p /var/www/vanuarai
+             git clone https://github.com/darkhorsefiji/vanuarai.git /var/www/vanuarai
+           fi
+           cd /var/www/vanuarai
+           git pull origin main
+           npm ci
+           npm ci --prefix web
+           npm run build
+           pm2 start ecosystem.config.js
+           pm2 save
+           REMOTE
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
