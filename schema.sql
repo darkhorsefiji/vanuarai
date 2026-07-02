@@ -645,3 +645,25 @@ CREATE INDEX ON audit_log(entity_type, entity_id, created_at);
 -- * Supra-village nodes exist in scope_nodes from day one; only village + its
 --   Mataqali/Tokatoka/Soqosoqo are actively administered in the pilot (Q16).
 -- =============================================================================
+
+-- =============================================================================
+-- M. OUTCOME FRAMEWORK  (results/M&E model — migration 039; see
+--    docs/outcome-framework-spec.md). Replaces the perspective/platform BSC
+--    scorecard: Outcome → Indicator → Variance → Action → Challenge, cascading
+--    over scope_nodes (both axes) via the sum/avg/none roll-up. Full DDL +
+--    seeds live in migrations/039_outcome_framework.sql; summarised here.
+-- =============================================================================
+-- outcome_focus_areas  — (a) Vanua classification axis  (seeded: 4 MMM focus areas)
+-- gov_pillars          — (b) Government axis = 5 TAB Platforms + thrust
+-- isic_sectors         — (c) ISIC Rev.4 sectors (sections A–U; deeper later)
+-- outcomes             — long-term goal @ apex node; tagged on all 3 axes
+-- outcome_indicators   — long-term indicators (rollup sum|avg|none)
+-- outcome_measurements — target/actual per node/period; variance generated; rolls UP
+-- actions              — Task | Intervention | Project (ref_code, RACI-linked,
+--                        status not_started→in_progress→on_hold→cancelled→completed);
+--                        task→intervention integrity enforced by trg_task_intervention
+-- intervention_indicators — short-term indicators, SEPARATE from outcome indicators
+-- challenges           — impediment log raised when an action is overdue
+-- raci_assignments     — R/A/C/I over actions & challenges (person/office/agency…)
+-- actions_overdue (view) — open actions past target_due_date
+-- =============================================================================
