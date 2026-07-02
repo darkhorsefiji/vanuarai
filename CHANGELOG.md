@@ -14,7 +14,8 @@ Newest first.
 
 | CHG | Date | Commit | Change |
 |-----|------|--------|--------|
-| CHG-0022 | 2026-06-19 | _this commit_ | Consolidate to ONE Scorecard: live scorecard+framework on renamed "Scorecard" page; remove scorecard from Vanua & TAB section from Government |
+| CHG-0023 | 2026-07-02 | _this commit_ | Make the Scorecard framework text editable inline (EditableText: vision, engines, 10% rows, cascade) via the DEV ✎ pencil |
+| CHG-0022 | 2026-06-19 | a91547a | Consolidate to ONE Scorecard: live scorecard+framework on renamed "Scorecard" page; remove scorecard from Vanua & TAB section from Government |
 | CHG-0021 | 2026-06-19 | dd964cf | Scorecard: By Perspective/By TAB Platform lens toggle; entry gated to Mataqali/Tokatoka/Vuvale (upper levels view-only) |
 | CHG-0020 | 2026-06-19 | af995ee | Add TAB platform to KPI registry (migration 038) — foundation for the "By Platform" scorecard lens |
 | CHG-0019 | 2026-06-19 | d299dac | Open the catalogue: enrich framework KPIs w/ unit+rollup; catalogue manager (import 25 / add / archive) |
