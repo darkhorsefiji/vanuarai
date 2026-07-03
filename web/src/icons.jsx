@@ -150,6 +150,14 @@ const ARTEFACTS = {
       <path d="M16.5 4 L20 4 L20 7.5" />
     </>
   ),
+  // Compass — setting direction, the Strategy
+  strategy: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 5.5 L14 12 L12 18.5 L10 12 Z" />
+      <circle cx="12" cy="12" r="0.9" fill="currentColor" stroke="none" />
+    </>
+  ),
 };
 
 // ── Set B — "Symbols": bolder, geometric / conceptual motifs ──────────────────
@@ -271,6 +279,13 @@ const SYMBOLS = {
       <path d="M16 4 L20 4 L20 8" />
     </>
   ),
+  // Compass — setting direction, the Strategy
+  strategy: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 5 L14.5 12 L12 19 L9.5 12 Z" />
+    </>
+  ),
 };
 
 export const ICON_SETS = {
@@ -303,7 +318,8 @@ export const ICON_ITEMS = [
   ["financials", "Financials"],
   ["minutes", "Minutes"],
   ["emergencies", "Emergencies"],
-  ["vscorecard", "VScorecard"],
+  ["strategy", "Strategy"],
+  ["vscorecard", "Scorecard"],
 ];
 
 // ── Selection state (live-switchable, persisted) ──────────────────────────────
