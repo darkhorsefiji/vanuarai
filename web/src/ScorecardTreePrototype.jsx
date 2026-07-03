@@ -194,11 +194,11 @@ function TA({ ta, id, sm }) {
   const b = eff(".b", ta.b ?? 0);
   const a = eff(".a", ta.a);
   const t = eff(".t", ta.t);
-  const prog = t - b ? clamp(Math.round(((a - b) / (t - b)) * 100)) : 0;
-  // Baseline → Target scale: the baseline is the left edge (0%) and the target
-  // the right edge (100%), so the actual sits at the progress % and the fill
-  // equals the progress — no dead track before the baseline.
-  const basePos = 0;
+  // 0 → Target scale: the bar (and its fill/percentage) always start from zero
+  // and are measured against the target, not the baseline. The baseline is just a
+  // marker placed at its point along the bar (b/target).
+  const prog = t ? clamp(Math.round((a / t) * 100)) : 0;
+  const basePos = t ? clamp((b / t) * 100) : 0;
   const actPos = prog;
   const N = (suf, def) =>
     id ? (
@@ -217,13 +217,7 @@ function TA({ ta, id, sm }) {
         </span>
       </div>
       <div className="pt-gauge-bar">
-        <i
-          className="pt-gfill"
-          style={{
-            left: Math.min(basePos, actPos) + "%",
-            width: Math.abs(actPos - basePos) + "%",
-          }}
-        />
+        <i className="pt-gfill" style={{ left: 0, width: actPos + "%" }} />
         <span
           className={"pt-gpct" + (actPos > 72 ? " pt-gpct-left" : "")}
           style={{ left: actPos + "%" }}
