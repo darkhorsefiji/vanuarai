@@ -1,17 +1,18 @@
 // ── THROWAWAY PROTOTYPE ──────────────────────────────────────────────────────
-// Layout exploration for the re-designed Scorecard: one page-wide card holding a
-// horizontal tree, left→right:
-//   Key Focus Area → Strategic Objective (+Target vs Actual) → Strategic Lever
-//     → Intervention (Initiative | Project) → KPI (with unit) → Target vs Actual
-// "Strategic Lever" is a NEW layer with no data model yet — shown as a dashed
-// placeholder. Uses hardcoded sample data (real Meda Matata Mada themes), NOT the
-// live DB. Three radically different layouts, switchable via ?variant=A|B|C.
+// Layout exploration for the re-designed Scorecard. The 6-level strategy chain
+// (locked 2026-07-09, docs/scorecard-concept-2026-07.md), left→right / outer→inner:
+//   Key Focus Area → Strategic Objective (+target) → Strategic Lever (a "how", no
+//     target) → Specific Objective (mandatory, +target) → Intervention (Initiative
+//     | Project) → KPI (+target)
+// Uses hardcoded sample data (real Meda Matata Mada themes), NOT the live DB.
+// Three layouts, switchable via ?variant=A|B|C. Variant B (nested panels) is the
+// chosen layout: interventions stack one after another, and every performance
+// gauge is pinned to a right-hand rail for readability.
 //
 // Every text label is an EditableText keyed by a STABLE path id (sc.t.<focus>.<obj>
 // …). All three variants reuse the same ids, so editing a label in one layout (via
-// the header ✎ DEV pencil) updates it in the other two — same content, compare the
-// layout. Edits persist per-browser (localStorage), like the rest of the app copy.
-// When a layout wins: fold it into OutcomeBoard and DELETE this file + the switcher.
+// the header ✎ DEV pencil) updates it in the others. Edits persist per-browser.
+// When B is folded into OutcomeBoard: DELETE this file + the switcher.
 
 import { EditableText, useCopy } from "./copy";
 
@@ -26,12 +27,14 @@ const LEVELS = [
   "Key Focus Area",
   "Strategic Objective",
   "Strategic Lever",
+  "Specific Objective",
   "Intervention",
   "KPI",
-  "Target vs Actual",
+  "Performance",
 ];
 
 // ta / kpi values are { b: baseline, a: actual, t: target, u: unit }.
+// Levers carry NO target (roll-up only); Objectives, Specific Objectives + KPIs do.
 const TREE = [
   {
     focus: "Child Development & Family Cohesion",
@@ -43,40 +46,71 @@ const TREE = [
         levers: [
           {
             name: "Home learning environment",
-            interventions: [
+            specifics: [
               {
-                type: "initiative",
-                name: "After-school study circles",
-                kpis: [
+                name: "Lift primary literacy in the koro",
+                ta: { b: 55, a: 68, t: 85, u: "%" },
+                interventions: [
                   {
-                    name: "Children attending",
-                    u: "children",
-                    b: 10,
-                    a: 18,
-                    t: 25,
-                    f: "weekly",
+                    type: "initiative",
+                    name: "After-school study circles",
+                    kpis: [
+                      {
+                        name: "Children attending",
+                        u: "children",
+                        b: 10,
+                        a: 18,
+                        t: 25,
+                        f: "weekly",
+                      },
+                      {
+                        name: "Homework completion",
+                        u: "%",
+                        b: 60,
+                        a: 72,
+                        t: 90,
+                        f: "weekly",
+                      },
+                    ],
                   },
                   {
-                    name: "Homework completion",
-                    u: "%",
-                    b: 60,
-                    a: 72,
-                    t: 90,
-                    f: "weekly",
+                    type: "project",
+                    name: "Village library build",
+                    kpis: [
+                      {
+                        name: "Construction complete",
+                        u: "%",
+                        b: 0,
+                        a: 40,
+                        t: 100,
+                        f: "monthly",
+                      },
+                    ],
                   },
                 ],
               },
+            ],
+          },
+          {
+            name: "Parental engagement",
+            specifics: [
               {
-                type: "project",
-                name: "Village library build",
-                kpis: [
+                name: "Parents present on school days",
+                ta: { b: 20, a: 35, t: 60, u: "parents" },
+                interventions: [
                   {
-                    name: "Construction complete",
-                    u: "%",
-                    b: 0,
-                    a: 40,
-                    t: 100,
-                    f: "monthly",
+                    type: "initiative",
+                    name: "Parent–teacher talanoa",
+                    kpis: [
+                      {
+                        name: "Parents attending",
+                        u: "parents",
+                        b: 12,
+                        a: 28,
+                        t: 50,
+                        f: "monthly",
+                      },
+                    ],
                   },
                 ],
               },
@@ -90,18 +124,24 @@ const TREE = [
         levers: [
           {
             name: "Weekly soli & family devotion",
-            interventions: [
+            specifics: [
               {
-                type: "initiative",
-                name: "Soli attendance drive",
-                kpis: [
+                name: "Every household at weekly soli",
+                ta: { b: 3, a: 6, t: 9, u: "households" },
+                interventions: [
                   {
-                    name: "Members at weekly soli",
-                    u: "people",
-                    b: 4,
-                    a: 6,
-                    t: 9,
-                    f: "weekly",
+                    type: "initiative",
+                    name: "Soli attendance drive",
+                    kpis: [
+                      {
+                        name: "Members at weekly soli",
+                        u: "people",
+                        b: 4,
+                        a: 6,
+                        t: 9,
+                        f: "weekly",
+                      },
+                    ],
                   },
                 ],
               },
@@ -121,40 +161,46 @@ const TREE = [
         levers: [
           {
             name: "Co-operative aggregation (VCDCL)",
-            interventions: [
+            specifics: [
               {
-                type: "project",
-                name: "Kumala mill supply chain",
-                kpis: [
+                name: "Reliable kumala supply to the miller",
+                ta: { b: 20, a: 120, t: 850, u: "tonnes" },
+                interventions: [
                   {
-                    name: "Kumala supplied to miller",
-                    u: "tonnes",
-                    b: 20,
-                    a: 120,
-                    t: 850,
-                    f: "monthly",
+                    type: "project",
+                    name: "Kumala mill supply chain",
+                    kpis: [
+                      {
+                        name: "Kumala supplied to miller",
+                        u: "tonnes",
+                        b: 20,
+                        a: 120,
+                        t: 850,
+                        f: "monthly",
+                      },
+                      {
+                        name: "Co-op revenue",
+                        u: "FJD",
+                        b: 50000,
+                        a: 210000,
+                        t: 1450000,
+                        f: "monthly",
+                      },
+                    ],
                   },
                   {
-                    name: "Co-op revenue",
-                    u: "FJD",
-                    b: 50000,
-                    a: 210000,
-                    t: 1450000,
-                    f: "monthly",
-                  },
-                ],
-              },
-              {
-                type: "initiative",
-                name: "Grower training programme",
-                kpis: [
-                  {
-                    name: "Households cultivating kumala",
-                    u: "households",
-                    b: 12,
-                    a: 34,
-                    t: 120,
-                    f: "monthly",
+                    type: "initiative",
+                    name: "Grower training programme",
+                    kpis: [
+                      {
+                        name: "Households cultivating kumala",
+                        u: "households",
+                        b: 12,
+                        a: 34,
+                        t: 120,
+                        f: "monthly",
+                      },
+                    ],
                   },
                 ],
               },
@@ -170,21 +216,21 @@ const TREE = [
 const idFocus = (fi) => `sc.t.${fi}`;
 const idObj = (fi, oi) => `sc.t.${fi}.o${oi}`;
 const idLever = (fi, oi, li) => `sc.t.${fi}.o${oi}.l${li}`;
-const idIv = (fi, oi, li, ii) => `sc.t.${fi}.o${oi}.l${li}.i${ii}`;
-const idKpi = (fi, oi, li, ii, ki) => `sc.t.${fi}.o${oi}.l${li}.i${ii}.k${ki}`;
+const idSpec = (fi, oi, li, si) => `sc.t.${fi}.o${oi}.l${li}.s${si}`;
+const idIv = (fi, oi, li, si, ii) => `sc.t.${fi}.o${oi}.l${li}.s${si}.i${ii}`;
+const idKpi = (fi, oi, li, si, ii, ki) =>
+  `sc.t.${fi}.o${oi}.l${li}.s${si}.i${ii}.k${ki}`;
 
 const clamp = (n) => Math.max(0, Math.min(100, n));
 const num = (n) => Number(n).toLocaleString();
 
-// Baseline → Actual → Target. Progress is measured from the baseline: how much of
-// the baseline→target gap has been closed. The bar is scaled 0→target, with a tick
-// at the baseline and the fill running baseline→actual.
 // Progress gauge. Baseline / Actual / Target / Unit are all editable (✎ pencil),
 // read from the copy store (override) or the sample default; everything recomputes
 // live. The bar is scaled 0→target with the % inside it, a baseline tick + value,
 // a target tick + value, and a taller "actual" marker with its value above it.
-// Colours + height are themeable via --ptg-* (DEV 🎨 → "Scorecard gauge").
-function TA({ ta, id, sm }) {
+// Fill colour is RAG by share-of-target: green (≥100, the themeable --ptg-fill),
+// amber (80–99), red (<80). Colours + height themeable via --ptg-* (DEV 🎨).
+function TA({ ta, id }) {
   const ctx = useCopy();
   const eff = (suf, def) => {
     const r = ctx && id ? ctx.get(id + suf, def) : def;
@@ -200,6 +246,7 @@ function TA({ ta, id, sm }) {
   const prog = t ? clamp(Math.round((a / t) * 100)) : 0;
   const basePos = t ? clamp((b / t) * 100) : 0;
   const actPos = prog;
+  const rag = prog >= 100 ? "g" : prog >= 80 ? "a" : "r";
   const N = (suf, def) =>
     id ? (
       <EditableText as="span" id={id + suf}>
@@ -209,7 +256,7 @@ function TA({ ta, id, sm }) {
       <span>{num(def)}</span>
     );
   return (
-    <div className={"pt-gauge" + (sm ? " pt-gauge-sm" : "")}>
+    <div className={"pt-gauge" + (rag !== "g" ? " pt-rag-" + rag : "")}>
       <div className="pt-gauge-units">Units: {N(".u", ta.u)}</div>
       <div className="pt-gauge-top">
         <span className="pt-gn pt-gn-act" style={{ left: actPos + "%" }}>
@@ -280,7 +327,7 @@ function VariantA() {
                   <div className="pt-node pt-a-obj">
                     <span className="pt-cap">Strategic Objective</span>
                     <ET id={idObj(fi, oi)}>{o.name}</ET>
-                    <TA ta={o.ta} id={idObj(fi, oi)} sm />
+                    <TA ta={o.ta} id={idObj(fi, oi)} />
                   </div>
                   <div className="pt-a-kids">
                     {o.levers.map((l, li) => (
@@ -292,28 +339,47 @@ function VariantA() {
                           <ET id={idLever(fi, oi, li)}>{l.name}</ET>
                         </div>
                         <div className="pt-a-kids">
-                          {l.interventions.map((iv, ii) => (
-                            <div className="pt-a-row" key={ii}>
-                              <div className="pt-node pt-a-iv">
-                                <TypePill t={iv.type} />
-                                <span className="pt-iv-name">
-                                  <ET id={idIv(fi, oi, li, ii)}>{iv.name}</ET>
+                          {l.specifics.map((sp, si) => (
+                            <div className="pt-a-row" key={si}>
+                              <div className="pt-node pt-a-spec">
+                                <span className="pt-cap">
+                                  Specific Objective
                                 </span>
+                                <ET id={idSpec(fi, oi, li, si)}>{sp.name}</ET>
+                                <TA ta={sp.ta} id={idSpec(fi, oi, li, si)} />
                               </div>
                               <div className="pt-a-kids">
-                                {iv.kpis.map((k, ki) => (
-                                  <div className="pt-a-leaf" key={ki}>
-                                    <div className="pt-kpi-name">
-                                      <KpiLabel
-                                        id={idKpi(fi, oi, li, ii, ki)}
-                                        k={k}
-                                      />
+                                {sp.interventions.map((iv, ii) => (
+                                  <div className="pt-a-row" key={ii}>
+                                    <div className="pt-node pt-a-iv">
+                                      <TypePill t={iv.type} />
+                                      <span className="pt-iv-name">
+                                        <ET id={idIv(fi, oi, li, si, ii)}>
+                                          {iv.name}
+                                        </ET>
+                                      </span>
                                     </div>
-                                    <TA
-                                      ta={{ b: k.b, a: k.a, t: k.t, u: k.u }}
-                                      id={idKpi(fi, oi, li, ii, ki)}
-                                      sm
-                                    />
+                                    <div className="pt-a-kids">
+                                      {iv.kpis.map((k, ki) => (
+                                        <div className="pt-a-leaf" key={ki}>
+                                          <div className="pt-kpi-name">
+                                            <KpiLabel
+                                              id={idKpi(fi, oi, li, si, ii, ki)}
+                                              k={k}
+                                            />
+                                          </div>
+                                          <TA
+                                            ta={{
+                                              b: k.b,
+                                              a: k.a,
+                                              t: k.t,
+                                              u: k.u,
+                                            }}
+                                            id={idKpi(fi, oi, li, si, ii, ki)}
+                                          />
+                                        </div>
+                                      ))}
+                                    </div>
                                   </div>
                                 ))}
                               </div>
@@ -333,7 +399,7 @@ function VariantA() {
   );
 }
 
-// ── Variant B — nested containment panels (no connector lines) ────────────────
+// ── Variant B — nested panels, interventions stacked, gauges on a right rail ──
 function VariantB() {
   return (
     <div className="card pt-card">
@@ -347,46 +413,67 @@ function VariantB() {
             </div>
             {fa.objectives.map((o, oi) => (
               <div className="pt-b-obj" key={oi}>
-                <div className="pt-b-h2">
-                  <span className="pt-cap">Strategic Objective</span>
-                  <span>
+                <div className="pt-row pt-b-h2">
+                  <div className="pt-row-lbl">
+                    <span className="pt-cap">Strategic Objective</span>
                     <ET id={idObj(fi, oi)}>{o.name}</ET>
-                  </span>
-                  <TA ta={o.ta} id={idObj(fi, oi)} sm />
+                  </div>
+                  <div className="pt-row-gauge">
+                    <TA ta={o.ta} id={idObj(fi, oi)} />
+                  </div>
                 </div>
                 {o.levers.map((l, li) => (
                   <div className="pt-b-lever" key={li}>
-                    <div className="pt-b-h3">
-                      <span className="pt-cap">
-                        Strategic Lever <em>· new</em>
-                      </span>
-                      <ET id={idLever(fi, oi, li)}>{l.name}</ET>
+                    <div className="pt-row pt-b-h3">
+                      <div className="pt-row-lbl">
+                        <span className="pt-cap">
+                          Strategic Lever <em>· how</em>
+                        </span>
+                        <ET id={idLever(fi, oi, li)}>{l.name}</ET>
+                      </div>
+                      <div className="pt-row-gauge pt-row-gauge-empty">
+                        rolls up
+                      </div>
                     </div>
-                    <div className="pt-b-ivs">
-                      {l.interventions.map((iv, ii) => (
-                        <div className="pt-b-iv" key={ii}>
-                          <div className="pt-b-iv-h">
-                            <TypePill t={iv.type} />
-                            <ET id={idIv(fi, oi, li, ii)}>{iv.name}</ET>
+                    {l.specifics.map((sp, si) => (
+                      <div className="pt-b-spec" key={si}>
+                        <div className="pt-row pt-b-h4">
+                          <div className="pt-row-lbl">
+                            <span className="pt-cap">Specific Objective</span>
+                            <ET id={idSpec(fi, oi, li, si)}>{sp.name}</ET>
                           </div>
-                          {iv.kpis.map((k, ki) => (
-                            <div className="pt-b-kpi" key={ki}>
-                              <span className="pt-kpi-name">
-                                <KpiLabel
-                                  id={idKpi(fi, oi, li, ii, ki)}
-                                  k={k}
-                                />
-                              </span>
-                              <TA
-                                ta={{ b: k.b, a: k.a, t: k.t, u: k.u }}
-                                id={idKpi(fi, oi, li, ii, ki)}
-                                sm
-                              />
+                          <div className="pt-row-gauge">
+                            <TA ta={sp.ta} id={idSpec(fi, oi, li, si)} />
+                          </div>
+                        </div>
+                        <div className="pt-b-ivs">
+                          {sp.interventions.map((iv, ii) => (
+                            <div className="pt-b-iv" key={ii}>
+                              <div className="pt-b-iv-h">
+                                <TypePill t={iv.type} />
+                                <ET id={idIv(fi, oi, li, si, ii)}>{iv.name}</ET>
+                              </div>
+                              {iv.kpis.map((k, ki) => (
+                                <div className="pt-row pt-b-kpi" key={ki}>
+                                  <div className="pt-row-lbl pt-kpi-name">
+                                    <KpiLabel
+                                      id={idKpi(fi, oi, li, si, ii, ki)}
+                                      k={k}
+                                    />
+                                  </div>
+                                  <div className="pt-row-gauge">
+                                    <TA
+                                      ta={{ b: k.b, a: k.a, t: k.t, u: k.u }}
+                                      id={idKpi(fi, oi, li, si, ii, ki)}
+                                    />
+                                  </div>
+                                </div>
+                              ))}
                             </div>
                           ))}
                         </div>
-                      ))}
-                    </div>
+                      </div>
+                    ))}
                   </div>
                 ))}
               </div>
@@ -400,10 +487,12 @@ function VariantB() {
 
 // ── Variant C — aligned outline grid (table with row-spans per level) ─────────
 function VariantC() {
-  const leaves = (iv) => iv.kpis.length;
-  const ivLeaves = (l) => l.interventions.reduce((s, iv) => s + leaves(iv), 0);
-  const objLeaves = (o) => o.levers.reduce((s, l) => s + ivLeaves(l), 0);
-  const faLeaves = (fa) => fa.objectives.reduce((s, o) => s + objLeaves(o), 0);
+  const kpiCount = (iv) => iv.kpis.length;
+  const specCount = (sp) =>
+    sp.interventions.reduce((s, iv) => s + kpiCount(iv), 0);
+  const leverCount = (l) => l.specifics.reduce((s, sp) => s + specCount(sp), 0);
+  const objCount = (o) => o.levers.reduce((s, l) => s + leverCount(l), 0);
+  const faCount = (fa) => fa.objectives.reduce((s, o) => s + objCount(o), 0);
   return (
     <div className="card pt-card pt-c-wrap">
       <table className="pt-c">
@@ -421,54 +510,65 @@ function VariantC() {
               let oFirst = true;
               return o.levers.map((l, li) => {
                 let lFirst = true;
-                return l.interventions.map((iv, ii) => {
-                  let ivFirst = true;
-                  return iv.kpis.map((k, ki) => {
-                    const row = (
-                      <tr key={`${fi}.${oi}.${li}.${ii}.${ki}`}>
-                        {faFirst && (
-                          <td
-                            className="pt-c-fa"
-                            rowSpan={faLeaves(fa)}
-                            style={{ "--acc": fa.accent }}
-                          >
-                            <ET id={idFocus(fi)}>{fa.focus}</ET>
+                return l.specifics.map((sp, si) => {
+                  let spFirst = true;
+                  return sp.interventions.map((iv, ii) => {
+                    let ivFirst = true;
+                    return iv.kpis.map((k, ki) => {
+                      const row = (
+                        <tr key={`${fi}.${oi}.${li}.${si}.${ii}.${ki}`}>
+                          {faFirst && (
+                            <td
+                              className="pt-c-fa"
+                              rowSpan={faCount(fa)}
+                              style={{ "--acc": fa.accent }}
+                            >
+                              <ET id={idFocus(fi)}>{fa.focus}</ET>
+                            </td>
+                          )}
+                          {oFirst && (
+                            <td className="pt-c-obj" rowSpan={objCount(o)}>
+                              <ET id={idObj(fi, oi)}>{o.name}</ET>
+                              <TA ta={o.ta} id={idObj(fi, oi)} />
+                            </td>
+                          )}
+                          {lFirst && (
+                            <td className="pt-c-lever" rowSpan={leverCount(l)}>
+                              <ET id={idLever(fi, oi, li)}>{l.name}</ET>
+                              <span className="pt-cap"> how · rolls up</span>
+                            </td>
+                          )}
+                          {spFirst && (
+                            <td className="pt-c-spec" rowSpan={specCount(sp)}>
+                              <ET id={idSpec(fi, oi, li, si)}>{sp.name}</ET>
+                              <TA ta={sp.ta} id={idSpec(fi, oi, li, si)} />
+                            </td>
+                          )}
+                          {ivFirst && (
+                            <td className="pt-c-iv" rowSpan={kpiCount(iv)}>
+                              <TypePill t={iv.type} />
+                              <div>
+                                <ET id={idIv(fi, oi, li, si, ii)}>{iv.name}</ET>
+                              </div>
+                            </td>
+                          )}
+                          <td>
+                            <KpiLabel
+                              id={idKpi(fi, oi, li, si, ii, ki)}
+                              k={k}
+                            />
                           </td>
-                        )}
-                        {oFirst && (
-                          <td className="pt-c-obj" rowSpan={objLeaves(o)}>
-                            <ET id={idObj(fi, oi)}>{o.name}</ET>
-                            <TA ta={o.ta} id={idObj(fi, oi)} sm />
+                          <td>
+                            <TA
+                              ta={{ b: k.b, a: k.a, t: k.t, u: k.u }}
+                              id={idKpi(fi, oi, li, si, ii, ki)}
+                            />
                           </td>
-                        )}
-                        {lFirst && (
-                          <td className="pt-c-lever" rowSpan={ivLeaves(l)}>
-                            <ET id={idLever(fi, oi, li)}>{l.name}</ET>
-                            <span className="pt-cap"> new layer</span>
-                          </td>
-                        )}
-                        {ivFirst && (
-                          <td className="pt-c-iv" rowSpan={leaves(iv)}>
-                            <TypePill t={iv.type} />
-                            <div>
-                              <ET id={idIv(fi, oi, li, ii)}>{iv.name}</ET>
-                            </div>
-                          </td>
-                        )}
-                        <td>
-                          <KpiLabel id={idKpi(fi, oi, li, ii, ki)} k={k} />
-                        </td>
-                        <td>
-                          <TA
-                            ta={{ b: k.b, a: k.a, t: k.t, u: k.u }}
-                            id={idKpi(fi, oi, li, ii, ki)}
-                            sm
-                          />
-                        </td>
-                      </tr>
-                    );
-                    faFirst = oFirst = lFirst = ivFirst = false;
-                    return row;
+                        </tr>
+                      );
+                      faFirst = oFirst = lFirst = spFirst = ivFirst = false;
+                      return row;
+                    });
                   });
                 });
               });

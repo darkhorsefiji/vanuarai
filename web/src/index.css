@@ -4132,6 +4132,16 @@ header.top > .authbox {
 .pt-gmk-tgt {
   opacity: 0.75;
 }
+/* RAG fill by share of target: green ≥100 (the themeable --ptg-fill default),
+   amber 80–99, red <80. Only amber/red override so the theme still owns "green". */
+.pt-rag-a {
+  --ptg-fill: #e0a021;
+  --ptg-act: #b47d10;
+}
+.pt-rag-r {
+  --ptg-fill: #d1495b;
+  --ptg-act: #b23448;
+}
 .pt-kpi-name {
   font-size: 13px;
 }
@@ -4195,6 +4205,9 @@ header.top > .authbox {
   border-style: dashed;
   background: rgba(14, 152, 165, 0.04);
 }
+.pt-a-spec {
+  border-left: 4px solid var(--sage);
+}
 .pt-iv-name {
   font-weight: 700;
 }
@@ -4206,11 +4219,43 @@ header.top > .authbox {
   min-width: 210px;
 }
 
-/* Variant B — nested containment panels */
+/* Variant B — nested containment panels with a right-aligned gauge rail.
+   Inner panels indent on the LEFT only (border-left + padding-left + margin-left)
+   and never pad/margin on the right, so every gauge lines up on the same rail
+   regardless of tree depth. The gutter for the rail comes from .pt-b-obj's
+   padding-right, which every gauge sits inside. */
 .pt-b {
+  --pt-gcol: 230px;
   display: flex;
   flex-direction: column;
   gap: 16px;
+  min-width: 620px;
+}
+/* A measurable row: label on the left (flows with indent), gauge on the rail. */
+.pt-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--pt-gcol);
+  gap: 16px;
+  align-items: center;
+}
+.pt-row-lbl {
+  min-width: 0;
+}
+.pt-row-gauge {
+  min-width: 0;
+}
+.pt-row-gauge .pt-gauge {
+  min-width: 0;
+  margin-top: 0;
+}
+.pt-row-gauge-empty {
+  font-size: 9.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--muted);
+  opacity: 0.6;
+  padding-left: 6px;
 }
 .pt-b-fa {
   border: 1px solid var(--line);
@@ -4225,59 +4270,63 @@ header.top > .authbox {
   color: var(--head-color);
   margin-bottom: 10px;
 }
+/* Strategic Objective — the panel that owns the rail gutter (padding-right). */
 .pt-b-obj {
   border: 1px solid var(--line);
   border-radius: 12px;
   background: #fff;
-  padding: 10px 12px;
+  padding: 10px 12px 10px 12px;
   margin: 10px 0 0 14px;
 }
-.pt-b-h2 {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  flex-wrap: wrap;
+.pt-b-h2 .pt-row-lbl {
   font-weight: 700;
+  font-size: 14px;
   color: var(--head-color);
 }
-.pt-b-h2 > span:nth-child(2) {
-  font-size: 14px;
-}
+/* Lever — a "how", no target of its own (empty gauge slot keeps the rail). */
 .pt-b-lever {
   border-left: 3px dashed var(--aqua);
   padding: 4px 0 4px 12px;
   margin: 10px 0 0 16px;
 }
-.pt-b-h3 {
+.pt-b-h3 .pt-row-lbl {
   font-weight: 700;
   font-size: 13px;
   color: var(--ocean);
-  margin-bottom: 8px;
 }
+/* Specific Objective — mandatory, carries a target. */
+.pt-b-spec {
+  border-left: 3px solid var(--sage);
+  padding: 6px 0 6px 12px;
+  margin: 10px 0 0 16px;
+}
+.pt-b-h4 .pt-row-lbl {
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--head-color);
+}
+/* Interventions stack one after another (a project follows an initiative). */
 .pt-b-ivs {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 10px;
+  margin-top: 8px;
 }
 .pt-b-iv {
-  flex: 1 1 260px;
   border: 1px solid var(--line);
   border-radius: 10px;
-  padding: 9px 11px;
+  padding: 9px 0 9px 11px;
   background: #fff;
 }
 .pt-b-iv-h {
   font-weight: 700;
   font-size: 13.5px;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
   display: flex;
   align-items: center;
+  padding-right: 11px;
 }
 .pt-b-kpi {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 14px;
   padding: 5px 0;
   border-top: 1px solid var(--line);
 }
