@@ -258,6 +258,13 @@ export const THEME_GROUPS = [
         step: 1,
         unit: "px",
       },
+      {
+        k: "--ptg-rag",
+        l: "RAG colouring (green/amber/red)",
+        t: "toggle",
+        d: "off",
+        on: "on",
+      },
     ],
   },
   {
@@ -487,17 +494,26 @@ export function applyOverrides(o) {
   const root = document.documentElement;
   Object.entries(o || {}).forEach(([k, v]) => root.style.setProperty(k, v));
 }
+// Notify JS-driven consumers (e.g. class-gated behaviours like the gauge RAG
+// toggle) that a theme variable changed. Pure CSS-var styling updates live and
+// doesn't need this, but anything reading a var in JS re-renders on it.
+const THEME_EVT = "vr:theme";
+function notifyTheme() {
+  if (typeof window !== "undefined") window.dispatchEvent(new Event(THEME_EVT));
+}
 export function setVar(k, v) {
   document.documentElement.style.setProperty(k, v);
   const o = loadOverrides();
   o[k] = v;
   localStorage.setItem(KEY, JSON.stringify(o));
+  notifyTheme();
 }
 export function resetVars() {
   const o = loadOverrides();
   const root = document.documentElement;
   Object.keys(o).forEach((k) => root.style.removeProperty(k));
   localStorage.removeItem(KEY);
+  notifyTheme();
 }
 // Clear a subset of overrides (used by the in-page styler's per-group reset).
 export function clearVars(keys) {
@@ -508,6 +524,7 @@ export function clearVars(keys) {
     root.style.removeProperty(k);
   });
   localStorage.setItem(KEY, JSON.stringify(o));
+  notifyTheme();
 }
 
 // ---- Google Fonts: dynamic loading + helpers ----

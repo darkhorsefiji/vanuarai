@@ -14,7 +14,27 @@
 // the header ✎ DEV pencil) updates it in the others. Edits persist per-browser.
 // When B is folded into OutcomeBoard: DELETE this file + the switcher.
 
+import { useEffect, useState } from "react";
 import { EditableText, useCopy } from "./copy";
+
+// RAG colouring is opt-in, controlled by the App Admin via the 🎨 style editor
+// ("Scorecard gauge" group → "RAG colouring" toggle, CSS var --ptg-rag). Off by
+// default so the themeable single fill colour (--ptg-fill) surfaces. Re-reads on
+// the "vr:theme" event dispatched when any theme variable changes.
+function useRagEnabled() {
+  const read = () =>
+    typeof document !== "undefined" &&
+    getComputedStyle(document.documentElement)
+      .getPropertyValue("--ptg-rag")
+      .trim() === "on";
+  const [on, setOn] = useState(read);
+  useEffect(() => {
+    const h = () => setOn(read());
+    window.addEventListener("vr:theme", h);
+    return () => window.removeEventListener("vr:theme", h);
+  }, []);
+  return on;
+}
 
 // Editable text node with a stable id (shared across variants).
 const ET = ({ id, children }) => (
@@ -232,6 +252,7 @@ const num = (n) => Number(n).toLocaleString();
 // amber (80–99), red (<80). Colours + height themeable via --ptg-* (DEV 🎨).
 function TA({ ta, id }) {
   const ctx = useCopy();
+  const ragOn = useRagEnabled();
   const eff = (suf, def) => {
     const r = ctx && id ? ctx.get(id + suf, def) : def;
     const n = Number(r);
@@ -256,7 +277,9 @@ function TA({ ta, id }) {
       <span>{num(def)}</span>
     );
   return (
-    <div className={"pt-gauge" + (rag !== "g" ? " pt-rag-" + rag : "")}>
+    <div
+      className={"pt-gauge" + (ragOn && rag !== "g" ? " pt-rag-" + rag : "")}
+    >
       <div className="pt-gauge-units">Units: {N(".u", ta.u)}</div>
       <div className="pt-gauge-top">
         <span className="pt-gn pt-gn-act" style={{ left: actPos + "%" }}>
