@@ -285,6 +285,9 @@ function TA({ ta, id }) {
         <span className="pt-gn pt-gn-act" style={{ left: actPos + "%" }}>
           {N(".a", ta.a)}
         </span>
+        <span className="pt-gn pt-gn-tgt" style={{ left: "100%" }}>
+          {N(".t", ta.t)}
+        </span>
       </div>
       <div className="pt-gauge-bar">
         <i className="pt-gfill" style={{ left: 0, width: actPos + "%" }} />
@@ -301,9 +304,6 @@ function TA({ ta, id }) {
       <div className="pt-gauge-bot">
         <span className="pt-gn pt-gn-base" style={{ left: basePos + "%" }}>
           {N(".b", ta.b)}
-        </span>
-        <span className="pt-gn pt-gn-tgt" style={{ left: "100%" }}>
-          {N(".t", ta.t)}
         </span>
       </div>
     </div>

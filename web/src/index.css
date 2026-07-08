@@ -4084,7 +4084,7 @@ header.top > .authbox {
   transform: none;
 }
 .pt-gn-tgt {
-  top: 0;
+  bottom: 2px;
   transform: translateX(-100%);
 }
 .pt-gauge-bar {
