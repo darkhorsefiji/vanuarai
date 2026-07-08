@@ -247,7 +247,13 @@ export const THEME_GROUPS = [
       { k: "--ptg-pct", l: "Percent text", t: "color", d: "#0c4651" },
       { k: "--ptg-act", l: "Actual value text", t: "color", d: "#46a877" },
       { k: "--ptg-num", l: "Baseline/Target text", t: "color", d: "#21464c" },
-      { k: "--ptg-marker", l: "Markers", t: "color", d: "#0c4651" },
+      {
+        k: "--ptg-marker",
+        l: "Markers (baseline/target)",
+        t: "color",
+        d: "#0c4651",
+      },
+      { k: "--ptg-marker-act", l: "Actual marker", t: "color", d: "#0c4651" },
       {
         k: "--ptg-h",
         l: "Bar height",

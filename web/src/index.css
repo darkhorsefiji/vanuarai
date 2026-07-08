@@ -4128,6 +4128,7 @@ header.top > .authbox {
   top: -6px;
   height: calc(100% + 6px);
   opacity: 1;
+  background: var(--ptg-marker-act, var(--ptg-marker, #0c4651));
 }
 .pt-gmk-tgt {
   opacity: 0.75;
