@@ -280,10 +280,7 @@ function TA({ ta, id }) {
     <div
       className={"pt-gauge" + (ragOn && rag !== "g" ? " pt-rag-" + rag : "")}
     >
-      <div className="pt-gauge-units">
-        <span className="pt-gu-lbl">Units: {N(".u", ta.u)}</span>
-        <span className="pt-gu-tgt">Target {N(".t", ta.t)}</span>
-      </div>
+      <div className="pt-gauge-units">Units: {N(".u", ta.u)}</div>
       <div className="pt-gauge-top">
         <span className="pt-gn pt-gn-act" style={{ left: actPos + "%" }}>
           {N(".a", ta.a)}
@@ -304,6 +301,9 @@ function TA({ ta, id }) {
       <div className="pt-gauge-bot">
         <span className="pt-gn pt-gn-base" style={{ left: basePos + "%" }}>
           {N(".b", ta.b)}
+        </span>
+        <span className="pt-gn pt-gn-tgt" style={{ left: "100%" }}>
+          {N(".t", ta.t)}
         </span>
       </div>
     </div>
