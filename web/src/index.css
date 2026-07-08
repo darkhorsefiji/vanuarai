@@ -4045,6 +4045,10 @@ header.top > .authbox {
   padding: 0 6px;
 }
 .pt-gauge-units {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
   font-size: 10px;
   font-weight: 800;
   text-transform: uppercase;
@@ -4052,11 +4056,17 @@ header.top > .authbox {
   color: var(--muted);
   margin-bottom: 1px;
 }
-.pt-gauge-units span,
+.pt-gu-lbl,
+.pt-gu-tgt {
+  white-space: nowrap;
+}
+/* The values (unit + target number) render normal-case ink; the UNITS:/TARGET
+   labels keep the uppercase muted caption look from .pt-gauge-units. */
 .pt-gauge-units [data-copy-id] {
   text-transform: none;
   color: var(--ink);
   font-weight: 700;
+  letter-spacing: 0;
 }
 .pt-gauge-top {
   position: relative;
@@ -4082,10 +4092,6 @@ header.top > .authbox {
 .pt-gn-base {
   top: 0;
   transform: none;
-}
-.pt-gn-tgt {
-  bottom: 2px;
-  transform: translateX(-100%);
 }
 .pt-gauge-bar {
   position: relative;
