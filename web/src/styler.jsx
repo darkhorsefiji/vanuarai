@@ -17,6 +17,11 @@ import { useAuth, isDev } from "./auth";
 // Most-specific first: the first selector that matches via closest() wins.
 const TARGETS = [
   { sel: ".pt-gauge", group: "Scorecard gauge" },
+  { sel: ".pt-type", group: "Scorecard pills" },
+  {
+    sel: ".pt-cap, .pt-b-h, .pt-row-lbl, .pt-b-iv-h, .pt-kpi-name",
+    group: "Scorecard text",
+  },
   { sel: ".trade-head", group: "Supply card" },
   { sel: ".produce-line", group: "Supply card" },
   { sel: ".rescard .lchip", group: "Resolution pills" },

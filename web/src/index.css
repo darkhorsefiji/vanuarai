@@ -3996,11 +3996,11 @@ header.top > .authbox {
 }
 .pt-cap {
   display: block;
-  font-size: 9.5px;
+  font-size: var(--sc-cap-size, 9.5px);
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.4px;
-  color: var(--muted);
+  color: var(--sc-cap-color, var(--muted));
   margin-bottom: 3px;
 }
 .pt-cap em {
@@ -4022,20 +4022,20 @@ header.top > .authbox {
   padding: 1px 5px;
 }
 .pt-type {
-  font-size: 9.5px;
-  font-weight: 800;
+  font-size: var(--sc-pill-size, 9.5px);
+  font-weight: var(--sc-pill-weight, 800);
   text-transform: uppercase;
   letter-spacing: 0.3px;
-  border-radius: 5px;
-  padding: 2px 7px;
-  color: #fff;
+  border-radius: var(--sc-pill-radius, 5px);
+  padding: var(--sc-pill-pad-y, 2px) var(--sc-pill-pad-x, 7px);
+  color: var(--sc-pill-text, #fff);
   margin-right: 7px;
 }
 .pt-type-initiative {
-  background: var(--ocean);
+  background: var(--sc-pill-initiative-bg, var(--ocean));
 }
 .pt-type-project {
-  background: var(--pop);
+  background: var(--sc-pill-project-bg, var(--pop));
 }
 /* Progress gauge — themeable via --ptg-* (DEV 🎨 → "Scorecard gauge"). */
 .pt-gauge {
@@ -4143,7 +4143,9 @@ header.top > .authbox {
   --ptg-act: #b23448;
 }
 .pt-kpi-name {
-  font-size: 13px;
+  font-size: calc(var(--sc-phrase-size, 13.5px) - 0.5px);
+  font-weight: var(--sc-phrase-weight, 400);
+  color: var(--sc-phrase-color, var(--ink));
 }
 
 /* Variant A — connector tree */
@@ -4265,9 +4267,9 @@ header.top > .authbox {
   background: rgba(0, 0, 0, 0.015);
 }
 .pt-b-h {
-  font-size: 15px;
-  font-weight: 800;
-  color: var(--head-color);
+  font-size: calc(var(--sc-phrase-size, 13.5px) + 1.5px);
+  font-weight: var(--sc-phrase-weight, 800);
+  color: var(--sc-phrase-color, var(--head-color));
   margin-bottom: 10px;
 }
 /* Strategic Objective — the panel that owns the rail gutter (padding-right). */
@@ -4279,9 +4281,9 @@ header.top > .authbox {
   margin: 10px 0 0 14px;
 }
 .pt-b-h2 .pt-row-lbl {
-  font-weight: 700;
-  font-size: 14px;
-  color: var(--head-color);
+  font-weight: var(--sc-phrase-weight, 700);
+  font-size: calc(var(--sc-phrase-size, 13.5px) + 0.5px);
+  color: var(--sc-phrase-color, var(--head-color));
 }
 /* Lever — a "how", no target of its own (empty gauge slot keeps the rail). */
 .pt-b-lever {
@@ -4290,9 +4292,9 @@ header.top > .authbox {
   margin: 10px 0 0 16px;
 }
 .pt-b-h3 .pt-row-lbl {
-  font-weight: 700;
-  font-size: 13px;
-  color: var(--ocean);
+  font-weight: var(--sc-phrase-weight, 700);
+  font-size: calc(var(--sc-phrase-size, 13.5px) - 0.5px);
+  color: var(--sc-phrase-color, var(--ocean));
 }
 /* Specific Objective — mandatory, carries a target. */
 .pt-b-spec {
@@ -4301,9 +4303,9 @@ header.top > .authbox {
   margin: 10px 0 0 16px;
 }
 .pt-b-h4 .pt-row-lbl {
-  font-weight: 700;
-  font-size: 13px;
-  color: var(--head-color);
+  font-weight: var(--sc-phrase-weight, 700);
+  font-size: calc(var(--sc-phrase-size, 13.5px) - 0.5px);
+  color: var(--sc-phrase-color, var(--head-color));
 }
 /* Interventions stack one after another (a project follows an initiative). */
 .pt-b-ivs {
@@ -4319,8 +4321,9 @@ header.top > .authbox {
   background: #fff;
 }
 .pt-b-iv-h {
-  font-weight: 700;
-  font-size: 13.5px;
+  font-weight: var(--sc-phrase-weight, 700);
+  font-size: var(--sc-phrase-size, 13.5px);
+  color: var(--sc-phrase-color, var(--ink));
   margin-bottom: 4px;
   display: flex;
   align-items: center;
